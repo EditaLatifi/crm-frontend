@@ -1,0 +1,89 @@
+/* [project]/frontend/components/tables/deals-table-desktop.css [app-client] (css) */
+@media (min-width: 1020px) {
+  .deals-table-container {
+    background: #fff;
+    border-radius: 18px;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 32px 24px 40px;
+    overflow-x: auto;
+    box-shadow: 0 8px 32px #1e293b1a;
+  }
+
+  .deals-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    background: none;
+    width: 100%;
+    font-size: 16px;
+  }
+
+  .deals-table th {
+    color: #1e293b;
+    text-align: left;
+    z-index: 2;
+    background: #f4f5f7;
+    border-bottom: 2px solid #e0e0e0;
+    padding: 16px 10px;
+    font-size: 16px;
+    font-weight: 800;
+    position: sticky;
+    top: 0;
+  }
+
+  .deals-table td {
+    color: #23272f;
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 14px 10px;
+  }
+
+  .deals-table tr:hover {
+    background: #f0f4fa;
+  }
+}
+
+/* [project]/frontend/app/(app)/deals/responsive.css [app-client] (css) */
+@media (max-width: 900px) {
+  .deals-page-container {
+    padding: 12px !important;
+  }
+
+  .deals-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+
+  .deals-header h1 {
+    font-size: 24px !important;
+  }
+
+  .deals-header button {
+    padding: 8px 20px !important;
+    font-size: 16px !important;
+  }
+
+  .deals-section {
+    border-radius: 8px !important;
+    padding: 16px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .deals-page-container {
+    padding: 4px !important;
+  }
+
+  .deals-header h1 {
+    margin-top: 34px !important;
+    font-size: 18px !important;
+  }
+
+  .deals-section {
+    border-radius: 6px !important;
+    padding: 8px !important;
+  }
+}
+
+/*# sourceMappingURL=frontend_4d8bed63._.css.map*/

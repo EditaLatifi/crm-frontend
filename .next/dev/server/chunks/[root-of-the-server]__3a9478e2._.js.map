@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 46, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Lenovo/Desktop/CRM/frontend/proxy.ts"],"sourcesContent":["\r\n\r\nimport { NextResponse } from 'next/server';\r\nimport type { NextRequest } from 'next/server';\r\n\r\nexport function proxy(request: NextRequest) {\r\n  return NextResponse.next();\r\n}\r\n\r\n\r\nexport const config = {\r\n  matcher: ['/((?!_next|api|static|favicon.ico).*)'],\r\n};\r\n"],"names":[],"mappings":";;;;;;AAEA;;AAGO,SAAS,MAAM,OAAoB;IACxC,OAAO,8IAAY,CAAC,IAAI;AAC1B;AAGO,MAAM,SAAS;IACpB,SAAS;QAAC;KAAwC;AACpD"}}]
+}

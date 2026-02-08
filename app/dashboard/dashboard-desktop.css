@@ -1,0 +1,106 @@
+/* Dashboard Desktop Only Styles */
+@media (min-width: 1020px) {
+.dashboard-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 32px 60px 32px;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #f8f9fb 60%, #e9effd 100%);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(30,41,59,0.12);
+}
+.dashboard-title {
+  font-size: 48px;
+  font-weight: 900;
+  color: #1e293b;
+  margin-bottom: 40px;
+  letter-spacing: -1.5px;
+  text-align: left;
+}
+.dashboard-cards-row {
+  display: flex;
+  gap: 48px;
+  margin-bottom: 56px;
+  width: 100%;
+  justify-content: center;
+}
+.dashboard-card {
+  background: #fff;
+  padding: 44px 32px;
+  border-radius: 22px;
+  flex: 1 1 340px;
+  box-shadow: 0 8px 32px rgba(30,41,59,0.13);
+  min-width: 340px;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 2px solid #e5e7eb;
+  transition: box-shadow 0.2s, border 0.2s;
+}
+.dashboard-card:hover {
+  box-shadow: 0 12px 40px rgba(30,41,59,0.18);
+  border-color: #2563eb;
+}
+.dashboard-card-title {
+  font-weight: 800;
+  margin-bottom: 16px;
+  font-size: 24px;
+  letter-spacing: -0.5px;
+  color: #2563eb;
+}
+.dashboard-card-value {
+  font-size: 44px;
+  font-weight: 900;
+  color: #23272f;
+}
+.dashboard-charts-row {
+  display: flex;
+  gap: 48px;
+  margin-bottom: 56px;
+  width: 100%;
+  justify-content: center;
+}
+.dashboard-chart {
+  background: #fff;
+  border-radius: 22px;
+  padding: 36px 28px;
+  box-shadow: 0 8px 32px rgba(30,41,59,0.13);
+  min-width: 340px;
+  max-width: 520px;
+  flex: 1 1 340px;
+  border: 2px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.2s, border 0.2s;
+}
+.dashboard-chart:hover {
+  box-shadow: 0 12px 40px rgba(30,41,59,0.18);
+  border-color: #36a2eb;
+}
+.dashboard-activity {
+  background: #fff;
+  border-radius: 22px;
+  padding: 44px 32px;
+  box-shadow: 0 8px 32px rgba(30,41,59,0.13);
+  width: 100%;
+  border: 2px solid #e5e7eb;
+  margin-top: 32px;
+}
+.dashboard-activity-title {
+  margin-bottom: 24px;
+  font-weight: 900;
+  color: #2563eb;
+  font-size: 28px;
+  letter-spacing: -0.5px;
+}
+.dashboard-activity-list {
+  font-size: 20px;
+  color: #444;
+  line-height: 1.8;
+  padding-left: 24px;
+  margin-bottom: 0;
+}
+}

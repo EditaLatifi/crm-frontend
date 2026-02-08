@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 14, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Lenovo/Desktop/CRM/frontend/app/profile/page.tsx"],"sourcesContent":["import React from 'react';\r\n\r\nexport default function UserProfilePage() {\r\n  return (\r\n    <div style={{ padding: 24 }}>\r\n      <h1 style={{ marginBottom: 24 }}>User Profile</h1>\r\n      <div style={{ background: '#fff', borderRadius: 8, padding: 24, marginBottom: 32 }}>\r\n        <h2>Alice Smith</h2>\r\n        <p>Email: alice@example.com</p>\r\n        <p>Role: User</p>\r\n      </div>\r\n      <div style={{ background: '#f4f5f7', borderRadius: 8, padding: 24 }}>\r\n        <h3>Assigned Tasks</h3>\r\n        <ul>\r\n          <li>Call Acme</li>\r\n          <li>Prepare Beta LLC proposal</li>\r\n        </ul>\r\n      </div>\r\n    </div>\r\n  );\r\n}"],"names":[],"mappings":";;;;;;AAEe,SAAS;IACtB,qBACE,0PAAC;QAAI,OAAO;YAAE,SAAS;QAAG;;0BACxB,0PAAC;gBAAG,OAAO;oBAAE,cAAc;gBAAG;0BAAG;;;;;;0BACjC,0PAAC;gBAAI,OAAO;oBAAE,YAAY;oBAAQ,cAAc;oBAAG,SAAS;oBAAI,cAAc;gBAAG;;kCAC/E,0PAAC;kCAAG;;;;;;kCACJ,0PAAC;kCAAE;;;;;;kCACH,0PAAC;kCAAE;;;;;;;;;;;;0BAEL,0PAAC;gBAAI,OAAO;oBAAE,YAAY;oBAAW,cAAc;oBAAG,SAAS;gBAAG;;kCAChE,0PAAC;kCAAG;;;;;;kCACJ,0PAAC;;0CACC,0PAAC;0CAAG;;;;;;0CACJ,0PAAC;0CAAG;;;;;;;;;;;;;;;;;;;;;;;;AAKd"}}]
+}

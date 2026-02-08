@@ -1,0 +1,51 @@
+/* [project]/frontend/components/charts/deals-analytics-desktop.css [app-client] (css) */
+@media (min-width: 1020px) {
+  .deals-analytics-desktop-card {
+    background: #fff;
+    border-radius: 22px;
+    min-width: 400px;
+    max-width: 900px;
+    margin: 40px auto 32px;
+    padding: 44px 32px 36px;
+    box-shadow: 0 8px 32px #1e293b21;
+  }
+
+  .deals-analytics-title {
+    color: #2563eb;
+    letter-spacing: -1px;
+    margin-bottom: 32px;
+    font-size: 32px;
+    font-weight: 900;
+  }
+
+  .deals-analytics-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px 48px;
+    display: grid;
+  }
+
+  .deals-analytics-item {
+    background: #f8f9fb;
+    border-radius: 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 18px 20px 16px;
+    display: flex;
+    box-shadow: 0 2px 8px #1e293b0f;
+  }
+
+  .deals-analytics-label {
+    color: #888;
+    margin-bottom: 6px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .deals-analytics-value {
+    color: #23272f;
+    font-size: 32px;
+    font-weight: 900;
+  }
+}
+
+/*# sourceMappingURL=frontend_components_charts_deals-analytics-desktop_css_bad6b30c._.single.css.map*/

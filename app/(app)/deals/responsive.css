@@ -1,0 +1,35 @@
+/* Responsive styles for DealsPage */
+@media (max-width: 900px) {
+  .deals-page-container {
+    padding: 12px !important;
+  }
+  .deals-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+  .deals-header h1 {
+    font-size: 24px !important;
+  }
+  .deals-header button {
+    font-size: 16px !important;
+    padding: 8px 20px !important;
+  }
+  .deals-section {
+    padding: 16px !important;
+    border-radius: 8px !important;
+  }
+}
+@media (max-width: 600px) {
+  .deals-page-container {
+    padding: 4px !important;
+  }
+  .deals-header h1 {
+    font-size: 18px !important;
+    margin-top: 34px !important;
+  }
+  .deals-section {
+    padding: 8px !important;
+    border-radius: 6px !important;
+  }
+}

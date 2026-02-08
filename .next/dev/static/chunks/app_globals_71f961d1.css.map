@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Lenovo/Desktop/CRM/frontend/app/globals.css"],"sourcesContent":["\r\nbody {\r\n  margin: 0;\r\n  font-family: system-ui, sans-serif;\r\n  background: #f4f5f7;\r\n}\r\n"],"names":[],"mappings":"AACA"}}]
+}

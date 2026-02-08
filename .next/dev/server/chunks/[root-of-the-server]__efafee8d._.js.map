@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 46, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Lenovo/Desktop/CRM/frontend/app/api/deals/analytics/route.ts"],"sourcesContent":["import { NextRequest, NextResponse } from 'next/server';\r\n\r\nconst BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';\r\n\r\nexport async function GET() {\r\n  const res = await fetch(`${BACKEND_URL}/deals/analytics`, {\r\n    headers: { 'Content-Type': 'application/json' },\r\n    method: 'GET',\r\n    cache: 'no-store',\r\n  });\r\n  const data = await res.json();\r\n  return NextResponse.json(data, { status: res.status });\r\n}\r\n"],"names":[],"mappings":";;;;AAAA;;AAEA,MAAM,cAAc,QAAQ,GAAG,CAAC,WAAW,IAAI;AAExC,eAAe;IACpB,MAAM,MAAM,MAAM,MAAM,GAAG,YAAY,gBAAgB,CAAC,EAAE;QACxD,SAAS;YAAE,gBAAgB;QAAmB;QAC9C,QAAQ;QACR,OAAO;IACT;IACA,MAAM,OAAO,MAAM,IAAI,IAAI;IAC3B,OAAO,4JAAY,CAAC,IAAI,CAAC,MAAM;QAAE,QAAQ,IAAI,MAAM;IAAC;AACtD"}}]
+}

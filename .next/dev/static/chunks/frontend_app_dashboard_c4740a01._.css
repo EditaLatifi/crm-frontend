@@ -1,0 +1,162 @@
+/* [project]/frontend/app/dashboard/dashboard-desktop.css [app-client] (css) */
+@media (min-width: 1020px) {
+  .dashboard-container {
+    box-sizing: border-box;
+    background: linear-gradient(135deg, #f8f9fb 60%, #e9effd 100%);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 48px 32px 60px;
+    box-shadow: 0 8px 32px #1e293b1f;
+  }
+
+  .dashboard-title {
+    color: #1e293b;
+    letter-spacing: -1.5px;
+    text-align: left;
+    margin-bottom: 40px;
+    font-size: 48px;
+    font-weight: 900;
+  }
+
+  .dashboard-cards-row {
+    justify-content: center;
+    gap: 48px;
+    width: 100%;
+    margin-bottom: 56px;
+    display: flex;
+  }
+
+  .dashboard-card {
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    border-radius: 22px;
+    flex-direction: column;
+    flex: 340px;
+    align-items: flex-start;
+    min-width: 340px;
+    max-width: 440px;
+    padding: 44px 32px;
+    transition: box-shadow .2s, border .2s;
+    display: flex;
+    box-shadow: 0 8px 32px #1e293b21;
+  }
+
+  .dashboard-card:hover {
+    border-color: #2563eb;
+    box-shadow: 0 12px 40px #1e293b2e;
+  }
+
+  .dashboard-card-title {
+    letter-spacing: -.5px;
+    color: #2563eb;
+    margin-bottom: 16px;
+    font-size: 24px;
+    font-weight: 800;
+  }
+
+  .dashboard-card-value {
+    color: #23272f;
+    font-size: 44px;
+    font-weight: 900;
+  }
+
+  .dashboard-charts-row {
+    justify-content: center;
+    gap: 48px;
+    width: 100%;
+    margin-bottom: 56px;
+    display: flex;
+  }
+
+  .dashboard-chart {
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    border-radius: 22px;
+    flex-direction: column;
+    flex: 340px;
+    align-items: center;
+    min-width: 340px;
+    max-width: 520px;
+    padding: 36px 28px;
+    transition: box-shadow .2s, border .2s;
+    display: flex;
+    box-shadow: 0 8px 32px #1e293b21;
+  }
+
+  .dashboard-chart:hover {
+    border-color: #36a2eb;
+    box-shadow: 0 12px 40px #1e293b2e;
+  }
+
+  .dashboard-activity {
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    border-radius: 22px;
+    width: 100%;
+    margin-top: 32px;
+    padding: 44px 32px;
+    box-shadow: 0 8px 32px #1e293b21;
+  }
+
+  .dashboard-activity-title {
+    color: #2563eb;
+    letter-spacing: -.5px;
+    margin-bottom: 24px;
+    font-size: 28px;
+    font-weight: 900;
+  }
+
+  .dashboard-activity-list {
+    color: #444;
+    margin-bottom: 0;
+    padding-left: 24px;
+    font-size: 20px;
+    line-height: 1.8;
+  }
+}
+
+/* [project]/frontend/app/dashboard/dashboard-mobile.css [app-client] (css) */
+@media (max-width: 1019px) {
+  .dashboard-container {
+    border-radius: 10px;
+    padding: 12px 2vw 24px;
+    box-shadow: 0 2px 8px #1e293b12;
+  }
+
+  .dashboard-title {
+    margin-bottom: 18px;
+    font-size: 22px;
+  }
+
+  .dashboard-cards-row {
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .dashboard-card {
+    border-radius: 10px;
+    min-width: 0;
+    max-width: 100vw;
+    padding: 16px 10px;
+    font-size: 13px;
+  }
+
+  .dashboard-card-title {
+    margin-bottom: 6px;
+    font-size: 15px;
+  }
+
+  .dashboard-card-value {
+    font-size: 22px;
+  }
+
+  .dashboard-charts-row {
+    flex-direction: column;
+    gap: 18px;
+  }
+}
+
+/*# sourceMappingURL=frontend_app_dashboard_c4740a01._.css.map*/

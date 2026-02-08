@@ -1,0 +1,44 @@
+@media (min-width: 1020px) {
+.deals-table-container {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(30,41,59,0.10);
+  padding: 32px 24px 40px 24px;
+  margin: 40px auto;
+  max-width: 1200px;
+  overflow-x: auto;
+}
+  .deals-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 14px;
+    background: none;
+  }
+  .deals-table th {
+    position: sticky;
+    top: 0;
+    background: #f4f5f7;
+    font-weight: 800;
+    color: #1e293b;
+    font-size: 14px;
+    padding: 18px 14px;
+    border-bottom: 2px solid #e0e0e0;
+    text-align: left;
+    z-index: 2;
+    letter-spacing: 0.01em;
+  }
+  .deals-table td {
+    padding: 18px 14px;
+    border-bottom: 1px solid #e0e0e0;
+    color: #23272f;
+    background: #fff;
+    letter-spacing: 0.01em;
+  }
+  .deals-table tr {
+    height: 54px;
+  }
+  .deals-table tr:hover {
+    background: #f0f4fa;
+  }
+}

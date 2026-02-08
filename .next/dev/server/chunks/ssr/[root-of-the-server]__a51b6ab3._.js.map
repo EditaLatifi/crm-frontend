@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 14, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Lenovo/Desktop/CRM/frontend/app/%28app%29/dashboard/page.tsx"],"sourcesContent":["export default function DashboardPage() {\r\n  return (\r\n    <div>\r\n      <h1>Dashboard</h1>\r\n      <div>Summary charts and stats will appear here.</div>\r\n    </div>\r\n  );\r\n}\r\n"],"names":[],"mappings":";;;;;;AAAe,SAAS;IACtB,qBACE,0PAAC;;0BACC,0PAAC;0BAAG;;;;;;0BACJ,0PAAC;0BAAI;;;;;;;;;;;;AAGX"}}]
+}

@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/frontend/app/dashboard/dashboard-mobile.css"],"sourcesContent":["@media (max-width: 1019px) {\r\n.dashboard-container {\r\n  padding: 12px 2vw 24px 2vw;\r\n  border-radius: 10px;\r\n  box-shadow: 0 2px 8px rgba(30,41,59,0.07);\r\n}\r\n.dashboard-title {\r\n  font-size: 22px;\r\n  margin-bottom: 18px;\r\n}\r\n.dashboard-cards-row {\r\n  flex-direction: column;\r\n  gap: 16px;\r\n  margin-bottom: 18px;\r\n}\r\n.dashboard-card {\r\n  padding: 16px 10px;\r\n  border-radius: 10px;\r\n  min-width: 0;\r\n  max-width: 100vw;\r\n  font-size: 13px;\r\n}\r\n.dashboard-card-title {\r\n  font-size: 15px;\r\n  margin-bottom: 6px;\r\n}\r\n.dashboard-card-value {\r\n  font-size: 22px;\r\n}\r\n.dashboard-charts-row {\r\n  flex-direction: column;\r\n  gap: 18px;\r\n}\r\n}\r\n"],"names":[],"mappings":"AAAA;EACA;;;;;;EAKA;;;;;EAIA;;;;;;EAKA;;;;;;;;EAOA;;;;;EAIA;;;;EAGA"}}]
+}
