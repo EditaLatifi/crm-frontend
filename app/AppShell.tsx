@@ -18,7 +18,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <ProtectedRoute>
       {/* Burger menu for mobile/tablet */}
       <button className="burger-menu" aria-label="Open sidebar" onClick={() => setSidebarOpen(true)}>
-        <FiMenu size={28} color="#2563eb" />
+        <FiMenu size={28} color="#1e293b" />
       </button>
       {/* Sidebar for desktop */}
       <div className="sidebar-desktop">

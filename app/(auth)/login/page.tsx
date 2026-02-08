@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, Input, Heading, Alert, VStack, Text, Flex, Icon } from '@chakra-ui/react';
+import styles from './login.module.css';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -29,56 +29,37 @@ export default function LoginPage() {
   }, [user, router]);
 
   return (
-    <Flex minH="100vh" bg="#f4f5f7" align="center" justify="center">
-      <Box bg="#fff" p={10} rounded="2xl" boxShadow="2xl" w="full" maxW="sm" borderTop="8px solid #0052cc">
-        <Flex direction="column" align="center" mb={6}>
-          <Icon viewBox="0 0 32 32" boxSize={10} color="#0052cc">
-            <circle cx="16" cy="16" r="16" fill="#0052cc" />
-            <text x="16" y="21" textAnchor="middle" fontSize="16" fill="#fff" fontFamily="Arial">CRM</text>
-          </Icon>
-          <Heading size="md" mt={2} color="#0052cc">Sign in to CRM</Heading>
-        </Flex>
-        <form onSubmit={handleSubmit}>
-          <VStack spacing={5} align="stretch">
-            <Box>
-              <Input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="Email address"
-                autoComplete="email"
-                isRequired
-                size="lg"
-                focusBorderColor="#0052cc"
-              />
-            </Box>
-            <Box>
-              <Input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Password"
-                autoComplete="current-password"
-                isRequired
-                size="lg"
-                focusBorderColor="#0052cc"
-              />
-            </Box>
-            {error && (
-              <Alert status="error" borderRadius="md">
-                {error}
-              </Alert>
-            )}
-            <Button type="submit" bg="#0052cc" color="#fff" _hover={{ bg: '#0747a6' }} size="lg" w="full" fontWeight="bold">
-              Login
-            </Button>
-          </VStack>
+    <div className={styles['login-bg']}>
+      <div className={styles['login-container']}>
+        <div className={styles['login-logo']}>
+          <img src="/logoip3.png" alt="Logo" />
+        </div>
+        <h2 className={styles['login-title']}>Sign in to CRM</h2>
+        <form className={styles['login-form']} onSubmit={handleSubmit}>
+          <input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="Email address"
+            autoComplete="email"
+            required
+            className={styles['login-input']}
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="Password"
+            autoComplete="current-password"
+            required
+            className={styles['login-input']}
+          />
+          {error && <div className={styles['login-error']}>{error}</div>}
+          <button type="submit" className={styles['login-btn']}>Login</button>
         </form>
-        <Text mt={8} textAlign="center" color="gray.500" fontSize="sm">
-          Powered by CRM • Inspired by Trello & Jira
-        </Text>
-      </Box>
-    </Flex>
+        <div className={styles['login-footer']}>Powered by ip3</div>
+      </div>
+    </div>
   );
 }
 

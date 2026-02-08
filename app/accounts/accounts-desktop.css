@@ -4,42 +4,44 @@
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 48px 32px 60px 32px;
+  padding: 40px 24px 48px 24px;
   box-sizing: border-box;
   background: linear-gradient(135deg, #f8f9fb 60%, #e9effd 100%);
-  border-radius: 24px;
-  box-shadow: 0 8px 32px rgba(30,41,59,0.12);
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(30,41,59,0.10);
+  border: 1px solid #e0e4ea;
 }
 .accounts-title {
-  font-size: 46px;
-  font-weight: 900;
+  font-size: 32px;
+  font-weight: 700;
   color: #1e293b;
-  margin-bottom: 40px;
-  letter-spacing: -1.5px;
+  margin-bottom: 28px;
+  letter-spacing: -0.5px;
   text-align: left;
 }
 .accounts-table {
   width: 100%;
-  border-radius: 18px;
-  box-shadow: 0 8px 32px rgba(30,41,59,0.10);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(30,41,59,0.08);
   background: #fff;
-  border: 2px solid #e5e7eb;
-  margin-bottom: 40px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 32px;
   overflow: hidden;
 }
 .accounts-table th {
   background: #f3f6fa;
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 600;
   color: #222e3a;
-  padding: 18px 16px;
+  padding: 12px 10px;
   text-align: left;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  letter-spacing: 0.2px;
 }
 .accounts-table td {
-  font-size: 18px;
+  font-size: 15px;
   color: #23272f;
-  padding: 16px 14px;
+  padding: 10px 8px;
   border-bottom: 1px solid #e5e7eb;
 }
 .accounts-table tr:last-child td {
@@ -53,21 +55,71 @@
 }
 .accounts-actions {
   display: flex;
-  gap: 18px;
+  gap: 12px;
 }
 .accounts-btn {
-  font-size: 18px;
-  font-weight: 700;
-  border-radius: 8px;
-  border: 2px solid #2563eb;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1.5px solid #2563eb;
   background: #2563eb;
   color: #fff;
-  padding: 12px 28px;
+  padding: 8px 20px;
   cursor: pointer;
   transition: background 0.15s, border 0.15s, color 0.15s;
 }
 .accounts-btn:hover {
   background: #1d4ed8;
   border-color: #1d4ed8;
+}
+
+/* Tag styling */
+.account-tag {
+  display: inline-block;
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 4px;
+  background: #e5e7eb;
+  color: #222e3a;
+}
+.account-tag.vip {
+  background: #ffe082;
+  color: #b28704;
+}
+.account-tag.prospect {
+  background: #b2ebf2;
+  color: #006064;
+}
+.account-tag.active {
+  background: #c8e6c9;
+  color: #256029;
+}
+
+/* Responsive styles */
+@media (max-width: 1020px) {
+  .accounts-container {
+    padding: 16px 4vw 24px 4vw;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(30,41,59,0.08);
+  }
+  .accounts-title {
+    font-size: 22px;
+    margin-bottom: 16px;
+  }
+  .accounts-table {
+    border-radius: 6px;
+    margin-bottom: 16px;
+  }
+  .accounts-table th, .accounts-table td {
+    font-size: 13px;
+    padding: 6px 4px;
+  }
+  .accounts-btn {
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 4px;
+  }
 }
 }

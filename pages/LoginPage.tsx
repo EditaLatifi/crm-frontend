@@ -40,9 +40,7 @@ export default function LoginPage() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)' }}>
       <div style={{ width: 360, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: 32, boxShadow: 'none', fontFamily: 'Inter, system-ui, Segoe UI, Arial, sans-serif' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
-          <img src="/logo.svg" alt="CRM Logo" style={{ height: 40, marginBottom: 8 }} />
-          <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>Sign in to CRM</h1>
-          <p style={{ color: 'var(--color-meta)', fontSize: '12px', marginTop: 4 }}>Enterprise Customer Management</p>
+          <img src="/logoip3.png" alt="Logo" style={{ height: 60, marginBottom: 8 }} />
         </div>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>

@@ -106,41 +106,46 @@ export default function DashboardPage() {
 	}, []);
 
 	return (
-		   <div className="dashboard-responsive">
-			   <div className="dashboard-container">
-				   <h1 className="dashboard-title">Dashboard</h1>
-				   <div className="dashboard-cards-row">
-					   <div className="dashboard-card">
-						   <h3 className="dashboard-card-title dashboard-card-tasks">Active Tasks</h3>
-						   <div className="dashboard-card-value">{tasksCount}</div>
-					   </div>
-					   <div className="dashboard-card">
-						   <h3 className="dashboard-card-title dashboard-card-deals">Deals in Pipeline</h3>
-						   <div className="dashboard-card-value">{dealsCount}</div>
-					   </div>
-					   <div className="dashboard-card">
-						   <h3 className="dashboard-card-title dashboard-card-time">Time Tracked (this week)</h3>
-						   <div className="dashboard-card-value">{timeTracked} h</div>
-					   </div>
+	   <div className="dashboard-responsive">
+		   <div className="dashboard-container">
+			   <h1 className="dashboard-title" style={{ fontSize: '2.2rem', fontWeight: 700, color: '#2D3748', marginBottom: '1.2rem', letterSpacing: '0.02em' }}>Dashboard</h1>
+			   <div className="dashboard-cards-row" style={{ display: 'flex', gap: '1.2rem', marginBottom: '1.2rem' }}>
+				   <div className="dashboard-card" style={{ flex: 1, background: '#F7FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '1rem', minWidth: '0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+					   <h3 className="dashboard-card-title dashboard-card-tasks" style={{ fontSize: '1rem', fontWeight: 600, color: '#4A5568', marginBottom: '0.5rem', letterSpacing: '0.01em' }}>Active Tasks</h3>
+					   <div className="dashboard-card-value" style={{ fontSize: '2rem', fontWeight: 700, color: '#2B6CB0', marginBottom: '0.2rem' }}>{tasksCount}</div>
 				   </div>
-				   <div className="dashboard-charts-row">
-					   <div className="dashboard-chart dashboard-chart-tasks">
-						   <TasksBarChart data={tasksChart} />
-					   </div>
-					   <div className="dashboard-chart dashboard-chart-deals">
-						   <DealsPieChart data={dealsChart} />
-					   </div>
-					   <div className="dashboard-chart dashboard-chart-time">
-						   <TimeLineChart data={timeChart} />
-					   </div>
+				   <div className="dashboard-card" style={{ flex: 1, background: '#F7FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '1rem', minWidth: '0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+					   <h3 className="dashboard-card-title dashboard-card-deals" style={{ fontSize: '1rem', fontWeight: 600, color: '#4A5568', marginBottom: '0.5rem', letterSpacing: '0.01em' }}>Deals in Pipeline</h3>
+					   <div className="dashboard-card-value" style={{ fontSize: '2rem', fontWeight: 700, color: '#2B6CB0', marginBottom: '0.2rem' }}>{dealsCount}</div>
 				   </div>
-				   <div className="dashboard-activity">
-					   <h2 className="dashboard-activity-title">Recent Activity</h2>
-					   <ul className="dashboard-activity-list">
-						   {recentActivity.slice(0, 8).map((a, i) => <li key={i}>{a}</li>)}
-					   </ul>
+				   <div className="dashboard-card" style={{ flex: 1, background: '#F7FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '1rem', minWidth: '0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+					   <h3 className="dashboard-card-title dashboard-card-time" style={{ fontSize: '1rem', fontWeight: 600, color: '#4A5568', marginBottom: '0.5rem', letterSpacing: '0.01em' }}>Time Tracked (this week)</h3>
+					   <div className="dashboard-card-value" style={{ fontSize: '2rem', fontWeight: 700, color: '#2B6CB0', marginBottom: '0.2rem' }}>{timeTracked} <span style={{ fontSize: '1rem', color: '#4A5568', fontWeight: 500 }}>h</span></div>
 				   </div>
 			   </div>
+			   <div className="dashboard-charts-row" style={{ display: 'flex', gap: '1.2rem', marginBottom: '1.2rem' }}>
+				   <div className="dashboard-chart dashboard-chart-tasks" style={{ flex: 1, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '1rem', minWidth: '0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+					   <div style={{ fontSize: '0.95rem', fontWeight: 500, color: '#4A5568', marginBottom: '0.5rem', letterSpacing: '0.01em' }}>Tasks by Status</div>
+					   <TasksBarChart data={tasksChart} />
+				   </div>
+				   <div className="dashboard-chart dashboard-chart-deals" style={{ flex: 1, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '1rem', minWidth: '0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+					   <div style={{ fontSize: '0.95rem', fontWeight: 500, color: '#4A5568', marginBottom: '0.5rem', letterSpacing: '0.01em' }}>Deals by Stage</div>
+					   <DealsPieChart data={dealsChart} />
+				   </div>
+				   <div className="dashboard-chart dashboard-chart-time" style={{ flex: 1, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '1rem', minWidth: '0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+					   <div style={{ fontSize: '0.95rem', fontWeight: 500, color: '#4A5568', marginBottom: '0.5rem', letterSpacing: '0.01em' }}>Time Tracked (7 days)</div>
+					   <TimeLineChart data={timeChart} />
+				   </div>
+			   </div>
+			   <div className="dashboard-activity" style={{ background: '#F7FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '1rem', marginBottom: '0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+				   <h2 className="dashboard-activity-title" style={{ fontSize: '1.1rem', fontWeight: 600, color: '#2D3748', marginBottom: '0.7rem', letterSpacing: '0.01em' }}>Recent Activity</h2>
+				   <ul className="dashboard-activity-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+					   {recentActivity.slice(0, 8).map((a, i) => (
+						   <li key={i} style={{ padding: '0.5rem 0', borderBottom: i < 7 ? '1px solid #E2E8F0' : 'none', fontSize: '0.97rem', color: '#4A5568', letterSpacing: '0.01em' }}>{a}</li>
+					   ))}
+				   </ul>
+			   </div>
 		   </div>
+	   </div>
 	);
 }

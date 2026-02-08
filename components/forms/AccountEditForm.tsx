@@ -14,38 +14,29 @@ export default function AccountEditForm({ initialData, onSubmit, onCancel }: {
   const [notes, setNotes] = useState(initialData?.notes || '');
 
   return (
-    <form onSubmit={e => { e.preventDefault(); onSubmit({ name, type, address, phone, email, notes }); }}>
-      <div style={{ marginBottom: 12 }}>
-        <label>Name</label><br />
-        <input value={name} onChange={e => setName(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
-      </div>
-      <div style={{ marginBottom: 12 }}>
-        <label>Type</label><br />
-        <select value={type} onChange={e => setType(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}>
+    <form onSubmit={e => { e.preventDefault(); onSubmit({ name, type, address, phone, email, notes }); }} style={{ maxWidth: 480, margin: '0 auto', background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(30,41,59,0.08)', padding: '36px 32px', border: '1.5px solid #e5e7eb' }}>
+      <h2 style={{ fontSize: 28, fontWeight: 900, color: '#1e293b', marginBottom: 32, letterSpacing: '-1px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', paddingBottom: 12 }}>Edit Account</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '18px 24px', marginBottom: 24 }}>
+        <label style={{ fontWeight: 700, fontSize: 16, color: '#23272f', alignSelf: 'center' }}>Name</label>
+        <input value={name} onChange={e => setName(e.target.value)} required style={{ width: '100%', padding: '10px 14px', borderRadius: 6, border: '1.5px solid #b3bac5', fontSize: 16, background: '#f8f9fb', color: '#23272f' }} />
+        <label style={{ fontWeight: 700, fontSize: 16, color: '#23272f', alignSelf: 'center' }}>Type</label>
+        <select value={type} onChange={e => setType(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 6, border: '1.5px solid #b3bac5', fontSize: 16, background: '#f8f9fb', color: '#23272f' }}>
           <option value="Client">Client</option>
           <option value="Partner">Partner</option>
           <option value="Potential Client">Potential Client</option>
         </select>
+        <label style={{ fontWeight: 700, fontSize: 16, color: '#23272f', alignSelf: 'center' }}>Address</label>
+        <input value={address} onChange={e => setAddress(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 6, border: '1.5px solid #b3bac5', fontSize: 16, background: '#f8f9fb', color: '#23272f' }} />
+        <label style={{ fontWeight: 700, fontSize: 16, color: '#23272f', alignSelf: 'center' }}>Phone</label>
+        <input value={phone} onChange={e => setPhone(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 6, border: '1.5px solid #b3bac5', fontSize: 16, background: '#f8f9fb', color: '#23272f' }} />
+        <label style={{ fontWeight: 700, fontSize: 16, color: '#23272f', alignSelf: 'center' }}>Email</label>
+        <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 6, border: '1.5px solid #b3bac5', fontSize: 16, background: '#f8f9fb', color: '#23272f' }} />
+        <label style={{ fontWeight: 700, fontSize: 16, color: '#23272f', alignSelf: 'center' }}>Notes</label>
+        <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 6, border: '1.5px solid #b3bac5', fontSize: 16, background: '#f8f9fb', color: '#23272f', minHeight: 60 }} />
       </div>
-      <div style={{ marginBottom: 12 }}>
-        <label>Address</label><br />
-        <input value={address} onChange={e => setAddress(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
-      </div>
-      <div style={{ marginBottom: 12 }}>
-        <label>Phone</label><br />
-        <input value={phone} onChange={e => setPhone(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
-      </div>
-      <div style={{ marginBottom: 12 }}>
-        <label>Email</label><br />
-        <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
-      </div>
-      <div style={{ marginBottom: 12 }}>
-        <label>Notes</label><br />
-        <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
-      </div>
-      <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-        <button type="button" onClick={onCancel} style={{ background: '#eee', color: '#333', border: 'none', borderRadius: 6, padding: '8px 20px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-        <button type="submit" style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 20px', fontWeight: 600, cursor: 'pointer' }}>Save</button>
+      <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 8 }}>
+        <button type="button" onClick={onCancel} style={{ background: '#f4f5f7', color: '#333', border: '1.5px solid #b3bac5', borderRadius: 8, padding: '10px 28px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>Cancel</button>
+        <button type="submit" style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 28px', fontWeight: 700, fontSize: 16, cursor: 'pointer', boxShadow: '0 2px 8px #0052cc22', letterSpacing: '0.2px' }}>Save</button>
       </div>
     </form>
   );
