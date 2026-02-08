@@ -1,4 +1,4 @@
-[00:00:01.707] Server  LOG     ✓ Ready in 1228ms
-[00:00:04.020] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:00:04.448] Browser LOG     [tokenStore] loadTokenFromStorage: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjYjdmOGFkMC0xNDk5LTQzYjMtYWIwNS04ZTlkYWMxYTE3NmYiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NzA1MTQyNDAsImV4cCI6MTc3MDUxNzg0MH0.t8mYsMAVRIZy2d5aPyBuJ_G4N991fw5RkatSUgaX8g0
-[00:00:04.448] Browser LOG     [tokenStore] getAccessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjYjdmOGFkMC0xNDk5LTQzYjMtYWIwNS04ZTlkYWMxYTE3NmYiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NzA1MTQyNDAsImV4cCI6MTc3MDUxNzg0MH0.t8mYsMAVRIZy2d5aPyBuJ_G4N991fw5RkatSUgaX8g0
+[00:00:01.536] Server  LOG     ✓ Ready in 1081ms
+[00:00:04.480] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:05.597] Browser LOG     [tokenStore] loadTokenFromStorage: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjYjdmOGFkMC0xNDk5LTQzYjMtYWIwNS04ZTlkYWMxYTE3NmYiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NzA1MTQyNDAsImV4cCI6MTc3MDUxNzg0MH0.t8mYsMAVRIZy2d5aPyBuJ_G4N991fw5RkatSUgaX8g0
+[00:00:05.597] Browser LOG     [tokenStore] getAccessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjYjdmOGFkMC0xNDk5LTQzYjMtYWIwNS04ZTlkYWMxYTE3NmYiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NzA1MTQyNDAsImV4cCI6MTc3MDUxNzg0MH0.t8mYsMAVRIZy2d5aPyBuJ_G4N991fw5RkatSUgaX8g0
