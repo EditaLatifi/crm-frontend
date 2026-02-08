@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/frontend/components/charts/deals-analytics-desktop.css"],"sourcesContent":["@media (min-width: 1020px) {\r\n.deals-analytics-desktop-card {\r\n  background: #fff;\r\n  border-radius: 22px;\r\n  box-shadow: 0 8px 32px rgba(30,41,59,0.13);\r\n  padding: 44px 32px 36px 32px;\r\n  margin: 40px auto 32px auto;\r\n  max-width: 900px;\r\n  min-width: 400px;\r\n}\r\n.deals-analytics-title {\r\n  font-size: 32px;\r\n  font-weight: 900;\r\n  color: #2563eb;\r\n  margin-bottom: 32px;\r\n  letter-spacing: -1px;\r\n}\r\n.deals-analytics-grid {\r\n  display: grid;\r\n  grid-template-columns: repeat(3, 1fr);\r\n  gap: 32px 48px;\r\n}\r\n.deals-analytics-item {\r\n  display: flex;\r\n  flex-direction: column;\r\n  align-items: flex-start;\r\n  background: #f8f9fb;\r\n  border-radius: 14px;\r\n  padding: 18px 20px 16px 20px;\r\n  box-shadow: 0 2px 8px rgba(30,41,59,0.06);\r\n}\r\n.deals-analytics-label {\r\n  font-size: 15px;\r\n  color: #888;\r\n  font-weight: 600;\r\n  margin-bottom: 6px;\r\n}\r\n.deals-analytics-value {\r\n  font-size: 32px;\r\n  font-weight: 900;\r\n  color: #23272f;\r\n}\r\n}"],"names":[],"mappings":"AAAA;EACA;;;;;;;;;;EASA;;;;;;;;EAOA;;;;;;EAKA;;;;;;;;;;EASA;;;;;;;EAMA"}}]
-}

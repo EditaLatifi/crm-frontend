@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 14, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Lenovo/Desktop/CRM/frontend/app/reports/page.tsx"],"sourcesContent":["import React from \"react\";\r\n\r\nexport default function ReportsPage() {\r\n  return (\r\n    <div style={{ padding: \"32px\" }}>\r\n      <h1 style={{ fontSize: \"2rem\", fontWeight: 600, marginBottom: \"16px\" }}>Reports</h1>\r\n      <p style={{ color: \"#666\", fontSize: \"1rem\" }}>\r\n        This page will show enterprise reports and analytics. Please select a report from the menu or contact your administrator for access.\r\n      </p>\r\n    </div>\r\n  );\r\n}\r\n"],"names":[],"mappings":";;;;;;AAEe,SAAS;IACtB,qBACE,0PAAC;QAAI,OAAO;YAAE,SAAS;QAAO;;0BAC5B,0PAAC;gBAAG,OAAO;oBAAE,UAAU;oBAAQ,YAAY;oBAAK,cAAc;gBAAO;0BAAG;;;;;;0BACxE,0PAAC;gBAAE,OAAO;oBAAE,OAAO;oBAAQ,UAAU;gBAAO;0BAAG;;;;;;;;;;;;AAKrD"}}]
-}

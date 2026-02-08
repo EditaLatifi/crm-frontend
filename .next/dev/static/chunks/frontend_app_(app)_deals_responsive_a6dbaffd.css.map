@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Lenovo/Desktop/CRM/frontend/app/%28app%29/deals/responsive.css"],"sourcesContent":["/* Responsive styles for DealsPage */\r\n@media (max-width: 900px) {\r\n  .deals-page-container {\r\n    padding: 12px !important;\r\n  }\r\n  .deals-header {\r\n    flex-direction: column !important;\r\n    align-items: flex-start !important;\r\n    gap: 16px !important;\r\n  }\r\n  .deals-header h1 {\r\n    font-size: 24px !important;\r\n  }\r\n  .deals-header button {\r\n    font-size: 16px !important;\r\n    padding: 8px 20px !important;\r\n  }\r\n  .deals-section {\r\n    padding: 16px !important;\r\n    border-radius: 8px !important;\r\n  }\r\n}\r\n@media (max-width: 600px) {\r\n  .deals-page-container {\r\n    padding: 4px !important;\r\n  }\r\n  .deals-header h1 {\r\n    font-size: 18px !important;\r\n    margin-top: 34px !important;\r\n  }\r\n  .deals-section {\r\n    padding: 8px !important;\r\n    border-radius: 6px !important;\r\n  }\r\n}\r\n"],"names":[],"mappings":"AACA;EACE;;;;EAGA;;;;;;EAKA;;;;EAGA;;;;;EAIA;;;;;;AAKF;EACE;;;;EAGA;;;;;EAIA"}}]
-}
