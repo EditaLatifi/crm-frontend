@@ -14,7 +14,7 @@ export default function Card({ card }: { card: any }) {
     >
       <div className="font-medium text-gray-800 mb-1">{card.name}</div>
       <div className="text-xs text-gray-500">{card.accountName}</div>
-      <div className="text-xs text-gray-400">Owner: {card.ownerName}</div>
+      <div className="text-xs text-gray-400">Verantwortlich: {card.ownerName}</div>
       {/* Add badges/status as needed */}
     </div>
   );

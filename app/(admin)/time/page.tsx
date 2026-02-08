@@ -30,7 +30,7 @@ function AdminTimePageContent() {
   console.log("ENTRIES", entries);
   return (
     <div style={{ padding: 32 }}>
-      <h1 style={{ fontSize: "1.5rem", fontWeight: 600, marginBottom: 24 }}>All Users Time Tracking</h1>
+      <h1 style={{ fontSize: "1.5rem", fontWeight: 600, marginBottom: 24 }}>Ziit-Erfassig vo allne Benutzer</h1>
       <div style={{ background: "#fff", borderRadius: 8,}}>
         <TimeEntriesTable entries={entries} showUserColumn={true} />
       </div>

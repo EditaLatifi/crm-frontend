@@ -38,32 +38,32 @@ export default function ActivityFeedPage() {
 
   return (
     <div style={{ padding: 24 }}>
-      <h1 style={{ marginBottom: 24, fontSize: 18, fontWeight: 700 }}>Activity Feed</h1>
+      <h1 style={{ marginBottom: 24, fontSize: 18, fontWeight: 700 }}>Aktivitäts-Feed</h1>
       <div style={{ background: '#fff', borderRadius: 8, padding: 32, minHeight: 320 }}>
         {loading ? (
-          <div style={{ color: '#888', fontSize: 14 }}>Loading...</div>
+          <div style={{ color: '#888', fontSize: 14 }}>Lade...</div>
         ) : (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {activities.length === 0 ? (
-              <li style={{ color: '#888', fontSize: 14 }}>No activity found.</li>
+              <li style={{ color: '#888', fontSize: 14 }}>Kei Aktivität gfunde.</li>
             ) : (
               activities.map(act => (
                 <li key={act.id} style={{ marginBottom: 20, fontSize: 15, color: '#23272f' }}>
                   <span style={{ fontWeight: 700 }}>{formatTime(act.createdAt)}</span>
                   {act.action === 'COMMENT' ? (
-                    <> - Comment added by <b>{act.actorName || act.actorUserId}</b></>
+                    <> - Kommentar vo <b>{act.actorName || act.actorUserId}</b> hinzugefügt</>
                   ) : act.action === 'UPDATE' && act.entityType === 'Task' ? (
-                    <> - Task <b>{act.entityName || act.entityId}</b> updated by <b>{act.actorName || act.actorUserId}</b></>
+                    <> - Task <b>{act.entityName || act.entityId}</b> aktualisiert vo <b>{act.actorName || act.actorUserId}</b></>
                   ) : act.action === 'COMPLETE' && act.entityType === 'Task' ? (
-                    <> - Task <b>{act.entityName || act.entityId}</b> marked complete by <b>{act.actorName || act.actorUserId}</b></>
+                    <> - Task <b>{act.entityName || act.entityId}</b> als erledigt markiert vo <b>{act.actorName || act.actorUserId}</b></>
                   ) : act.action === 'UPDATE' && act.entityType === 'Deal' ? (
-                    <> - Deal <b>{act.entityName || act.entityId}</b> updated by <b>{act.actorName || act.actorUserId}</b></>
+                    <> - Deal <b>{act.entityName || act.entityId}</b> aktualisiert vo <b>{act.actorName || act.actorUserId}</b></>
                   ) : act.action === 'MOVE' && act.entityType === 'Deal' ? (
-                    <> - Deal <b>{act.entityName || act.entityId}</b> moved to <b>{act.details}</b> by <b>{act.actorName || act.actorUserId}</b></>
+                    <> - Deal <b>{act.entityName || act.entityId}</b> verschobe uf <b>{act.details}</b> vo <b>{act.actorName || act.actorUserId}</b></>
                   ) : act.action === 'CREATE' && act.entityType === 'TimeEntry' ? (
-                    <> - Time entry <b>{act.details}</b> logged on <b>{act.entityName || act.entityId}</b> by <b>{act.actorName || act.actorUserId}</b></>
+                    <> - Ziit-Eitrag <b>{act.details}</b> erfasst uf <b>{act.entityName || act.entityId}</b> vo <b>{act.actorName || act.actorUserId}</b></>
                   ) : (
-                    <> - {act.action} <b>{act.entityName || act.entityId}</b> by <b>{act.actorName || act.actorUserId}</b></>
+                    <> - {act.action} <b>{act.entityName || act.entityId}</b> vo <b>{act.actorName || act.actorUserId}</b></>
                   )}
                 </li>
               ))

@@ -1,5 +1,6 @@
 "use client";
 import ContactsTable from '../../../components/tables/ContactsTable';
+import './contacts-desktop.css';
 import { useState, useEffect } from 'react';
 import Modal from '../../../components/ui/Modal';
 import ContactForm from '../../../components/forms/ContactForm';
@@ -43,26 +44,30 @@ export default function ContactsPage() {
   if (loading) return null;
 
   return (
-    <div style={{ padding: 32, background: '#f8f9fb', minHeight: '100vh', fontFamily: 'Inter, Arial, sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-        <h1 style={{ fontSize: 32, fontWeight: 800, color: '#222' }}>Contacts</h1>
-        <button onClick={() => setModalOpen(true)} style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 8, padding: '12px 28px', fontWeight: 700, fontSize: 16, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,82,204,0.08)' }}>+ New Contact</button>
+    <div className="contacts-responsive">
+      <div className="contacts-header-row">
+        <div>
+          <h1 className="contacts-title">Kontakte</h1>
+          <div className="contacts-header-subtitle">Verwalte dini Geschäftskontakte effizient und sicher.</div>
+        </div>
+        <button className="contacts-new-btn" onClick={() => setModalOpen(true)}>+ Neue Kontakt</button>
       </div>
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'flex-end' }}>
         <input
           type="text"
-          placeholder="Search contacts..."
+          placeholder="Kontakte sueche..."
           value={search}
           onChange={e => setSearch(e.target.value)}
+          className="contacts-filter-input"
           style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 16, width: 320 }}
         />
       </div>
-      <div style={{ background: '#fff', borderRadius: 16, padding: 32, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <div className="contacts-table-card">
         <ContactsTable search={search} refresh={refresh} />
       </div>
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New Contact">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Neue Kontakt">
         <ContactForm onSubmit={handleCreate} />
-        {saving && <div style={{ color: '#0052cc', marginTop: 12 }}>Saving...</div>}
+        {saving && <div style={{ color: '#0052cc', marginTop: 12 }}>Speichere...</div>}
         {error && <div style={{ color: 'red', marginTop: 12 }}>{error}</div>}
       </Modal>
     </div>

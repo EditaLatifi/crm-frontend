@@ -10,7 +10,7 @@ export default function TasksBarChart({ data }: { data: { labels: string[], valu
           labels: data.labels,
           datasets: [
             {
-              label: 'Tasks',
+              label: 'Tasks', // No visible text for user, keep as is
               data: data.values,
               backgroundColor: '#0052cc',
             },
@@ -20,7 +20,7 @@ export default function TasksBarChart({ data }: { data: { labels: string[], valu
           responsive: true,
           plugins: {
             legend: { display: false },
-            title: { display: true, text: 'Tasks Overview' },
+            title: { display: true, text: 'Tasks-Übersicht' },
           },
         }}
       />

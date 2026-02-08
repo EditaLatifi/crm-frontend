@@ -55,7 +55,7 @@ function InlineEditableAccountCard({ acc, selected, onSelect, onEdit, getTags, h
       onMouseEnter={e => { if (!selected) e.currentTarget.style.boxShadow = '0 12px 40px rgba(30,41,59,0.18)'; }}
       onMouseLeave={e => { if (!selected) e.currentTarget.style.boxShadow = '0 2px 8px rgba(30,41,59,0.08)'; }}
     >
-      <input type="checkbox" checked={selected} onChange={e => onSelect(e.target.checked)} style={{ position: 'absolute', left: 10, top: 10, zIndex: 2, width: 18, height: 18 }} title="Select account" />
+      <input type="checkbox" checked={selected} onChange={e => onSelect(e.target.checked)} style={{ position: 'absolute', left: 10, top: 10, zIndex: 2, width: 18, height: 18 }} title="Account wähle" />
       {/* Action icons row at the top, not overlapping content */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, padding: '8px 12px 0 12px', background: 'transparent', zIndex: 2 }}>
         <button
@@ -74,7 +74,7 @@ function InlineEditableAccountCard({ acc, selected, onSelect, onEdit, getTags, h
             transition: 'background 0.15s, border 0.15s, color 0.15s',
             boxShadow: 'none'
           }}
-          title="Edit"
+          title="Bearbeite"
         ><FiEdit2 /></button>
         <button
           onClick={e => { e.stopPropagation(); e.preventDefault(); if (window.confirm('Are you sure you want to delete this account?')) handleDelete(acc.id); }}
@@ -92,7 +92,7 @@ function InlineEditableAccountCard({ acc, selected, onSelect, onEdit, getTags, h
             transition: 'background 0.15s, border 0.15s, color 0.15s',
             boxShadow: 'none'
           }}
-          title="Delete"
+          title="Lösche"
         ><FiTrash2 /></button>
         <button
           onClick={e => { e.stopPropagation(); e.preventDefault(); onShowActivity(acc.id); }}
@@ -110,7 +110,7 @@ function InlineEditableAccountCard({ acc, selected, onSelect, onEdit, getTags, h
             transition: 'background 0.15s, border 0.15s, color 0.15s',
             boxShadow: 'none'
           }}
-          title="Show activity log"
+          title="Aktivitätslog zeige"
         ><FiActivity /></button>
       </div>
       {/* Card content below icons */}
@@ -159,8 +159,8 @@ function InlineEditableAccountCard({ acc, selected, onSelect, onEdit, getTags, h
               } style={{ marginLeft: 4, fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 4, background: '#f6f7f9', color: tag === 'VIP' ? '#2563eb' : tag === 'Prospect' ? '#36a2eb' : tag === 'Active' ? '#22c55e' : '#23272f', border: '1px solid #d1d5db' }}>{tag}</span>
             ))}
           </div>
-          <div style={{ fontSize: 12, color: '#555', margin: '2px 0 6px 0', fontWeight: 500 }}>Owner: <span style={{ fontWeight: 400 }}>{acc.ownerUserId}</span></div>
-          <div style={{ fontSize: 11, color: '#888', fontWeight: 500 }}>Created: <span style={{ fontWeight: 400 }}>{new Date(acc.createdAt).toLocaleDateString()}</span></div>
+          <div style={{ fontSize: 12, color: '#555', margin: '2px 0 6px 0', fontWeight: 500 }}>Besitzer: <span style={{ fontWeight: 400 }}>{acc.ownerUserId}</span></div>
+          <div style={{ fontSize: 11, color: '#888', fontWeight: 500 }}>Erstellt: <span style={{ fontWeight: 400 }}>{new Date(acc.createdAt).toLocaleDateString()}</span></div>
           <div style={{ marginTop: 4 }}>
             {editing ? (
               <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ fontSize: 13, borderRadius: 6, border: '1.5px solid #b3bac5', padding: 6, width: '100%', background: '#f8f9fb', color: '#23272f' }} />
@@ -170,7 +170,7 @@ function InlineEditableAccountCard({ acc, selected, onSelect, onEdit, getTags, h
           </div>
         </div>
         {editing ? (
-          <button onClick={() => { setEditing(false); onEdit({ name, notes }); }} style={{ marginLeft: 8, background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>Save</button>
+          <button onClick={() => { setEditing(false); onEdit({ name, notes }); }} style={{ marginLeft: 8, background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>Speichere</button>
         ) : null}
       </div>
     </div>
@@ -444,7 +444,7 @@ function AccountsTable({ search = "", typeFilter = "", ownerFilter = "", dateFro
               {col.accounts.length === 0 && (
                 <div style={{ color: '#bbb', textAlign: 'center', fontStyle: 'italic', margin: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, opacity: 0.8, transition: 'opacity 0.2s' }}>
                   <span style={{ fontSize: 32, opacity: 0.5 }}>🗂️</span>
-                  <span>No accounts</span>
+                  <span>Kei Accounts</span>
                 </div>
               )}
               {col.accounts.map((acc: any) => (
@@ -465,7 +465,7 @@ function AccountsTable({ search = "", typeFilter = "", ownerFilter = "", dateFro
           );
         })}
       </div>
-      <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Account">
+      <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)} title="Account bearbeite">
         {editAccount && <AccountEditForm initialData={editAccount} onSubmit={handleEditSubmit} onCancel={() => setEditModalOpen(false)} />}
       </Modal>
       {activityAccountId && (

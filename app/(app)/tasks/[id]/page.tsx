@@ -1,5 +1,108 @@
 "use client";
-import { Box, Heading, Text, VStack, HStack, Input, Textarea, Divider, Tag, Avatar, Button, Flex, Icon, Stack, Menu, MenuButton, MenuList, MenuItem, Select, useToast } from "@chakra-ui/react";
+import { Box, Heading, Text, VStack, HStack, Input, Textarea, Divider, Tag, Avatar, Button, Flex, Icon, Stack, Menu, MenuButton, MenuList, MenuItem, Select, useToast, extendTheme, ChakraProvider } from "@chakra-ui/react";
+// Swiss/European B2B theme override for this page only
+const b2bTheme = extendTheme({
+  fonts: {
+    heading: 'Inter, Helvetica Neue, Arial, sans-serif',
+    body: 'Inter, Helvetica Neue, Arial, sans-serif',
+  },
+  colors: {
+    brand: {
+      50: '#f5f7fa',
+      100: '#e4e7ed',
+      200: '#c9d0db',
+      300: '#aeb8c8',
+      400: '#93a1b6',
+      500: '#7889a3',
+      600: '#5e6f87',
+      700: '#475466',
+      800: '#2f3946',
+      900: '#181e26',
+    },
+    gray: {
+      50: '#f8f9fa',
+      100: '#f1f3f6',
+      200: '#e2e6ea',
+      300: '#cfd4da',
+      400: '#b5bbc4',
+      500: '#8e96a3',
+      600: '#6c7684',
+      700: '#49505a',
+      800: '#2d3238',
+      900: '#181a1d',
+    },
+    blue: {
+      500: '#2a4365',
+      600: '#223355',
+    },
+    purple: {
+      500: '#5f4b8b',
+    },
+  },
+  components: {
+    Button: {
+      baseStyle: {
+        borderRadius: '4px',
+        fontWeight: 500,
+      },
+      variants: {
+        solid: {
+          bg: 'brand.700',
+          color: 'white',
+          _hover: { bg: 'brand.800' },
+        },
+        outline: {
+          borderColor: 'brand.300',
+          color: 'brand.700',
+          _hover: { bg: 'brand.50' },
+        },
+      },
+    },
+    Input: {
+      variants: {
+        outline: {
+          field: {
+            borderColor: 'gray.300',
+            borderRadius: '4px',
+            _focus: { borderColor: 'brand.500', boxShadow: '0 0 0 1px #7889a3' },
+          },
+        },
+      },
+    },
+    Select: {
+      variants: {
+        outline: {
+          field: {
+            borderColor: 'gray.300',
+            borderRadius: '4px',
+            _focus: { borderColor: 'brand.500', boxShadow: '0 0 0 1px #7889a3' },
+          },
+        },
+      },
+    },
+    Tag: {
+      baseStyle: {
+        borderRadius: '4px',
+        fontWeight: 500,
+        px: 3,
+        py: 1,
+      },
+    },
+    Box: {
+      baseStyle: {
+        borderRadius: '8px',
+      },
+    },
+  },
+  styles: {
+    global: {
+      body: {
+        bg: 'gray.50',
+        color: 'gray.800',
+      },
+    },
+  },
+});
 import { useEffect, useState } from "react";
 import { loadTokenFromStorage } from "../../../../src/auth/tokenStore";
 // import { fetchWithAuth } from '../../../../src/api/client';
@@ -30,6 +133,8 @@ export default function TaskDetailsPage() {
   const [editMode, setEditMode] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editDueDate, setEditDueDate] = useState("");
+  const [editEstimate, setEditEstimate] = useState("");
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
@@ -47,9 +152,12 @@ export default function TaskDetailsPage() {
   };
   useEffect(() => {
     fetchTask();
-    fetch('/api/users')
-      .then(res => res.json())
-      .then(setUsers);
+    loadTokenFromStorage(); // Ensure token is loaded from localStorage
+    fetchWithAuth('/api/users')
+      .then(data => {
+        console.log('[TaskDetailsPage] /api/users response:', data);
+        setUsers(Array.isArray(data) ? data : []);
+      });
   }, [taskId]);
   const handleAssignUser = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const userId = e.target.value;
@@ -61,14 +169,14 @@ export default function TaskDetailsPage() {
     });
     fetchTask();
     setAssigning(false);
-    toast({ status: 'success', title: 'Task assigned!' });
+    toast({ status: 'success', title: 'Task zuegwise!' });
   };
 
 
   const statusOptions = [
-    { key: 'OPEN', label: 'To Do' },
-    { key: 'IN_PROGRESS', label: 'In Progress' },
-    { key: 'DONE', label: 'Done' },
+    { key: 'OPEN', label: 'Offe' },
+    { key: 'IN_PROGRESS', label: 'Am mache' },
+    { key: 'DONE', label: 'Erledigt' },
   ];
 
   const handleMove = async (newStatus: string) => {
@@ -93,9 +201,9 @@ export default function TaskDetailsPage() {
       });
       setNewComment("");
       fetchTask();
-      toast({ status: 'success', title: 'Comment added!' });
+      toast({ status: 'success', title: 'Kommentar hinzugefügt!' });
     } catch (e: any) {
-      toast({ status: 'error', title: 'Failed to add comment', description: e?.message || String(e) });
+      toast({ status: 'error', title: 'Kommentar konnt nöd hinzugefügt werde', description: e?.message || String(e) });
     }
     setLoadingComment(false);
   };
@@ -106,7 +214,7 @@ export default function TaskDetailsPage() {
     try {
       const accountId = task?.accountId;
       if (!accountId) {
-        toast({ status: 'error', title: 'No account associated with this task.' });
+        toast({ status: 'error', title: 'Kei Konto isch mit däm Task verknüpft.' });
         setLoadingTime(false);
         return;
       }
@@ -118,13 +226,13 @@ export default function TaskDetailsPage() {
       if (res.ok) {
         setNewTime({ startedAt: '', endedAt: '', durationMinutes: '', description: '' });
         fetchTask();
-        toast({ status: 'success', title: 'Time entry added!' });
+        toast({ status: 'success', title: 'Zyt erfasst!' });
       } else {
         const err = await res.text();
-        toast({ status: 'error', title: 'Failed to add time entry', description: err });
+        toast({ status: 'error', title: 'Zyt erfasse isch fehlgschlage', description: err });
       }
     } catch (e) {
-      toast({ status: 'error', title: 'Failed to add time entry', description: String(e) });
+      toast({ status: 'error', title: 'Zyt erfasse isch fehlgschlage', description: String(e) });
     }
     setLoadingTime(false);
   };
@@ -143,6 +251,8 @@ export default function TaskDetailsPage() {
   const startEdit = () => {
     setEditTitle(task.title);
     setEditDescription(task.description || "");
+    setEditDueDate(task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : "");
+    setEditEstimate(task.estimate || "");
     setEditMode(true);
   };
   const cancelEdit = () => {
@@ -154,34 +264,44 @@ export default function TaskDetailsPage() {
       await fetch(`/api/tasks/${taskId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: editTitle, description: editDescription }),
+        body: JSON.stringify({
+          title: editTitle,
+          description: editDescription,
+          dueDate: editDueDate ? new Date(editDueDate).toISOString() : null,
+          estimate: editEstimate !== '' ? Number(editEstimate) : null,
+        }),
       });
       setEditMode(false);
       fetchTask();
-      toast({ status: 'success', title: 'Task updated!' });
+      toast({ status: 'success', title: 'Task aktualisiert!' });
     } catch (e) {
-      toast({ status: 'error', title: 'Failed to update task', description: String(e) });
+      toast({ status: 'error', title: 'Task konnt nöd aktualisiert werde', description: String(e) });
     }
     setSaving(false);
   };
 
-  if (!task) return <Box p={8}>Loading...</Box>;
+  if (!task) return (
+    <ChakraProvider theme={b2bTheme} resetCSS>
+      <Box p={8}>Lade...</Box>
+    </ChakraProvider>
+  );
 
   return (
-    <Flex direction={{ base: "column", md: "row" }} gap={8} p={8}>
+    <ChakraProvider theme={b2bTheme} resetCSS>
+      <Flex direction={{ base: "column", md: "row" }} gap={8} p={8}>
       {/* Main Task Info */}
       <Box flex={2} bg="#fff" p={6} borderRadius="lg" boxShadow="md">
         <HStack mb={4} spacing={4} align="center">
-          <Tag colorScheme="blue" size="lg">TASK-{task.id}</Tag>
+          <Tag colorScheme="blue" size="lg">TASK-{task.id?.slice(0, 6).toUpperCase()}</Tag>
           <Tag colorScheme="purple">{task.status}</Tag>
           <Select value={priority} onChange={handlePriorityChange} size="sm" width="140px" minW="140px">
-            <option value="LOW">Low</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HIGH">High</option>
+            <option value="LOW">Nid so wichtig</option>
+            <option value="MEDIUM">Mittel</option>
+            <option value="HIGH">Wichtig</option>
           </Select>
           <Menu>
             <MenuButton as={Button} size="sm" colorScheme="blue" variant="outline">
-              Move to...
+              Verschiebe zu...
             </MenuButton>
             <MenuList>
               {statusOptions.filter(opt => opt.key !== task.status).map(opt => (
@@ -200,15 +320,39 @@ export default function TaskDetailsPage() {
             minW="120px"
             isDisabled={assigning}
           >
-            <option value="">Unassigned</option>
-            {users.map(u => (
+            <option value="">Kei zuewiesene</option>
+            {Array.isArray(users) && users.map(u => (
               <option key={u.id} value={u.id}>{u.name || u.email || u.id}</option>
             ))}
           </Select>
           <Icon as={FiClock} />
-          <Text>Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "-"}</Text>
+          {editMode ? (
+            <Input
+              type="date"
+              size="sm"
+              value={editDueDate}
+              onChange={e => setEditDueDate(e.target.value)}
+              width="160px"
+              minW="120px"
+            />
+          ) : (
+            <Text>Fällig: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "-"}</Text>
+          )}
           <Icon as={FiClock} />
-          <Text>Estimate: {task.estimate || "-"}h</Text>
+          {editMode ? (
+            <Input
+              type="number"
+              size="sm"
+              value={editEstimate}
+              onChange={e => setEditEstimate(e.target.value)}
+              width="80px"
+              minW="60px"
+              min={0}
+              placeholder="Estimate (h)"
+            />
+          ) : (
+            <Text>Schätzung: {task.estimate || "-"}h</Text>
+          )}
         </HStack>
         <Heading size="lg" mb={2} display="flex" alignItems="center" gap={2}>
           {editMode ? (
@@ -227,19 +371,19 @@ export default function TaskDetailsPage() {
             </HStack>
           </>
         ) : (
-          <Text color="gray.600" mb={4}>{task.description || <i>No description</i>}</Text>
+          <Text color="gray.600" mb={4}>{task.description || <i>Kei Beschreibung</i>}</Text>
         )}
         <Divider my={4} />
         {/* Subtasks/Parent */}
         {task.parentTaskId && (
           <Box mb={4}>
-            <Text fontSize="sm" color="gray.500">Parent Task:</Text>
+            <Text fontSize="sm" color="gray.500">Übergeordneter Task:</Text>
             <Tag colorScheme="blue">TASK-{task.parentTaskId}</Tag>
           </Box>
         )}
         {task.subtasks && task.subtasks.length > 0 && (
           <Box mb={4}>
-            <Text fontSize="sm" color="gray.500">Subtasks:</Text>
+            <Text fontSize="sm" color="gray.500">Unteraufgabe:</Text>
             <Stack direction="column" spacing={1} mt={1}>
               {task.subtasks.map((sub: any) => (
                 <Tag key={sub.id} colorScheme="blue" variant="outline">TASK-{sub.id}: {sub.title}</Tag>
@@ -254,17 +398,17 @@ export default function TaskDetailsPage() {
         {/* Time Tracking */}
         <Box bg="#fff" p={4} borderRadius="lg" boxShadow="md">
           <Heading size="md" mb={2} display="flex" alignItems="center" gap={2}>
-            <Icon as={FiClock} /> Time Tracking
+            <Icon as={FiClock} /> Zyt Erfassung
           </Heading>
           <VStack align="stretch" spacing={2} maxH="150px" overflowY="auto">
-            {timeEntries.length === 0 && <Text color="gray.400">No time entries yet.</Text>}
+            {timeEntries.length === 0 && <Text color="gray.400">No Zyt erfasst.</Text>}
             {timeEntries.map((t, i) => (
               <Box key={i} p={2} bg="gray.50" borderRadius="md">
                 <HStack spacing={2} mb={1}>
                   <Avatar size="xs" name={t.user?.name || t.userId || 'User'} />
                   <Text fontWeight="bold" fontSize="sm">{t.user?.name || t.userId || 'User'}</Text>
                   {t.account?.name && (
-                    <Text fontSize="xs" color="gray.500">Account: {t.account.name}</Text>
+                    <Text fontSize="xs" color="gray.500">Konto: {t.account.name}</Text>
                   )}
                   {t.task?.title && (
                     <Text fontSize="xs" color="gray.500">Task: {t.task.title}</Text>
@@ -274,24 +418,33 @@ export default function TaskDetailsPage() {
                 <Text fontSize="sm">{t.description || ''} ({t.durationMinutes} min)</Text>
               </Box>
             ))}
-            <Text fontWeight="bold" color="blue.600" mt={2}>Total: {timeEntries.reduce((sum, t) => sum + (t.durationMinutes || 0), 0)} min</Text>
+            {(() => {
+              const totalMin = timeEntries.reduce((sum, t) => sum + (t.durationMinutes || 0), 0);
+              const hours = Math.floor(totalMin / 60);
+              const minutes = totalMin % 60;
+              return (
+                <Text fontWeight="bold" color="blue.600" mt={2}>
+                  Total: {hours > 0 ? `${hours}h ` : ''}{minutes}min
+                </Text>
+              );
+            })()}
           </VStack>
           <Stack direction="row" mt={3} spacing={2}>
             <Input type="datetime-local" size="sm" value={newTime.startedAt} onChange={e => setNewTime(nt => ({ ...nt, startedAt: e.target.value }))} placeholder="Start" />
             <Input type="datetime-local" size="sm" value={newTime.endedAt} onChange={e => setNewTime(nt => ({ ...nt, endedAt: e.target.value }))} placeholder="End" />
             <Input type="number" size="sm" value={newTime.durationMinutes} onChange={e => setNewTime(nt => ({ ...nt, durationMinutes: e.target.value }))} placeholder="Minutes" min={1} />
-            <Input size="sm" value={newTime.description} onChange={e => setNewTime(nt => ({ ...nt, description: e.target.value }))} placeholder="Description" />
-            <Button colorScheme="blue" size="sm" onClick={handleAddTime} isLoading={loadingTime}>Add</Button>
+            <Input size="sm" value={newTime.description} onChange={e => setNewTime(nt => ({ ...nt, description: e.target.value }))} placeholder="Beschrieb" />
+            <Button colorScheme="blue" size="sm" onClick={handleAddTime} isLoading={loadingTime}>Hinzufüge</Button>
           </Stack>
         </Box>
 
         {/* Comments */}
         <Box bg="#fff" p={4} borderRadius="lg" boxShadow="md">
           <Heading size="md" mb={2} display="flex" alignItems="center" gap={2}>
-            <Icon as={FiMessageCircle} /> Comments
+            <Icon as={FiMessageCircle} /> Kommentare
           </Heading>
           <VStack align="stretch" spacing={3} maxH="250px" overflowY="auto">
-            {comments.length === 0 && <Text color="gray.400">No comments yet.</Text>}
+            {comments.length === 0 && <Text color="gray.400">No kei Kommentare.</Text>}
             {comments.map((c, i) => (
               <Box key={i} p={2} bg="gray.50" borderRadius="md">
                 <HStack spacing={2} mb={1}>
@@ -305,22 +458,22 @@ export default function TaskDetailsPage() {
           </VStack>
           <HStack mt={3} spacing={2}>
             <Input
-              placeholder="Add a comment..."
+              placeholder="Kommentar schriebe..."
               value={newComment}
               onChange={e => setNewComment(e.target.value)}
               size="sm"
             />
-            <Button colorScheme="blue" size="sm" onClick={handleAddComment} isLoading={loadingComment}>Comment</Button>
+            <Button colorScheme="blue" size="sm" onClick={handleAddComment} isLoading={loadingComment}>Kommentiere</Button>
           </HStack>
         </Box>
 
         {/* History */}
         <Box bg="#fff" p={4} borderRadius="lg" boxShadow="md">
           <Heading size="md" mb={2} display="flex" alignItems="center" gap={2}>
-            <Icon as={FiList} /> History
+            <Icon as={FiList} /> Verlauf
           </Heading>
           <VStack align="stretch" spacing={2} maxH="150px" overflowY="auto">
-            {history.length === 0 && <Text color="gray.400">No history yet.</Text>}
+            {history.length === 0 && <Text color="gray.400">No kei Verlauf.</Text>}
             {history.map((h, i) => (
               <Box key={i} p={2} bg="gray.50" borderRadius="md">
                 <HStack spacing={2} mb={1}>
@@ -334,6 +487,7 @@ export default function TaskDetailsPage() {
           </VStack>
         </Box>
       </VStack>
-    </Flex>
+      </Flex>
+    </ChakraProvider>
   );
 }

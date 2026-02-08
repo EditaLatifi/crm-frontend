@@ -15,22 +15,23 @@ import { FiGrid, FiUsers, FiUser, FiBriefcase, FiCheckSquare, FiClock, FiSetting
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: FiGrid },
-  { href: "/accounts", label: "Accounts", icon: FiUsers },
-  { href: "/contacts", label: "Contacts", icon: FiUser, admin: true },
+  { href: "/accounts", label: "Kunde", icon: FiUsers },
+  { href: "/contacts", label: "Kontakt", icon: FiUser, admin: true },
   { href: "/deals", label: "Deals", icon: FiBriefcase },
   { href: "/tasks", label: "Tasks", icon: FiCheckSquare },
-  { href: "/time", label: "Time Tracking", icon: FiClock, admin: true },
-
-  { href: "/profile", label: "Profile", icon: FiUser },
-  { href: "/reports", label: "Reports", icon: FiSettings, admin: true },
+  { href: "/time", label: "Zyt Erfassung", icon: FiClock, admin: true },
+  { href: "/users", label: "Benutzer", icon: FiUsers, admin: true },
+  { href: "/profile", label: "Profil", icon: FiUser },
+  { href: "/reports", label: "Bericht", icon: FiSettings, admin: true },
 ];
 
 
 
 export default function Sidebar({ className = "", onClose }: { className?: string; onClose?: () => void }) {
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
   const router = useRouter();
   const { user, logout } = useAuth();
+  console.log('[Sidebar] user from useAuth:', JSON.stringify(user, null, 2));
   const isAdmin = user?.role === 'ADMIN';
   const handleLogout = () => {
     logout();
@@ -109,7 +110,7 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
           borderColor="#d1d5db"
           _hover={{ bg: '#e5e7eb', color: '#23272f', borderColor: '#d1d5db' }}
         >
-          Logout
+          Abmelde
         </Button>
       </Box>
     </Box>

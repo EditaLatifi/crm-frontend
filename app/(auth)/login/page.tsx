@@ -34,13 +34,13 @@ export default function LoginPage() {
         <div className={styles['login-logo']}>
           <img src="/logoip3.png" alt="Logo" />
         </div>
-        <h2 className={styles['login-title']}>Sign in to CRM</h2>
+        <h2 className={styles['login-title']}>Im CRM aalogge</h2>
         <form className={styles['login-form']} onSubmit={handleSubmit}>
           <input
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            placeholder="Email address"
+            placeholder="E-Mail Adress"
             autoComplete="email"
             required
             className={styles['login-input']}
@@ -49,13 +49,13 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            placeholder="Password"
+            placeholder="Passwort"
             autoComplete="current-password"
             required
             className={styles['login-input']}
           />
           {error && <div className={styles['login-error']}>{error}</div>}
-          <button type="submit" className={styles['login-btn']}>Login</button>
+          <button type="submit" className={styles['login-btn']}>Aalogge</button>
         </form>
         <div className={styles['login-footer']}>Powered by ip3</div>
       </div>

@@ -31,27 +31,27 @@ export default function ContactForm({ onSubmit, initialData }: {
         <input value={name} onChange={e => setName(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
       </div>
       <div style={{ marginBottom: 12 }}>
-        <label>Email</label><br />
+        <label>E-Mail</label><br />
         <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
       </div>
       <div style={{ marginBottom: 12 }}>
-        <label>Phone</label><br />
+        <label>Telefon</label><br />
         <input value={phone} onChange={e => setPhone(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
       </div>
       <div style={{ marginBottom: 12 }}>
-        <label>Account (optional)</label><br />
+        <label>Konto (optional)</label><br />
         {loadingAccounts ? (
-          <div style={{ color: '#888', padding: 8 }}>Loading accounts...</div>
+          <div style={{ color: '#888', padding: 8 }}>Lade Konti...</div>
         ) : (
           <select value={accountId} onChange={e => setAccountId(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}>
-            <option value="">No account</option>
+            <option value="">Kei Konto</option>
             {accounts.map((acc: any) => (
               <option key={acc.id} value={acc.id}>{acc.name}</option>
             ))}
           </select>
         )}
       </div>
-      <button type="submit" style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 600, cursor: 'pointer', marginTop: 8 }}>Save Contact</button>
+      <button type="submit" style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 600, cursor: 'pointer', marginTop: 8 }}>Kontakt speichere</button>
     </form>
   );
 }

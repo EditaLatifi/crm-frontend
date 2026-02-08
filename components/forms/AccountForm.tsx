@@ -19,31 +19,31 @@ export default function AccountForm({ onSubmit, initialData }: {
         <input value={name} onChange={e => setName(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
       </div>
       <div style={{ marginBottom: 12 }}>
-        <label>Type</label><br />
+        <label>Typ</label><br />
         <select value={type} onChange={e => setType(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}>
-          <option value="Client">Client</option>
+          <option value="Client">Kunde</option>
           <option value="Partner">Partner</option>
-          <option value="Potential Client">Potential Client</option>
+          <option value="Potential Client">Potenzielle Kunde</option>
         </select>
       </div>
       <div style={{ marginBottom: 12 }}>
-        <label>Address</label><br />
+        <label>Adress</label><br />
         <input value={address} onChange={e => setAddress(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
       </div>
       <div style={{ marginBottom: 12 }}>
-        <label>Phone</label><br />
+        <label>Telefon</label><br />
         <input value={phone} onChange={e => setPhone(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
       </div>
       <div style={{ marginBottom: 12 }}>
-        <label>Email</label><br />
+        <label>E-Mail</label><br />
         <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
       </div>
       <div style={{ marginBottom: 12 }}>
-        <label>Notes</label><br />
+        <label>Notize</label><br />
         <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
       </div>
       <button type="submit" style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 20px', fontWeight: 600, cursor: 'pointer' }}>
-        Save
+        Speichere
       </button>
     </form>
   );

@@ -55,19 +55,19 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
 
   const showCards = hydrated && isMobile;
 
-  if (loading) return <div style={{ padding: 32, textAlign: 'center', color: '#888' }}>Loading contacts...</div>;
+  if (loading) return <div style={{ padding: 32, textAlign: 'center', color: '#888' }}>Lade Kontakte...</div>;
 
   return (
     <div className="contacts-table-responsive">
       {adminView && (
         <div className="mb-6 flex items-center gap-4 bg-gray-50 rounded-xl px-6 py-4 shadow-sm" style={{ maxWidth: 600 }}>
-          <span className="font-bold text-lg text-gray-700">Delete Selected ({selected.length})</span>
+          <span className="font-bold text-lg text-gray-700">Ausgwählt lösche ({selected.length})</span>
           <button
             className="ml-8 mr-4 pl-4 px-6 py-2 rounded-lg bg-red-600 text-white font-bold shadow hover:bg-red-700 transition disabled:opacity-50 text-lg"
             style={{ background: '#e53935', color: '#fff', fontWeight: 700, fontSize: 18, minWidth: 100 , marginLeft: 10, marginBottom: 2}}
             disabled={selected.length === 0 || deleting}
             onClick={async () => {
-              if (!window.confirm(`Delete ${selected.length} selected contacts?`)) return;
+              if (!window.confirm(`Sicher, dass du die ${selected.length} ausgewählte Kontakte wotsch lösche?`)) return;
               setDeleting(true);
               try {
                 const res = await fetch('/api/contacts/bulk', {
@@ -86,14 +86,14 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
               }
             }}
           >
-            Delete
+            Lösche
           </button>
         </div>
       )}
       {showCards ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {filtered.length === 0 ? (
-            <div style={{ padding: 24, textAlign: 'center', color: '#888', background: '#fff', borderRadius: 10 }}>No contacts found.</div>
+            <div style={{ padding: 24, textAlign: 'center', color: '#888', background: '#fff', borderRadius: 10 }}>Kei Kontakte gfunde.</div>
           ) : (
             filtered.map((c: any) => (
               <div key={c.id} style={{ background: '#fff', borderRadius: 10, boxShadow: '0 2px 10px rgba(80,120,200,0.10)', border: '1.5px solid #f0f4fa', padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -109,18 +109,18 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
                   </div>
                 )}
                 <div><span style={{ fontWeight: 700, color: '#2563eb' }}>Name:</span> {c.name}</div>
-                <div><span style={{ fontWeight: 700, color: '#2563eb' }}>Email:</span> {c.email}</div>
-                <div><span style={{ fontWeight: 700, color: '#2563eb' }}>Phone:</span> {c.phone}</div>
-                <div><span style={{ fontWeight: 700, color: '#2563eb' }}>Account:</span> {c.accountId
-                  ? <span style={{ color: '#0052cc' }}>{accounts.find((acc: any) => acc.id === c.accountId)?.name || <span style={{ color: '#bbb' }}>Unknown</span>}</span>
-                  : <span style={{ color: '#bbb' }}>No account</span>
+                <div><span style={{ fontWeight: 700, color: '#2563eb' }}>E-Mail:</span> {c.email}</div>
+                <div><span style={{ fontWeight: 700, color: '#2563eb' }}>Telefon:</span> {c.phone}</div>
+                <div><span style={{ fontWeight: 700, color: '#2563eb' }}>Firma:</span> {c.accountId
+                  ? <span style={{ color: '#0052cc' }}>{accounts.find((acc: any) => acc.id === c.accountId)?.name || <span style={{ color: '#bbb' }}>Unbekannt</span>}</span>
+                  : <span style={{ color: '#bbb' }}>Kei Firma</span>
                 }</div>
                 {adminView && (
                   <div style={{ marginTop: 8 }}>
                     <button
                       style={{ background: '#e53935', color: '#fff', fontWeight: 700, fontSize: 16, width: '100%', borderRadius: 8, padding: '12px 0', letterSpacing: '0.5px', boxShadow: '0 1px 4px rgba(229,57,53,0.07)' }}
                       onClick={async () => {
-                        if (!window.confirm(`Delete contact '${c.name}'?`)) return;
+                        if (!window.confirm(`Sicher, dass du Kontakt '${c.name}' wotsch lösche?`)) return;
                         try {
                           const res = await fetch(`/api/contacts/${c.id}`, {
                             method: 'DELETE',
@@ -135,7 +135,7 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
                           alert('Delete failed');
                         }
                       }}
-                    >Delete</button>
+                    >Lösche</button>
                   </div>
                 )}
               </div>
@@ -143,7 +143,7 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
           )}
         </div>
       ) : (
-        <table className="contacts-table min-w-full text-base" style={{ width: '100%', tableLayout: 'fixed', borderSpacing: '0 24px' }}>
+        <table className="contacts-table" style={{ width: '100%' }}>
           <thead>
             <tr className="bg-gray-100 text-gray-800 font-semibold">
               {adminView && (
@@ -157,15 +157,15 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
                 </th>
               )}
               <th className="px-6 py-3 text-left rounded-tl-lg text-xl font-bold">Name</th>
-              <th className="px-6 py-3 text-left text-xl font-bold">Email</th>
-              <th className="px-6 py-3 text-left text-xl font-bold">Phone</th>
-              <th className="px-6 py-3 text-left rounded-tr-lg text-xl font-bold">Account</th>
-              {adminView && <th className="px-6 py-3 text-left text-xl font-bold">Actions</th>}
+              <th className="px-6 py-3 text-left text-xl font-bold">E-Mail</th>
+              <th className="px-6 py-3 text-left text-xl font-bold">Telefon</th>
+              <th className="px-6 py-3 text-left rounded-tr-lg text-xl font-bold">Firma</th>
+              {adminView && <th className="px-6 py-3 text-left text-xl font-bold">Aktionen</th>}
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={adminView ? 6 : 4} className="py-8 text-center text-gray-400">No contacts found.</td></tr>
+              <tr><td colSpan={adminView ? 6 : 4} className="py-8 text-center text-gray-400">Kei Kontakte gfunde.</td></tr>
             ) : (
               filtered.map((c: any) => (
                 <tr key={c.id} className="border-b last:border-b-0 hover:bg-gray-50 transition" style={{ height: 72 }}>
@@ -180,22 +180,21 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
                       />
                     </td>
                   )}
-                  <td className="px-6 py-3 font-semibold text-gray-900 text-lg" data-label="Name">{c.name}</td>
-                  <td className="px-6 py-3 text-gray-700 text-lg" data-label="Email">{c.email}</td>
-                  <td className="px-6 py-3 text-gray-700 text-lg" data-label="Phone">{c.phone}</td>
-                  <td className="px-6 py-3" data-label="Account">
+                  <td data-label="Name">{c.name}</td>
+                  <td data-label="Email">{c.email}</td>
+                  <td data-label="Phone">{c.phone}</td>
+                  <td data-label="Account">
                     {c.accountId
-                      ? <span className="font-medium text-blue-700 bg-blue-100 px-3 py-1 rounded">{accounts.find((acc: any) => acc.id === c.accountId)?.name || <span className="text-gray-400">Unknown</span>}</span>
-                      : <span className="text-gray-400 bg-gray-100 px-3 py-1 rounded">No account</span>
+                      ? <span className="contacts-account">{accounts.find((acc: any) => acc.id === c.accountId)?.name || <span className="contacts-no-account">Unbekannt</span>}</span>
+                      : <span className="contacts-no-account">Kei Firma</span>
                     }
                   </td>
                   {adminView && (
-                    <td className="px-6 py-3" data-label="Actions">
+                    <td data-label="Actions">
                       <button
-                        className="bg-red-600 hover:bg-red-700 text-white font-bold px-7 py-3 rounded-xl shadow-md transition"
-                        style={{ background: '#e53935', color: '#fff', fontWeight: 700, fontSize: 16, marginLeft: 12, marginRight: 12, minWidth: 120, letterSpacing: '0.5px' }}
+                        className="contacts-delete-btn"
                         onClick={async () => {
-                          if (!window.confirm(`Delete contact '${c.name}'?`)) return;
+                          if (!window.confirm(`Sicher, dass du Kontakt '${c.name}' wotsch lösche?`)) return;
                           try {
                             const res = await fetch(`/api/contacts/${c.id}`, {
                               method: 'DELETE',
@@ -210,7 +209,7 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
                             alert('Delete failed');
                           }
                         }}
-                      >Delete</button>
+                      >Lösche</button>
                     </td>
                   )}
                 </tr>

@@ -11,7 +11,25 @@ import './accounts-desktop.css';
 const DEMO_TAGS = ['VIP', 'Prospect', 'Active'];
 
 
-
+// 1. Add export handler to AccountsPage
+const handleExportCSV = (accounts: any[]) => {
+  if (!accounts || !accounts.length) return;
+  const replacer = (key: string, value: any) => value === null ? '' : value;
+  const header = Object.keys(accounts[0]);
+  const csv = [
+    header.join(','),
+    ...accounts.map((row: any) =>
+      header.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(',')
+    )
+  ].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'accounts.csv';
+  a.click();
+  window.URL.revokeObjectURL(url);
+};
 
 export default function AccountsPage() {
   const tableRef = useRef<any>(null);
@@ -78,64 +96,74 @@ export default function AccountsPage() {
     }
   };
 
+  // 2. Add state to store accounts
+  const [accounts, setAccounts] = useState<any[]>([]);
+
+  // 3. Fetch accounts and update state
+  useEffect(() => {
+    fetch('/api/accounts')
+      .then(res => res.json())
+      .then(data => setAccounts(Array.isArray(data) ? data : []));
+  }, [tableKey]);
+
   return (
     <div className="accounts-responsive">
       {/* Blue header only behind title/subtitle */}
       <div className="page-section-blue accounts-header" style={{ background: 'linear-gradient(135deg, #f8f9fb 60%, #e9effd 100%)', borderRadius: 18, boxShadow: '0 4px 16px rgba(30,41,59,0.10)', padding: '32px 24px 24px 24px', marginBottom: 18 }}>
         <div className="accounts-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
           <div>
-            <h1 className="accounts-title" style={{ fontSize: 32, fontWeight: 700, color: '#1e293b', marginBottom: 0, letterSpacing: '-0.5px', textAlign: 'left' }}>Accounts</h1>
-            <div style={{ fontSize: 15, color: '#23272f', fontWeight: 500, marginTop: 6, letterSpacing: '0.2px' }}>Manage your business accounts efficiently and securely.</div>
+            <h1 className="accounts-title" style={{ fontSize: 32, fontWeight: 700, color: '#1e293b', marginBottom: 0, letterSpacing: '-0.5px', textAlign: 'left' }}>Firmen</h1>
+            <div style={{ fontSize: 15, color: '#23272f', fontWeight: 500, marginTop: 6, letterSpacing: '0.2px' }}>Verwalte dini Geschäftsfirmen effizient und sicher.</div>
           </div>
-          <button className="accounts-new-btn" style={{ fontSize: 15, fontWeight: 600, borderRadius: 6, border: '1.5px solid #2563eb', background: '#2563eb', color: '#fff', padding: '8px 20px', cursor: 'pointer', boxShadow: 'none', transition: 'background 0.15s, border 0.15s, color 0.15s' }} onClick={() => setModalOpen(true)}>+ New Account</button>
+          <button className="accounts-new-btn" style={{ fontSize: 15, fontWeight: 600, borderRadius: 6, border: '1.5px solid #2563eb', background: '#2563eb', color: '#fff', padding: '8px 20px', cursor: 'pointer', boxShadow: 'none', transition: 'background 0.15s, border 0.15s, color 0.15s' }} onClick={() => setModalOpen(true)}>+ Neue Firma</button>
         </div>
       </div>
       {/* Filters and actions in a white card overlapping the header */}
       <div className="accounts-filters-card">
         <div className="accounts-filters-row" style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 12 }}>
           <select value={tagFilter} onChange={e => setTagFilter(e.target.value)} className="accounts-filter-select" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, minWidth: 110, height: 32 }}>
-            <option value="">All Status/Tags</option>
+            <option value="">Alli Status/Tags</option>
             {DEMO_TAGS.map(tag => <option key={tag} value={tag}>{tag}</option>)}
           </select>
-          <input
+            <input
             type="text"
-            placeholder="Search name, email, owner..."
+            placeholder="Name, E-Mail, Verantwortlich sueche..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="accounts-filter-input"
             style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, minWidth: 120, height: 32 }}
           />
           <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="accounts-filter-select" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, minWidth: 110, height: 32 }}>
-            <option value="">All Types</option>
+            <option value="">Alli Typen</option>
             {types.map(type => <option key={type} value={type}>{type}</option>)}
           </select>
           <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)} className="accounts-filter-select" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, minWidth: 110, height: 32 }}>
-            <option value="">All Owners</option>
+            <option value="">Alli Verantwortlichi</option>
             {owners.map(owner => <option key={owner} value={owner}>{owner}</option>)}
           </select>
           <div className="accounts-filter-date-row" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <label className="accounts-filter-date-label" style={{ fontSize: 13 }}>Created:</label>
+            <label className="accounts-filter-date-label" style={{ fontSize: 13 }}>Erstellt:</label>
             <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="accounts-filter-date" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, height: 32 }} />
-            <span className="accounts-filter-date-sep" style={{ fontSize: 13 }}>to</span>
+            <span className="accounts-filter-date-sep" style={{ fontSize: 13 }}>bis</span>
             <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="accounts-filter-date" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, height: 32 }} />
           </div>
-          <button className="accounts-filter-clear" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #2563eb', background: '#fff', color: '#2563eb', padding: '6px 14px', cursor: 'pointer', marginLeft: 0, height: 32 }} onClick={() => { setSearch(""); setTypeFilter(""); setOwnerFilter(""); setDateFrom(""); setDateTo(""); }}>Clear Filters</button>
+          <button className="accounts-filter-clear" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #2563eb', background: '#fff', color: '#2563eb', padding: '6px 14px', cursor: 'pointer', marginLeft: 0, height: 32 }} onClick={() => { setSearch(""); setTypeFilter(""); setOwnerFilter(""); setDateFrom(""); setDateTo(""); }}>Filter lösche</button>
           <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="accounts-filter-select" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, minWidth: 110, height: 32 }}>
-            <option value="createdAt-desc">Sort: Newest</option>
-            <option value="createdAt-asc">Sort: Oldest</option>
-            <option value="name-asc">Sort: Name A-Z</option>
-            <option value="name-desc">Sort: Name Z-A</option>
-            <option value="type-asc">Sort: Type A-Z</option>
-            <option value="type-desc">Sort: Type Z-A</option>
-            <option value="ownerUserId-asc">Sort: Owner A-Z</option>
-            <option value="ownerUserId-desc">Sort: Owner Z-A</option>
+            <option value="createdAt-desc">Sortiere: Neuschte</option>
+            <option value="createdAt-asc">Sortiere: Ältesti</option>
+            <option value="name-asc">Sortiere: Name A-Z</option>
+            <option value="name-desc">Sortiere: Name Z-A</option>
+            <option value="type-asc">Sortiere: Typ A-Z</option>
+            <option value="type-desc">Sortiere: Typ Z-A</option>
+            <option value="ownerUserId-asc">Sortiere: Verantwortlich A-Z</option>
+            <option value="ownerUserId-desc">Sortiere: Verantwortlich Z-A</option>
           </select>
         </div>
         <div className="accounts-filters-actions" style={{ display: 'flex', gap: 8, marginTop: 4 }}>
           {/* Export/Import CSV buttons disabled, since ref is removed. You can re-implement CSV export/import via callback/prop pattern if needed. */}
-          <button className="accounts-export-btn" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #2563eb', background: '#2563eb', color: '#fff', padding: '6px 14px', cursor: 'pointer', height: 32, boxShadow: 'none' }} disabled>Export CSV</button>
+          <button className="accounts-export-btn" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #2563eb', background: '#2563eb', color: '#fff', padding: '6px 14px', cursor: 'pointer', height: 32, boxShadow: 'none' }} onClick={() => handleExportCSV(accounts)}>CSV exportiere</button>
           <label className="accounts-import-label" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #36a2eb', background: '#fff', color: '#36a2eb', padding: '6px 14px', cursor: 'pointer', height: 32, display: 'flex', alignItems: 'center', boxShadow: 'none' }}>
-            Import CSV
+            CSV importiere
             <input type="file" accept=".csv" disabled style={{ display: 'none' }} />
           </label>
         </div>
@@ -152,7 +180,7 @@ export default function AccountsPage() {
           tagFilter={tagFilter}
         />
       </div>
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New Account">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Neue Firma">
         <AccountForm onSubmit={handleCreate} />
       </Modal>
     </div>

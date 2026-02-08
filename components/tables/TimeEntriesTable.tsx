@@ -44,32 +44,32 @@ export default function TimeEntriesTable({ entries, showUserColumn }: TimeEntrie
       }}>
         <thead>
           <tr style={{ background: '#f6f8fa' }}>
-            {showUserColumn && <th style={thStyle}>User</th>}
-            <th style={thStyle}>Account</th>
+            {showUserColumn && <th style={thStyle}>Benutzer</th>}
+            <th style={thStyle}>Konto</th>
             <th style={thStyle}>Task</th>
             <th style={thStyle}>Start</th>
-            <th style={thStyle}>End</th>
-            <th style={thStyle}>Duration (min)</th>
-            <th style={thStyle}>Description</th>
+            <th style={thStyle}>Ende</th>
+            <th style={thStyle}>Dauer (min)</th>
+            <th style={thStyle}>Beschrieb</th>
           </tr>
         </thead>
         <tbody>
           {localEntries.length === 0 ? (
             <tr>
               <td colSpan={showUserColumn ? 7 : 6} style={{ textAlign: 'center', color: '#888', padding: 24 }}>
-                No time entries found.
+                Kei Zyt erfasst gfunde.
               </td>
             </tr>
           ) : (
             localEntries.map((e: TimeEntry, idx) => (
               <tr key={e.id || Math.random()} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb', transition: 'background 0.2s' }}>
-                {showUserColumn && <td style={tdStyle} data-label="User">{(e.user && e.user.name) || e.userId || '—'}</td>}
-                <td style={tdStyle} data-label="Account">{(e.account && e.account.name) || e.accountId || '—'}</td>
+                {showUserColumn && <td style={tdStyle} data-label="Benutzer">{(e.user && e.user.name) || e.userId || '—'}</td>}
+                <td style={tdStyle} data-label="Konto">{(e.account && e.account.name) || e.accountId || '—'}</td>
                 <td style={tdStyle} data-label="Task">{(e.task && e.task.title) || e.taskId || '—'}</td>
                 <td style={tdStyle} data-label="Start">{e.startedAt ? new Date(e.startedAt).toLocaleString() : '—'}</td>
-                <td style={tdStyle} data-label="End">{e.endedAt ? new Date(e.endedAt).toLocaleString() : '—'}</td>
-                <td style={tdStyle} data-label="Duration (min)">{typeof e.durationMinutes === 'number' ? e.durationMinutes : '—'}</td>
-                <td style={tdStyle} data-label="Description">{e.description || '—'}</td>
+                <td style={tdStyle} data-label="Ende">{e.endedAt ? new Date(e.endedAt).toLocaleString() : '—'}</td>
+                <td style={tdStyle} data-label="Dauer (min)">{typeof e.durationMinutes === 'number' ? e.durationMinutes : '—'}</td>
+                <td style={tdStyle} data-label="Beschrieb">{e.description || '—'}</td>
               </tr>
             ))
           )}

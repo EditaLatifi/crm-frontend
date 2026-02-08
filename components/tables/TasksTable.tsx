@@ -1,18 +1,26 @@
-
 "use client";
 import { useEffect, useState } from 'react';
 import { Box, Flex, Heading, VStack, Text, Tag, Avatar, Spinner } from '@chakra-ui/react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import Link from 'next/link';
+interface Task {
+  id: string;
+  title: string;
+  status: string;
+  priority?: string;
+  dueDate?: string;
+  assigneeName?: string;
+  assignedToUserId?: string;
+}
 
 const statusColumns = [
-  { key: 'OPEN', label: 'To Do', color: 'gray' },
-  { key: 'IN_PROGRESS', label: 'In Progress', color: 'blue' },
-  { key: 'DONE', label: 'Done', color: 'green' },
+  { key: 'OPEN', label: 'Offe', color: 'gray' },
+  { key: 'IN_PROGRESS', label: 'Am mache', color: 'blue' },
+  { key: 'DONE', label: 'Erledigt', color: 'green' },
 ];
 
 export default function TasksTable() {
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -49,9 +57,9 @@ export default function TasksTable() {
   if (loading) return <Flex justify="center" align="center" minH="200px"><Spinner size="lg" /></Flex>;
 
   // Group tasks by status for columns
-  const tasksByStatus: Record<string, any[]> = {};
+  const tasksByStatus: Record<string, Task[]> = {};
   statusColumns.forEach(col => {
-    tasksByStatus[col.key] = tasks.filter((t: any) => t.status === col.key);
+    tasksByStatus[col.key] = tasks.filter((t: Task) => t.status === col.key);
   });
 
   // Kanban drag logic
@@ -60,7 +68,7 @@ export default function TasksTable() {
     if (!destination || source.droppableId === destination.droppableId) return;
     const taskId = draggableId;
     const newStatus = destination.droppableId;
-    setTasks(prev => prev.map((t: any) => t.id === taskId ? { ...t, status: newStatus } : t));
+    setTasks(prev => prev.map((t: Task) => t.id === taskId ? { ...t, status: newStatus } : t));
     await fetch(`/api/tasks/${taskId}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -77,9 +85,9 @@ export default function TasksTable() {
           <Box key={col.key} mb={4} className="tasks-mobile-status-group" bg="#f8f9fb" borderRadius="lg" p={2}>
             <Text fontWeight="bold" fontSize="lg" color={col.color + ".600"} mb={2} ml={1}>{col.label}</Text>
             {tasksByStatus[col.key].length === 0 ? (
-              <Text color="gray.400" fontSize="md" ml={2}>No tasks</Text>
+              <Text color="gray.400" fontSize="md" ml={2}>Kei Tasks</Text>
             ) : (
-              tasksByStatus[col.key].map((t: any) => (
+              tasksByStatus[col.key].map((t: Task) => (
                 <Link key={t.id} href={`/tasks/${t.id}`} style={{ textDecoration: 'none' }}>
                   <Box bg="#fff" borderRadius="md" p={4} boxShadow="sm" mb={3} _hover={{ boxShadow: 'lg', bg: '#f0f4ff' }} transition="all 0.2s">
                     <Flex align="center" justify="space-between" mb={2}>
@@ -87,9 +95,9 @@ export default function TasksTable() {
                       <Tag colorScheme={col.color} size="sm">{t.priority}</Tag>
                     </Flex>
                     <Flex align="center" gap={2} fontSize="sm" color="gray.600">
-                      <Avatar size="xs" name={t.assigneeName || t.assignedToUserId || 'Unassigned'} />
-                      <Text>{t.assigneeName || t.assignedToUserId || 'Unassigned'}</Text>
-                      {t.dueDate && <Text ml={2}>Due: {new Date(t.dueDate).toLocaleDateString()}</Text>}
+                      <Avatar size="xs" name={t.assigneeName || t.assignedToUserId || 'Kei zuewiesene'} />
+                      <Text>{t.assigneeName || t.assignedToUserId || 'Kei zuewiesene'}</Text>
+                      {t.dueDate && <Text ml={2}>Fällig: {new Date(t.dueDate).toLocaleDateString()}</Text>}
                     </Flex>
                   </Box>
                 </Link>
@@ -121,9 +129,9 @@ export default function TasksTable() {
                 <Heading size="md" mb={4} color={col.color + '.600'}>{col.label}</Heading>
                 <VStack align="stretch" spacing={4} minH="80px">
                   {tasksByStatus[col.key].length === 0 && (
-                    <Text color="gray.400" fontSize="sm">No tasks</Text>
+                    <Text color="gray.400" fontSize="sm">Kei Tasks</Text>
                   )}
-                  {tasksByStatus[col.key].map((t: any, idx: number) => (
+                  {tasksByStatus[col.key].map((t: Task, idx: number) => (
                     <Draggable draggableId={t.id} index={idx} key={t.id}>
                       {(provided, snapshot) => (
                         <div
@@ -142,9 +150,9 @@ export default function TasksTable() {
                                 <Tag colorScheme={col.color} size="sm">{t.priority}</Tag>
                               </Flex>
                               <Flex align="center" gap={2} fontSize="sm" color="gray.600">
-                                <Avatar size="xs" name={t.assigneeName || t.assignedToUserId || 'Unassigned'} />
-                                <Text>{t.assigneeName || t.assignedToUserId || 'Unassigned'}</Text>
-                                {t.dueDate && <Text ml={2}>Due: {new Date(t.dueDate).toLocaleDateString()}</Text>}
+                                <Avatar size="xs" name={t.assigneeName || t.assignedToUserId || 'Kei zuewiesene'} />
+                                <Text>{t.assigneeName || t.assignedToUserId || 'Kei zuewiesene'}</Text>
+                                {t.dueDate && <Text ml={2}>Fällig: {new Date(t.dueDate).toLocaleDateString()}</Text>}
                               </Flex>
                             </Box>
                           </Link>

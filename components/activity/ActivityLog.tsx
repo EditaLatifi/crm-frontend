@@ -43,28 +43,28 @@ export default function ActivityLog({ accountId, onClose }: { accountId: string,
   return (
     <div style={{ width: '100%', maxWidth: 900, background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', boxShadow: 'none', padding: 24, margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#23272f', margin: 0 }}>Audit Logs</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#23272f', margin: 0 }}>Audit-Logs</h2>
         <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#64748b' }}>×</button>
       </div>
-      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 18 }}>Monitor key changes and comments for this account.</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 18 }}>Überwache Hauptänderige und Kommentare für die Firma.</div>
       {loading ? (
-        <div style={{ padding: 32, textAlign: 'center', color: '#888' }}>Loading...</div>
+        <div style={{ padding: 32, textAlign: 'center', color: '#888' }}>Lade...</div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: 13, background: '#fff' }}>
             <thead>
               <tr style={{ background: '#f8fafc', color: '#23272f', fontWeight: 600 }}>
-                <th style={{ padding: '12px 8px', textAlign: 'left', borderTopLeftRadius: 8 }}>User</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left' }}>Action</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left' }}>Type</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left' }}>Environment</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left', borderTopLeftRadius: 8 }}>Benutzer</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left' }}>Aktion</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left' }}>Typ</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left' }}>Umgebung</th>
                 <th style={{ padding: '12px 8px', textAlign: 'left' }}>Details</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', borderTopRightRadius: 8 }}>Date</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left', borderTopRightRadius: 8 }}>Datum</th>
               </tr>
             </thead>
             <tbody>
               {activities.length === 0 ? (
-                <tr><td colSpan={6} style={{ padding: 32, textAlign: 'center', color: '#888' }}>No activity found.</td></tr>
+                <tr><td colSpan={6} style={{ padding: 32, textAlign: 'center', color: '#888' }}>Kei Aktivität gfunde.</td></tr>
               ) : (
                 activities.map(act => (
                   <tr key={act.id} style={{ borderBottom: '1px solid #f0f0f0', transition: 'background 0.2s' }}>

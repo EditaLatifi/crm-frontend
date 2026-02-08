@@ -1,5 +1,6 @@
 "use client";
 import ContactsTable from '../../../components/tables/ContactsTable';
+import '../../../app/(app)/contacts/contacts-desktop.css';
 import { useState } from 'react';
 import Modal from '../../../components/ui/Modal';
 import ContactForm from '../../../components/forms/ContactForm';
@@ -33,35 +34,32 @@ function AdminContactsPageContent() {
   };
 
   return (
-    <div className="accounts-responsive" style={{ background: '#f8f9fb', minHeight: '100vh', fontFamily: 'Inter, Arial, sans-serif' }}>
-      <div className="accounts-header">
-        <div className="accounts-header-row">
-          <div>
-            <h1 className="accounts-title">Contacts (Admin)</h1>
-          </div>
-          <button className="accounts-new-btn" onClick={() => setModalOpen(true)}>
-            + New Contact
-          </button>
+    <div className="contacts-responsive">
+      <div className="contacts-header-row">
+        <div>
+          <h1 className="contacts-title">Kontakte (Admin)</h1>
+          <div className="contacts-header-subtitle">Verwalte dini Geschäftskontakte effizient und sicher.</div>
         </div>
+        <button className="contacts-new-btn" onClick={() => setModalOpen(true)}>
+          + Neuer Kontakt
+        </button>
       </div>
-      <div className="accounts-filters-card" style={{ marginTop: -36, marginBottom: 18 }}>
-        <div className="accounts-filters-row">
-          <input
-            type="text"
-            className="accounts-filter-input"
-            placeholder="Search contacts..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{ maxWidth: 340 }}
-          />
-        </div>
+      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'flex-end' }}>
+        <input
+          type="text"
+          className="contacts-filter-input"
+          placeholder="Kontakte sueche..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ maxWidth: 340 }}
+        />
       </div>
-      <div className="accounts-table-section contacts-table-section">
+      <div className="contacts-table-card">
         <ContactsTable search={search} refresh={refresh} adminView />
       </div>
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New Contact">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Neuer Kontakt">
         <ContactForm onSubmit={handleCreate} />
-        {saving && <div style={{ color: '#0052cc', marginTop: 12 }}>Saving...</div>}
+        {saving && <div style={{ color: '#0052cc', marginTop: 12 }}>Speichere...</div>}
         {error && <div style={{ color: 'red', marginTop: 12 }}>{error}</div>}
       </Modal>
     </div>

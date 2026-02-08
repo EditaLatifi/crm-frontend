@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const res = await fetch(`${BACKEND_URL}/deals/${params.id}/attachments`, {
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  const res = await fetch(`${BACKEND_URL}/deals/${id}/attachments`, {
     headers: { 'Content-Type': 'application/json' },
     method: 'GET',
     cache: 'no-store',
@@ -12,9 +13,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json(data, { status: res.status });
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const body = await req.json();
-  const res = await fetch(`${BACKEND_URL}/deals/${params.id}/attachments`, {
+  const res = await fetch(`${BACKEND_URL}/deals/${id}/attachments`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

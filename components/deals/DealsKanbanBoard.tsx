@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 
 // Example data structure for deals and stages
 const stages = [
-  { id: 'stage-1', name: 'Prospecting' },
-  { id: 'stage-2', name: 'Qualified' },
-  { id: 'stage-3', name: 'Proposal' },
-  { id: 'stage-4', name: 'Negotiation' },
-  { id: 'stage-5', name: 'Closed' },
+  { id: 'stage-1', name: 'Prospektierig' },
+  { id: 'stage-2', name: 'Qualifiziert' },
+  { id: 'stage-3', name: 'Vorschlag' },
+  { id: 'stage-4', name: 'Verhandlig' },
+  { id: 'stage-5', name: 'Abgschlosse' },
 ];
 
 const initialDeals = [
@@ -94,7 +94,7 @@ export default function DealsKanbanBoard() {
                 >
                   <div style={{ fontWeight: 600, color: '#222', marginBottom: 2 }}>{deal.title}</div>
                   <div style={{ color: '#444', fontSize: 13 }}>{deal.company}</div>
-                  <div style={{ color: '#888', fontSize: 12 }}>Owner: {deal.owner}</div>
+                  <div style={{ color: '#888', fontSize: 12 }}>Verantwortlich: {deal.owner}</div>
                 </div>
               ))}
             </div>

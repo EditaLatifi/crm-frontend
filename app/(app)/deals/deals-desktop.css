@@ -1,0 +1,67 @@
+@media (max-width: 1019px) {
+  .deals-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 8px 10px 8px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    margin-top: 16px;
+    box-shadow: 0 2px 8px rgba(30,41,59,0.07);
+  }
+  .deals-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 0;
+    margin-top: 12px;
+    letter-spacing: -0.2px;
+    text-align: left;
+  }
+  .deals-new-btn {
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid #2563eb;
+    background: #2563eb;
+    color: #fff;
+    padding: 6px 12px;
+    margin-top: 6px;
+    box-shadow: none;
+    width: 100%;
+    transition: background 0.15s, border 0.15s, color 0.15s;
+  }
+}
+/* Deals Desktop Only Styles */
+@media (min-width: 1020px) {
+  .deals-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: linear-gradient(135deg, #f8f9fb 60%, #e9effd 100%);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(30,41,59,0.10);
+    padding: 24px 18px 18px 18px;
+    margin-bottom: 16px;
+  }
+  .deals-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0;
+    letter-spacing: -0.5px;
+    text-align: left;
+  }
+  .deals-new-btn {
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1.5px solid #2563eb;
+    background: #2563eb;
+    color: #fff;
+    padding: 6px 16px;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background 0.15s, border 0.15s, color 0.15s;
+  }
+}

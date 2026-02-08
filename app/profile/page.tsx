@@ -1,6 +1,8 @@
 
 "use client";
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '../../src/auth/AuthProvider';
+import { getMe } from '../../src/api/client';
 
 interface User {
   id: string;
@@ -9,6 +11,7 @@ interface User {
   role: string;
   avatarUrl?: string;
   meta?: string;
+  createdAt?: string;
 }
 
 interface Task {
@@ -20,71 +23,65 @@ interface Task {
 
 export default function UserProfilePage() {
   const [user, setUser] = useState<User | null>(null);
+  const { user: authUser } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/users/me').then(async res => {
+    async function fetchData() {
+      setLoading(true);
+      let userData = null;
+      if (authUser?.email) {
         try {
-          const data = await res.json();
-          return data;
-        } catch { return null; }
-      }),
-      fetch('/api/tasks?assignedToMe=true').then(async res => {
-        try {
-          const data = await res.json();
-          return Array.isArray(data) ? data : [];
-        } catch { return []; }
-      })
-    ]).then(([userData, tasksData]) => {
+          userData = await getMe(authUser.email);
+        } catch {
+          userData = null;
+        }
+      }
+      const tasksRes = await fetch('/api/tasks?assignedToMe=true');
+      let tasksData: Task[] = [];
+      try {
+        const data = await tasksRes.json();
+        tasksData = Array.isArray(data) ? data : [];
+      } catch {
+        tasksData = [];
+      }
       setUser(userData);
       setTasks(tasksData);
       setLoading(false);
-    });
-  }, []);
+    }
+    fetchData();
+  }, [authUser]);
 
   return (
-    <div style={{ padding: 32, maxWidth: 700, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: 32, fontSize: 22, fontWeight: 700, color: '#23272f' }}>Profile</h1>
-      <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 32, display: 'flex', alignItems: 'center', gap: 32, marginBottom: 32 }}>
+    <div style={{ padding: 40, maxWidth: 640, margin: '0 auto', background: '#f5f6f7', borderRadius: 12, boxShadow: '0 2px 8px #e5e7eb33' }}>
+      <h1 style={{ marginBottom: 28, fontSize: 26, fontWeight: 700, color: '#222', letterSpacing: 0.5, borderBottom: '1px solid #e0e2e5', paddingBottom: 12 }}>Benutzer-Profil</h1>
+      <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #e0e2e5', padding: 28, marginBottom: 28 }}>
         {user ? (
-          <>
-            <img src={user.avatarUrl || '/avatar.svg'} alt="avatar" style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', background: '#f3f4f6', border: '2px solid #e5e7eb' }} />
-            <div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#23272f', marginBottom: 4 }}>{user.name}</div>
-              <div style={{ fontSize: 15, color: '#64748b', marginBottom: 8 }}>{user.email}</div>
-              <div style={{ fontSize: 13, color: '#2563eb', fontWeight: 600, marginBottom: 8 }}>{user.role}</div>
-              {user.meta && <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 8 }}>{user.meta}</div>}
-              {user.role === 'ADMIN' ? (
-                <div style={{ marginTop: 16 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#23272f', marginBottom: 8 }}>Admin Actions</div>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                    <li style={{ marginBottom: 8, fontSize: 14, color: '#2563eb' }}>View all users</li>
-                    <li style={{ marginBottom: 8, fontSize: 14, color: '#2563eb' }}>Manage roles</li>
-                    <li style={{ marginBottom: 8, fontSize: 14, color: '#2563eb' }}>Access audit logs</li>
-                  </ul>
-                </div>
-              ) : null}
-            </div>
-          </>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ fontSize: 20, fontWeight: 600, color: '#222', marginBottom: 2 }}>{user.name}</div>
+            <div style={{ fontSize: 15, color: '#444', marginBottom: 6 }}>E-Mail: <span style={{ fontWeight: 500 }}>{user.email}</span></div>
+            <div style={{ fontSize: 14, color: '#666', fontWeight: 500, marginBottom: 6 }}>Rolle: {user.role}</div>
+            {user.createdAt && <div style={{ fontSize: 13, color: '#888', marginBottom: 6 }}>Dabeiseit: {new Date(user.createdAt).toLocaleDateString()}</div>}
+            {user.meta && <div style={{ fontSize: 13, color: '#888', marginBottom: 6 }}>{user.meta}</div>}
+          </div>
         ) : (
-          <div style={{ color: '#888', fontSize: 15 }}>Loading user...</div>
+          <div style={{ color: '#aaa', fontSize: 15 }}>Lade Benutzer...</div>
         )}
       </div>
-      <div style={{ background: '#f8fafc', borderRadius: 12, padding: 32 }}>
-        <div style={{ fontSize: 16, fontWeight: 600, color: '#23272f', marginBottom: 16 }}>Assigned Tasks</div>
+      <div style={{ background: '#f7f8fa', borderRadius: 8, padding: 28, border: '1px solid #e0e2e5' }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: '#222', marginBottom: 12 }}>Zuegwieseni Tasks</div>
         {loading ? (
-          <div style={{ color: '#888', fontSize: 14 }}>Loading tasks...</div>
+          <div style={{ color: '#aaa', fontSize: 14 }}>Lade Tasks...</div>
         ) : tasks.length === 0 ? (
-          <div style={{ color: '#888', fontSize: 14 }}>No assigned tasks.</div>
+          <div style={{ color: '#aaa', fontSize: 14 }}>Kei zuegwieseni Tasks.</div>
         ) : (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {tasks.map(task => (
-              <li key={task.id} style={{ marginBottom: 18, padding: 0, fontSize: 15, color: '#23272f', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <li key={task.id} style={{ marginBottom: 14, fontSize: 14, color: '#222', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontWeight: 600 }}>{task.title}</span>
-                <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>{task.status}</span>
-                {task.dueDate && <span style={{ fontSize: 13, color: '#94a3b8' }}>Due: {new Date(task.dueDate).toLocaleDateString()}</span>}
+                <span style={{ fontSize: 13, color: '#666', fontWeight: 500 }}>{task.status}</span>
+                {task.dueDate && <span style={{ fontSize: 13, color: '#888' }}>Fällig: {new Date(task.dueDate).toLocaleDateString()}</span>}
               </li>
             ))}
           </ul>

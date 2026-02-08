@@ -10,7 +10,7 @@ export default function DealsPieChart({ data }: { data: { labels: string[], valu
           labels: data.labels,
           datasets: [
             {
-              label: 'Deals',
+              label: 'Deals', // No visible text for user, keep as is
               data: data.values,
               backgroundColor: ['#0052cc', '#36a2eb', '#ffce56', '#e74c3c'],
             },
@@ -20,7 +20,7 @@ export default function DealsPieChart({ data }: { data: { labels: string[], valu
           responsive: true,
           plugins: {
             legend: { position: 'bottom' },
-            title: { display: true, text: 'Deals by Stage' },
+            title: { display: true, text: 'Deals nach Phase' },
           },
         }}
       />

@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const res = await fetch(`${BACKEND_URL}/tasks/${id}/time-entries`, {
     headers: { 'Content-Type': 'application/json' },
     method: 'GET',
@@ -13,8 +13,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json(Array.isArray(data) ? data : (data?.entries || []), { status: res.status });
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const body = await req.json();
   const res = await fetch(`${BACKEND_URL}/tasks/${id}/time-entries`, {
     method: 'POST',

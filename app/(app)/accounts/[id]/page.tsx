@@ -34,8 +34,8 @@ export default function AccountDetailsPage({ params }: { params: Promise<{ id: s
     fetchAccount();
   };
 
-  if (loading) return <div style={{ padding: 32 }}>Loading account...</div>;
-  if (!account) return <div style={{ padding: 32 }}>Account not found.</div>;
+  if (loading) return <div style={{ padding: 32 }}>Lade Account...</div>;
+  if (!account) return <div style={{ padding: 32 }}>Account nöd gfunde.</div>;
 
   return (
     <div style={{ padding: 32, maxWidth: 900, margin: '0 auto' }}>
@@ -46,35 +46,35 @@ export default function AccountDetailsPage({ params }: { params: Promise<{ id: s
       {/* Title and Edit Button */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>{account.name}</h1>
-        <button onClick={() => setEditOpen(true)} style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 20px', fontWeight: 600, cursor: 'pointer' }}>Edit</button>
+        <button onClick={() => setEditOpen(true)} style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 20px', fontWeight: 600, cursor: 'pointer' }}>Bearbeite</button>
       </div>
       <div style={{ color: '#888', marginBottom: 24 }}>{account.type}</div>
       {/* Main Info Card */}
       <div style={{ background: '#fff', borderRadius: 8, padding: 24, marginBottom: 32, boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
-        <div><b>Owner:</b> {account.owner?.name || account.ownerUserId || '-'}</div>
-        <div><b>Address:</b> {account.address || '-'}</div>
-        <div><b>Phone:</b> {account.phone || '-'}</div>
-        <div><b>Email:</b> {account.email || '-'}</div>
-        <div><b>Notes:</b> {account.notes || '-'}</div>
-        <div><b>Created:</b> {account.createdAt ? new Date(account.createdAt).toLocaleDateString() : '-'}</div>
+        <div><b>Besitzer:</b> {account.owner?.name || account.ownerUserId || '-'}</div>
+        <div><b>Adress:</b> {account.address || '-'}</div>
+        <div><b>Telefon:</b> {account.phone || '-'}</div>
+        <div><b>E-Mail:</b> {account.email || '-'}</div>
+        <div><b>Notize:</b> {account.notes || '-'}</div>
+        <div><b>Erstellt:</b> {account.createdAt ? new Date(account.createdAt).toLocaleDateString() : '-'}</div>
       </div>
       {/* Related Data */}
       <div style={{ display: 'flex', gap: 24, marginBottom: 32 }}>
         <div style={{ flex: 1, background: '#f4f5f7', borderRadius: 8, padding: 16 }}>
-          <h3>Contacts</h3>
-          <div style={{ color: '#888' }}>Related contacts will appear here.</div>
+          <h3>Kontakte</h3>
+          <div style={{ color: '#888' }}>Verbundene Kontakte werde da angezeigt.</div>
         </div>
         <div style={{ flex: 1, background: '#f4f5f7', borderRadius: 8, padding: 16 }}>
           <h3>Deals</h3>
-          <div style={{ color: '#888' }}>Related deals will appear here.</div>
+          <div style={{ color: '#888' }}>Verbundene Deals werde da angezeigt.</div>
         </div>
       </div>
       {/* Activity Feed */}
       <div style={{ background: '#f4f5f7', borderRadius: 8, padding: 16 }}>
-        <h3>Activity Feed</h3>
-        <div style={{ color: '#888' }}>Activity timeline will appear here.</div>
+        <h3>Aktivitätsfeed</h3>
+        <div style={{ color: '#888' }}>Aktivitätsverlauf wird da angezeigt.</div>
       </div>
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Account">
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Account bearbeite">
         {editOpen && <AccountEditForm initialData={account} onSubmit={handleEdit} onCancel={() => setEditOpen(false)} />}
       </Modal>
     </div>

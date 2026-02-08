@@ -43,12 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      if (!email) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-      const me = await getMe(email);
+      const me = await getMe(email!);
       setUser(me);
     } catch (err: any) {
       setUser(null);
