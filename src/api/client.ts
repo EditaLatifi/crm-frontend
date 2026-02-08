@@ -1,7 +1,7 @@
 // src/api/client.ts
 import { getAccessToken, setAccessToken, clearAccessToken} from '../auth/tokenStore';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API2_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export type ApiError = {
   status: number;
