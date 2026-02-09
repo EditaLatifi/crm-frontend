@@ -29,13 +29,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // On mount, try to load token from storage (if fallback is used)
+  // On mount, try to load token from storage (if fallback is used) and validate it
   useEffect(() => {
     loadTokenFromStorage();
     const token = getAccessToken();
     setAccessTokenState(token || null);
-    bootstrapUser();
-    setLoading(false);
+    if (token) {
+      // Validate token by calling bootstrapUser
+      bootstrapUser()
+        .then(() => setLoading(false))
+        .catch(() => {
+          // If invalid, clear token from everywhere
+          clearAccessToken();
+          clearTokenFromStorage();
+          setAccessTokenState(null);
+          setUser(null);
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
     // eslint-disable-next-line
   }, []);
 
@@ -65,7 +78,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAccessTokenState(data.access_token);
         console.log('[AuthProvider] set and saved accessToken:', data.access_token);
       } else {
-        console.warn('[AuthProvider] No accessToken in login response!');
+        // No access token, treat as failed login
+        clearAccessToken();
+        clearTokenFromStorage();
+        setAccessTokenState(null);
+        setUser(null);
+        setError('No access token received');
+        return;
       }
       await bootstrapUser(email);
     } catch (err: any) {
@@ -73,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       clearAccessToken();
       clearTokenFromStorage();
+      setAccessTokenState(null);
       console.error('[AuthProvider] login error:', err);
     } finally {
       setLoading(false);
@@ -84,6 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearAccessToken();
     clearTokenFromStorage();
     setAccessTokenState(null);
+    // Defensive: also clear error and role if needed
+    setError(null);
   }
 
   if (loading) {
