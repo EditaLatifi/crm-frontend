@@ -62,7 +62,7 @@ export default function UserProfilePage() {
             <div style={{ fontSize: 20, fontWeight: 600, color: '#222', marginBottom: 2 }}>{user.name}</div>
             <div style={{ fontSize: 15, color: '#444', marginBottom: 6 }}>E-Mail: <span style={{ fontWeight: 500 }}>{user.email}</span></div>
             <div style={{ fontSize: 14, color: '#666', fontWeight: 500, marginBottom: 6 }}>Rolle: {user.role}</div>
-            {user.createdAt && <div style={{ fontSize: 13, color: '#888', marginBottom: 6 }}>Dabeiseit: {new Date(user.createdAt).toLocaleDateString()}</div>}
+            {user.createdAt && <div style={{ fontSize: 13, color: '#888', marginBottom: 6 }}>Dabei seit: {new Date(user.createdAt).toLocaleDateString()}</div>}
             {user.meta && <div style={{ fontSize: 13, color: '#888', marginBottom: 6 }}>{user.meta}</div>}
           </div>
         ) : (
@@ -70,11 +70,11 @@ export default function UserProfilePage() {
         )}
       </div>
       <div style={{ background: '#f7f8fa', borderRadius: 8, padding: 28, border: '1px solid #e0e2e5' }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: '#222', marginBottom: 12 }}>Zuegwieseni Tasks</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: '#222', marginBottom: 12 }}>Zugewiesene Aufgaben</div>
         {loading ? (
-          <div style={{ color: '#aaa', fontSize: 14 }}>Lade Tasks...</div>
+          <div style={{ color: '#aaa', fontSize: 14 }}>Lade Aufgaben...</div>
         ) : tasks.length === 0 ? (
-          <div style={{ color: '#aaa', fontSize: 14 }}>Kei zuegwieseni Tasks.</div>
+          <div style={{ color: '#aaa', fontSize: 14 }}>Keine zugewiesenen Aufgaben.</div>
         ) : (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {tasks.map(task => (

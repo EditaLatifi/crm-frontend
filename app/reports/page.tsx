@@ -115,21 +115,21 @@ export default function ReportsPage() {
 
   return (
     <div style={{ padding: 32, maxWidth: 1200, margin: "0 auto" }}>
-      <h1 style={{ fontSize: "2rem", fontWeight: 600, marginBottom: 24 }}>Reports</h1>
+      <h1 style={{ fontSize: "2rem", fontWeight: 600, marginBottom: 24 }}>Berichte</h1>
       <div style={{ display: 'flex', gap: 24, marginBottom: 32, flexWrap: 'wrap' }}>
-        <DashboardCard title="Total Ziit" value={`${totalHours}h ${totalMins}m`} color="#4f8cff" />
-        <DashboardCard title="Die Wuche" value={`${weekHours}h ${weekMins}m`} color="#00c48c" />
+        <DashboardCard title="Gesamtzeit" value={`${totalHours}h ${totalMins}m`} color="#4f8cff" />
+        <DashboardCard title="Diese Woche" value={`${weekHours}h ${weekMins}m`} color="#00c48c" />
         <DashboardCard title="Top Mitglied" value={topUsers[0]?.name || '-'} color="#ffb547" />
-        <button onClick={exportCSV} style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 8, padding: '18px 32px', fontWeight: 600, fontSize: 18, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', marginLeft: 'auto' }}>CSV exportiere</button>
+        <button onClick={exportCSV} style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 8, padding: '18px 32px', fontWeight: 600, fontSize: 18, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', marginLeft: 'auto' }}>CSV exportieren</button>
       </div>
 
       <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', marginBottom: 32 }}>
         <div style={{ flex: 2, minWidth: 340, background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', padding: 24 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>Aktivitäts-Report (Letschti 7 Täg)</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>Aktivitäts-Report (Letzte 7 Tage)</h2>
           <TimeLineChart data={activityData} />
         </div>
         <div style={{ flex: 1, minWidth: 320, background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', padding: 24 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>Top 5 Mitglieder nach erfasster Ziit</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>Top 5 Mitglieder nach erfasster Zeit</h2>
           {loading ? (
             <div>Lade...</div>
           ) : (
@@ -138,7 +138,7 @@ export default function ReportsPage() {
                 <tr style={{ background: "#f6f8fa" }}>
                   <th style={thStyle}>#</th>
                   <th style={thStyle}>Name</th>
-                  <th style={thStyle}>Total Time</th>
+                  <th style={thStyle}>Gesamtzeit</th>
                 </tr>
               </thead>
               <tbody>
@@ -156,7 +156,7 @@ export default function ReportsPage() {
       </div>
       {/* Top Tasks by Time */}
       <div style={{ marginTop: 48, background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', padding: 32 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 18 }}>Top 5 Tasks nach Ziit</h2>
+        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 18 }}>Top 5 Aufgaben nach Zeit</h2>
         <TopTasksTable entries={allEntries} />
       </div>
     </div>
@@ -177,14 +177,14 @@ function TopTasksTable({ entries }: { entries: TimeEntry[] }) {
     .filter(t => t.taskId !== 'Unknown')
     .sort((a, b) => b.totalMinutes - a.totalMinutes)
     .slice(0, 5);
-  if (topTasks.length === 0) return <div style={{ color: '#888' }}>Kei Task-Daten verfügbar.</div>;
+  if (topTasks.length === 0) return <div style={{ color: '#888' }}>Keine Aufgabendaten verfügbar.</div>;
   return (
     <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
       <thead>
         <tr style={{ background: '#f6f8fa' }}>
           <th style={thStyle}>#</th>
-          <th style={thStyle}>Task</th>
-          <th style={thStyle}>Total Ziit</th>
+          <th style={thStyle}>Aufgabe</th>
+          <th style={thStyle}>Gesamtzeit</th>
         </tr>
       </thead>
       <tbody>

@@ -38,7 +38,7 @@ function AdminContactsPageContent() {
       <div className="contacts-header-row">
         <div>
           <h1 className="contacts-title">Kontakte (Admin)</h1>
-          <div className="contacts-header-subtitle">Verwalte dini Geschäftskontakte effizient und sicher.</div>
+          <div className="contacts-header-subtitle">Verwalte deine Geschäftskontakte effizient und sicher.</div>
         </div>
         <button className="contacts-new-btn" onClick={() => setModalOpen(true)}>
           + Neuer Kontakt
@@ -48,7 +48,7 @@ function AdminContactsPageContent() {
         <input
           type="text"
           className="contacts-filter-input"
-          placeholder="Kontakte sueche..."
+          placeholder="Kontakte suchen..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{ maxWidth: 340 }}
@@ -59,7 +59,7 @@ function AdminContactsPageContent() {
       </div>
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Neuer Kontakt">
         <ContactForm onSubmit={handleCreate} />
-        {saving && <div style={{ color: '#0052cc', marginTop: 12 }}>Speichere...</div>}
+        {saving && <div style={{ color: '#0052cc', marginTop: 12 }}>Speichern...</div>}
         {error && <div style={{ color: 'red', marginTop: 12 }}>{error}</div>}
       </Modal>
     </div>

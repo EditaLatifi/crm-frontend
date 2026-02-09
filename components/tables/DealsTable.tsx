@@ -30,7 +30,7 @@ export default function DealsTable() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Dä Deal wotsch würkli lösche?')) return;
+    if (!window.confirm('Diesen Deal wirklich löschen?')) return;
     await fetch(`/api/deals/${id}`, { method: 'DELETE' });
     fetchDeals();
   };
@@ -72,7 +72,7 @@ export default function DealsTable() {
         <tbody>
           {deals.length === 0 && (
             <tr>
-              <td colSpan={6} style={{ color: '#bbb', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>Kei Deals vorhande.</td>
+              <td colSpan={6} style={{ color: '#bbb', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>Keine Deals vorhanden.</td>
             </tr>
           )}
           {deals.map((d: any) => (
@@ -86,8 +86,46 @@ export default function DealsTable() {
               <td style={{ padding: '10px 8px', border: 'none', color: '#888', fontSize: 14 }} data-label="Owner">{d.owner?.name || d.ownerUserId}</td>
               <td style={{ padding: '10px 8px', border: 'none', color: '#888', fontSize: 14 }} data-label="Expected Close">{d.expectedCloseDate ? new Date(d.expectedCloseDate).toLocaleDateString() : ''}</td>
               <td style={{ padding: '10px 8px', border: 'none' }} data-label="Actions">
-                <button onClick={() => handleEdit(d)} style={{ marginRight: 8, background: '#f4f5f7', color: '#0052cc', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer' }}>Bearbeite</button>
-                <button onClick={() => handleDelete(d.id)} style={{ background: '#ff4d4f', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer' }}>Lösche</button>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button
+                    onClick={() => handleEdit(d)}
+                    style={{
+                      minWidth: 90,
+                      background: '#f4f5f7',
+                      color: '#0052cc',
+                      border: 'none',
+                      borderRadius: 4,
+                      padding: '4px 0',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                      fontSize: 14,
+                      transition: 'background 0.2s',
+                    }}
+                    onMouseOver={e => (e.currentTarget.style.background = '#e1e7f0')}
+                    onMouseOut={e => (e.currentTarget.style.background = '#f4f5f7')}
+                  >
+                    Bearbeiten
+                  </button>
+                  <button
+                    onClick={() => handleDelete(d.id)}
+                    style={{
+                      minWidth: 90,
+                      background: '#ff4d4f',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 4,
+                      padding: '4px 0',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                      fontSize: 14,
+                      transition: 'background 0.2s',
+                    }}
+                    onMouseOver={e => (e.currentTarget.style.background = '#d9363e')}
+                    onMouseOut={e => (e.currentTarget.style.background = '#ff4d4f')}
+                  >
+                    Löschen
+                  </button>
+                </div>
                 {d.customFields && Object.keys(d.customFields).length > 0 && (
                   <div style={{ marginTop: 4, fontSize: 12, color: '#888' }}>
                     {Object.entries(d.customFields).map(([k, v]) => (
@@ -104,9 +142,9 @@ export default function DealsTable() {
       {showEditModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: '#fff', borderRadius: 8, padding: 24, minWidth: 320 }}>
-            <h3>Deal bearbeite</h3>
+            <h3>Deal bearbeiten</h3>
             <DealForm onSubmit={handleEditSubmit} initialData={editDeal} />
-            <button onClick={() => setShowEditModal(false)} style={{ marginTop: 12, background: '#eee', color: '#333', border: 'none', borderRadius: 4, padding: '6px 16px', cursor: 'pointer' }}>Abbreche</button>
+            <button onClick={() => setShowEditModal(false)} style={{ marginTop: 12, background: '#eee', color: '#333', border: 'none', borderRadius: 4, padding: '6px 16px', cursor: 'pointer' }}>Abbrechen</button>
           </div>
         </div>
       )}

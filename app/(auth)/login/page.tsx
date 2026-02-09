@@ -34,7 +34,7 @@ export default function LoginPage() {
         <div className={styles['login-logo']}>
           <img src="/logoip3.png" alt="Logo" />
         </div>
-        <h2 className={styles['login-title']}>Im CRM aalogge</h2>
+        <h2 className={styles['login-title']}>Im CRM anmelden</h2>
         <form className={styles['login-form']} onSubmit={handleSubmit}>
           <input
             type="email"
@@ -55,7 +55,7 @@ export default function LoginPage() {
             className={styles['login-input']}
           />
           {error && <div className={styles['login-error']}>{error}</div>}
-          <button type="submit" className={styles['login-btn']}>Aalogge</button>
+          <button type="submit" className={styles['login-btn']}>Anmelden</button>
         </form>
         <div className={styles['login-footer']}>Powered by ip3</div>
       </div>

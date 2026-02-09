@@ -10,7 +10,7 @@ export default function TimeLineChart({ data }: { data: { labels: string[], valu
           labels: data.labels,
           datasets: [
             {
-              label: 'Erfassti Ziit (h)',
+              label: 'Erfasste Zeit (h)',
               data: data.values,
               borderColor: '#0052cc',
               backgroundColor: 'rgba(0,82,204,0.1)',
@@ -22,7 +22,7 @@ export default function TimeLineChart({ data }: { data: { labels: string[], valu
           responsive: true,
           plugins: {
             legend: { display: false },
-            title: { display: true, text: 'Ziit-Erfassig' },
+            title: { display: true, text: 'Zeiterfassung' },
           },
         }}
       />

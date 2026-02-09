@@ -57,7 +57,7 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
                           <div style={{ marginBottom: 16 }}>
                             <label>Konto</label><br />
                             <select value={accountId} onChange={e => setAccountId(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}>
-                              <option value="">Konto wähle</option>
+                              <option value="">Konto auswählen</option>
                               {accounts.map((a: any) => (
                                 <option key={a.id} value={a.id}>{a.name}</option>
                               ))}
@@ -66,7 +66,7 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
                           <div style={{ marginBottom: 16 }}>
                             <label>Phase</label><br />
                             <select value={stageId} onChange={e => setStageId(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}>
-                              <option value="">Phase wähle</option>
+                              <option value="">Phase auswählen</option>
                               {stages.map((s: any) => (
                                 <option key={s.id} value={s.id}>{s.name}</option>
                               ))}
@@ -77,10 +77,10 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
                       <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
                         <input placeholder="Schlüssel" value={f.key} onChange={e => handleCustomFieldChange(idx, 'key', e.target.value)} style={{ width: 100, padding: 6, borderRadius: 4, border: '1px solid #ccc' }} />
                         <input placeholder="Wert" value={f.value} onChange={e => handleCustomFieldChange(idx, 'value', e.target.value)} style={{ width: 160, padding: 6, borderRadius: 4, border: '1px solid #ccc' }} />
-                        <button type="button" onClick={() => handleRemoveCustomField(idx)} style={{ background: '#eee', border: 'none', borderRadius: 4, padding: '4px 8px', cursor: 'pointer' }}>Entferne</button>
+                        <button type="button" onClick={() => handleRemoveCustomField(idx)} style={{ background: '#eee', border: 'none', borderRadius: 4, padding: '4px 8px', cursor: 'pointer' }}>Entfernen</button>
                       </div>
                     ))}
-                    <button type="button" onClick={handleAddCustomField} style={{ background: '#f4f5f7', color: '#0052cc', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer', marginTop: 4 }}>+ Feld hinzufüge</button>
+                    <button type="button" onClick={handleAddCustomField} style={{ background: '#f4f5f7', color: '#0052cc', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer', marginTop: 4 }}>+ Feld hinzufügen</button>
                   </div>
             <div style={{ marginBottom: 16 }}>
               <label>Wahrscheinlichkeit (%)</label><br />

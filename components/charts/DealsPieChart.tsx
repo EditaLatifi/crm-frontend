@@ -20,7 +20,7 @@ export default function DealsPieChart({ data }: { data: { labels: string[], valu
           responsive: true,
           plugins: {
             legend: { position: 'bottom' },
-            title: { display: true, text: 'Deals nach Phase' },
+            title: { display: true, text: 'Deals nach Phase' }, // Already standard German, no change needed
           },
         }}
       />

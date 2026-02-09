@@ -48,14 +48,14 @@ export default function ContactsPage() {
       <div className="contacts-header-row">
         <div>
           <h1 className="contacts-title">Kontakte</h1>
-          <div className="contacts-header-subtitle">Verwalte dini Geschäftskontakte effizient und sicher.</div>
+          <div className="contacts-header-subtitle">Verwalte deine Geschäftskontakte effizient und sicher.</div>
         </div>
-        <button className="contacts-new-btn" onClick={() => setModalOpen(true)}>+ Neue Kontakt</button>
+        <button className="contacts-new-btn" onClick={() => setModalOpen(true)}>+ Neuer Kontakt</button>
       </div>
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'flex-end' }}>
         <input
           type="text"
-          placeholder="Kontakte sueche..."
+          placeholder="Kontakte suchen..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="contacts-filter-input"
@@ -65,9 +65,9 @@ export default function ContactsPage() {
       <div className="contacts-table-card">
         <ContactsTable search={search} refresh={refresh} />
       </div>
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Neue Kontakt">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Neuer Kontakt">
         <ContactForm onSubmit={handleCreate} />
-        {saving && <div style={{ color: '#0052cc', marginTop: 12 }}>Speichere...</div>}
+        {saving && <div style={{ color: '#0052cc', marginTop: 12 }}>Speichern...</div>}
         {error && <div style={{ color: 'red', marginTop: 12 }}>{error}</div>}
       </Modal>
     </div>

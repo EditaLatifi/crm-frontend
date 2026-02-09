@@ -51,7 +51,7 @@ export default function ContactForm({ onSubmit, initialData }: {
           </select>
         )}
       </div>
-      <button type="submit" style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 600, cursor: 'pointer', marginTop: 8 }}>Kontakt speichere</button>
+      <button type="submit" style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 600, cursor: 'pointer', marginTop: 8 }}>Kontakt speichern</button>
     </form>
   );
 }

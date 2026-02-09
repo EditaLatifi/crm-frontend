@@ -101,7 +101,7 @@ export default function DealDetailsPage({ params }: { params: { id: string } }) 
       )}
       {tasks.length > 0 && (
         <div style={{ marginBottom: 24 }}>
-          <h2>Tasks</h2>
+          <h2>Aufgaben</h2>
           <ul>
             {tasks.map((t: any) => (
               <li key={t.id}>{t.title} - {t.status}</li>
@@ -117,11 +117,11 @@ export default function DealDetailsPage({ params }: { params: { id: string } }) 
           <button type="submit" style={{ marginTop: 8, background: '#0052cc', color: '#fff', border: 'none', borderRadius: 4, padding: '6px 16px', cursor: 'pointer' }}>Notiz hinzufügen</button>
         </form>
         <div>
-          {notes.length === 0 && <div style={{ color: '#888' }}>No Notes bis jetzt.</div>}
+          {notes.length === 0 && <div style={{ color: '#888' }}>Noch keine Notizen.</div>}
           {notes.map((n: any) => (
             <div key={n.id} style={{ background: '#fafbfc', border: '1px solid #eee', borderRadius: 4, padding: 12, marginBottom: 8 }}>
               <div style={{ fontSize: 14 }}>{n.content}</div>
-              <div style={{ fontSize: 12, color: '#888' }}>Vo {n.createdByUserId} am {new Date(n.createdAt).toLocaleString()}</div>
+              <div style={{ fontSize: 12, color: '#888' }}>Von {n.createdByUserId} am {new Date(n.createdAt).toLocaleString()}</div>
             </div>
           ))}
         </div>
@@ -134,11 +134,11 @@ export default function DealDetailsPage({ params }: { params: { id: string } }) 
           <button type="submit" style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 4, padding: '6px 16px', cursor: 'pointer' }}>Anhang hinzufügen</button>
         </form>
         <div>
-          {attachments.length === 0 && <div style={{ color: '#888' }}>No Anhänge bis jetzt.</div>}
+          {attachments.length === 0 && <div style={{ color: '#888' }}>Noch keine Anhänge.</div>}
           {attachments.map((a: any) => (
             <div key={a.id} style={{ background: '#fafbfc', border: '1px solid #eee', borderRadius: 4, padding: 12, marginBottom: 8 }}>
               <a href={a.url} target="_blank" rel="noopener noreferrer">{a.filename}</a>
-              <div style={{ fontSize: 12, color: '#888' }}>Vo {a.uploadedByUserId} am {new Date(a.createdAt).toLocaleString()}</div>
+              <div style={{ fontSize: 12, color: '#888' }}>Von {a.uploadedByUserId} am {new Date(a.createdAt).toLocaleString()}</div>
             </div>
           ))}
         </div>

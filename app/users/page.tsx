@@ -54,7 +54,7 @@ export default function UsersPage() {
 
   return (
     <div className="users-container">
-      <h1 className="users-title">Benutzer-Verwaltig</h1>
+      <h1 className="users-title">Benutzerverwaltung</h1>
       <form
         className="users-form"
         onSubmit={e => {
@@ -104,10 +104,10 @@ export default function UsersPage() {
           disabled={loading}
           style={{ width: '100%', padding: '12px 0', fontWeight: 600, fontSize: 16, background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
         >
-          {loading ? 'Am Hinzuefüege...' : 'Benutzer hinzuefüege'}
+          {loading ? 'Wird hinzugefügt...' : 'Benutzer hinzufügen'}
         </button>
       </form>
-      <h2 className="users-title" style={{ fontSize: 22, margin: '32px 0 18px 0', fontWeight: 700 }}>Alli Benutzer</h2>
+      <h2 className="users-title" style={{ fontSize: 22, margin: '32px 0 18px 0', fontWeight: 700 }}>Alle Benutzer</h2>
       <div className="users-table" style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>

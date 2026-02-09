@@ -20,7 +20,7 @@ export default function TasksBarChart({ data }: { data: { labels: string[], valu
           responsive: true,
           plugins: {
             legend: { display: false },
-            title: { display: true, text: 'Tasks-Übersicht' },
+            title: { display: true, text: 'Aufgabenübersicht' },
           },
         }}
       />

@@ -57,7 +57,7 @@ export default function TimeEntriesTable({ entries, showUserColumn }: TimeEntrie
           {localEntries.length === 0 ? (
             <tr>
               <td colSpan={showUserColumn ? 7 : 6} style={{ textAlign: 'center', color: '#888', padding: 24 }}>
-                Kei Zyt erfasst gfunde.
+                Keine Zeiteinträge gefunden.
               </td>
             </tr>
           ) : (

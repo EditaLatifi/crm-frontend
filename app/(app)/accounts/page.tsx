@@ -113,7 +113,7 @@ export default function AccountsPage() {
         <div className="accounts-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
           <div>
             <h1 className="accounts-title" style={{ fontSize: 32, fontWeight: 700, color: '#1e293b', marginBottom: 0, letterSpacing: '-0.5px', textAlign: 'left' }}>Firmen</h1>
-            <div style={{ fontSize: 15, color: '#23272f', fontWeight: 500, marginTop: 6, letterSpacing: '0.2px' }}>Verwalte dini Geschäftsfirmen effizient und sicher.</div>
+              <div style={{ fontSize: 15, color: '#23272f', fontWeight: 500, marginTop: 6, letterSpacing: '0.2px' }}>Verwalte deine Geschäftsfirmen effizient und sicher.</div>
           </div>
           <button className="accounts-new-btn" style={{ fontSize: 15, fontWeight: 600, borderRadius: 6, border: '1.5px solid #2563eb', background: '#2563eb', color: '#fff', padding: '8px 20px', cursor: 'pointer', boxShadow: 'none', transition: 'background 0.15s, border 0.15s, color 0.15s' }} onClick={() => setModalOpen(true)}>+ Neue Firma</button>
         </div>
@@ -123,11 +123,12 @@ export default function AccountsPage() {
         <div className="accounts-filters-row" style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 12 }}>
           <select value={tagFilter} onChange={e => setTagFilter(e.target.value)} className="accounts-filter-select" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, minWidth: 110, height: 32 }}>
             <option value="">Alli Status/Tags</option>
+              <option value="">Alle Status/Tags</option>
             {DEMO_TAGS.map(tag => <option key={tag} value={tag}>{tag}</option>)}
           </select>
             <input
             type="text"
-            placeholder="Name, E-Mail, Verantwortlich sueche..."
+            placeholder="Name, E-Mail, Verantwortliche suchen..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="accounts-filter-input"
@@ -135,10 +136,12 @@ export default function AccountsPage() {
           />
           <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="accounts-filter-select" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, minWidth: 110, height: 32 }}>
             <option value="">Alli Typen</option>
+              <option value="">Alle Typen</option>
             {types.map(type => <option key={type} value={type}>{type}</option>)}
           </select>
           <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)} className="accounts-filter-select" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, minWidth: 110, height: 32 }}>
             <option value="">Alli Verantwortlichi</option>
+              <option value="">Alle Verantwortlichen</option>
             {owners.map(owner => <option key={owner} value={owner}>{owner}</option>)}
           </select>
           <div className="accounts-filter-date-row" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -148,6 +151,7 @@ export default function AccountsPage() {
             <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="accounts-filter-date" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, height: 32 }} />
           </div>
           <button className="accounts-filter-clear" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #2563eb', background: '#fff', color: '#2563eb', padding: '6px 14px', cursor: 'pointer', marginLeft: 0, height: 32 }} onClick={() => { setSearch(""); setTypeFilter(""); setOwnerFilter(""); setDateFrom(""); setDateTo(""); }}>Filter lösche</button>
+            <button className="accounts-filter-clear" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #2563eb', background: '#fff', color: '#2563eb', padding: '6px 14px', cursor: 'pointer', marginLeft: 0, height: 32 }} onClick={() => { setSearch(""); setTypeFilter(""); setOwnerFilter(""); setDateFrom(""); setDateTo(""); }}>Filter löschen</button>
           <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="accounts-filter-select" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, minWidth: 110, height: 32 }}>
             <option value="createdAt-desc">Sortiere: Neuschte</option>
             <option value="createdAt-asc">Sortiere: Ältesti</option>
@@ -162,8 +166,9 @@ export default function AccountsPage() {
         <div className="accounts-filters-actions" style={{ display: 'flex', gap: 8, marginTop: 4 }}>
           {/* Export/Import CSV buttons disabled, since ref is removed. You can re-implement CSV export/import via callback/prop pattern if needed. */}
           <button className="accounts-export-btn" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #2563eb', background: '#2563eb', color: '#fff', padding: '6px 14px', cursor: 'pointer', height: 32, boxShadow: 'none' }} onClick={() => handleExportCSV(accounts)}>CSV exportiere</button>
+            <button className="accounts-export-btn" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #2563eb', background: '#2563eb', color: '#fff', padding: '6px 14px', cursor: 'pointer', height: 32, boxShadow: 'none' }} onClick={() => handleExportCSV(accounts)}>CSV exportieren</button>
           <label className="accounts-import-label" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #36a2eb', background: '#fff', color: '#36a2eb', padding: '6px 14px', cursor: 'pointer', height: 32, display: 'flex', alignItems: 'center', boxShadow: 'none' }}>
-            CSV importiere
+            CSV importieren
             <input type="file" accept=".csv" disabled style={{ display: 'none' }} />
           </label>
         </div>

@@ -55,7 +55,7 @@ function InlineEditableAccountCard({ acc, selected, onSelect, onEdit, getTags, h
       onMouseEnter={e => { if (!selected) e.currentTarget.style.boxShadow = '0 12px 40px rgba(30,41,59,0.18)'; }}
       onMouseLeave={e => { if (!selected) e.currentTarget.style.boxShadow = '0 2px 8px rgba(30,41,59,0.08)'; }}
     >
-      <input type="checkbox" checked={selected} onChange={e => onSelect(e.target.checked)} style={{ position: 'absolute', left: 10, top: 10, zIndex: 2, width: 18, height: 18 }} title="Account wähle" />
+      <input type="checkbox" checked={selected} onChange={e => onSelect(e.target.checked)} style={{ position: 'absolute', left: 10, top: 10, zIndex: 2, width: 18, height: 18 }} title="Account auswählen" />
       {/* Action icons row at the top, not overlapping content */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, padding: '8px 12px 0 12px', background: 'transparent', zIndex: 2 }}>
         <button
@@ -74,10 +74,10 @@ function InlineEditableAccountCard({ acc, selected, onSelect, onEdit, getTags, h
             transition: 'background 0.15s, border 0.15s, color 0.15s',
             boxShadow: 'none'
           }}
-          title="Bearbeite"
+          title="Bearbeiten"
         ><FiEdit2 /></button>
         <button
-          onClick={e => { e.stopPropagation(); e.preventDefault(); if (window.confirm('Are you sure you want to delete this account?')) handleDelete(acc.id); }}
+          onClick={e => { e.stopPropagation(); e.preventDefault(); if (window.confirm('Sind Sie sicher, dass Sie diesen Account löschen möchten?')) handleDelete(acc.id); }}
           style={{
             background: '#f6f7f9',
             border: '1px solid #d1d5db',
@@ -92,7 +92,7 @@ function InlineEditableAccountCard({ acc, selected, onSelect, onEdit, getTags, h
             transition: 'background 0.15s, border 0.15s, color 0.15s',
             boxShadow: 'none'
           }}
-          title="Lösche"
+          title="Löschen"
         ><FiTrash2 /></button>
         <button
           onClick={e => { e.stopPropagation(); e.preventDefault(); onShowActivity(acc.id); }}

@@ -43,7 +43,7 @@ export default function AccountForm({ onSubmit, initialData }: {
         <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
       </div>
       <button type="submit" style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 20px', fontWeight: 600, cursor: 'pointer' }}>
-        Speichere
+        Speichern
       </button>
     </form>
   );

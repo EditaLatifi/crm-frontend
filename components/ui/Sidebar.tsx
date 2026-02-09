@@ -15,14 +15,14 @@ import { FiGrid, FiUsers, FiUser, FiBriefcase, FiCheckSquare, FiClock, FiSetting
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: FiGrid },
-  { href: "/accounts", label: "Kunde", icon: FiUsers },
-  { href: "/contacts", label: "Kontakt", icon: FiUser, admin: true },
+  { href: "/accounts", label: "Kunden", icon: FiUsers },
+  { href: "/contacts", label: "Kontakte", icon: FiUser, admin: true },
   { href: "/deals", label: "Deals", icon: FiBriefcase },
-  { href: "/tasks", label: "Tasks", icon: FiCheckSquare },
-  { href: "/time", label: "Zyt Erfassung", icon: FiClock, admin: true },
+  { href: "/tasks", label: "Aufgaben", icon: FiCheckSquare },
+  { href: "/time", label: "Zeiterfassung", icon: FiClock, admin: true },
   { href: "/users", label: "Benutzer", icon: FiUsers, admin: true },
   { href: "/profile", label: "Profil", icon: FiUser },
-  { href: "/reports", label: "Bericht", icon: FiSettings, admin: true },
+  { href: "/reports", label: "Berichte", icon: FiSettings, admin: true },
 ];
 
 

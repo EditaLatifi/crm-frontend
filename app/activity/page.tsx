@@ -41,29 +41,29 @@ export default function ActivityFeedPage() {
       <h1 style={{ marginBottom: 24, fontSize: 18, fontWeight: 700 }}>Aktivitäts-Feed</h1>
       <div style={{ background: '#fff', borderRadius: 8, padding: 32, minHeight: 320 }}>
         {loading ? (
-          <div style={{ color: '#888', fontSize: 14 }}>Lade...</div>
+          <div style={{ color: '#888', fontSize: 14 }}>Lädt...</div>
         ) : (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {activities.length === 0 ? (
-              <li style={{ color: '#888', fontSize: 14 }}>Kei Aktivität gfunde.</li>
+              <li style={{ color: '#888', fontSize: 14 }}>Keine Aktivität gefunden.</li>
             ) : (
               activities.map(act => (
                 <li key={act.id} style={{ marginBottom: 20, fontSize: 15, color: '#23272f' }}>
                   <span style={{ fontWeight: 700 }}>{formatTime(act.createdAt)}</span>
                   {act.action === 'COMMENT' ? (
-                    <> - Kommentar vo <b>{act.actorName || act.actorUserId}</b> hinzugefügt</>
+                    <> - Kommentar von <b>{act.actorName || act.actorUserId}</b> hinzugefügt</>
                   ) : act.action === 'UPDATE' && act.entityType === 'Task' ? (
-                    <> - Task <b>{act.entityName || act.entityId}</b> aktualisiert vo <b>{act.actorName || act.actorUserId}</b></>
+                    <> - Aufgabe <b>{act.entityName || act.entityId}</b> aktualisiert von <b>{act.actorName || act.actorUserId}</b></>
                   ) : act.action === 'COMPLETE' && act.entityType === 'Task' ? (
-                    <> - Task <b>{act.entityName || act.entityId}</b> als erledigt markiert vo <b>{act.actorName || act.actorUserId}</b></>
+                    <> - Aufgabe <b>{act.entityName || act.entityId}</b> als erledigt markiert von <b>{act.actorName || act.actorUserId}</b></>
                   ) : act.action === 'UPDATE' && act.entityType === 'Deal' ? (
-                    <> - Deal <b>{act.entityName || act.entityId}</b> aktualisiert vo <b>{act.actorName || act.actorUserId}</b></>
+                    <> - Deal <b>{act.entityName || act.entityId}</b> aktualisiert von <b>{act.actorName || act.actorUserId}</b></>
                   ) : act.action === 'MOVE' && act.entityType === 'Deal' ? (
-                    <> - Deal <b>{act.entityName || act.entityId}</b> verschobe uf <b>{act.details}</b> vo <b>{act.actorName || act.actorUserId}</b></>
+                    <> - Deal <b>{act.entityName || act.entityId}</b> verschoben nach <b>{act.details}</b> von <b>{act.actorName || act.actorUserId}</b></>
                   ) : act.action === 'CREATE' && act.entityType === 'TimeEntry' ? (
-                    <> - Ziit-Eitrag <b>{act.details}</b> erfasst uf <b>{act.entityName || act.entityId}</b> vo <b>{act.actorName || act.actorUserId}</b></>
+                    <> - Zeiteintrag <b>{act.details}</b> erfasst für <b>{act.entityName || act.entityId}</b> von <b>{act.actorName || act.actorUserId}</b></>
                   ) : (
-                    <> - {act.action} <b>{act.entityName || act.entityId}</b> vo <b>{act.actorName || act.actorUserId}</b></>
+                    <> - {act.action} <b>{act.entityName || act.entityId}</b> von <b>{act.actorName || act.actorUserId}</b></>
                   )}
                 </li>
               ))

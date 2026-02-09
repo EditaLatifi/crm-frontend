@@ -68,8 +68,8 @@ export default function TasksPage() {
   return (
     <div className="tasks-page-main-container">
       <div className="tasks-header-row tasks-header-mobile">
-        <h1 className="tasks-title tasks-title-mobile">Tasks</h1>
-        <Button colorScheme="blue" size="lg" className="tasks-new-btn-mobile" onClick={onOpen}>+ Neue Task</Button>
+        <h1 className="tasks-title tasks-title-mobile">Aufgaben</h1>
+        <Button colorScheme="blue" size="lg" className="tasks-new-btn-mobile" onClick={onOpen}>+ Neue Aufgabe</Button>
       </div>
       <div style={{ background: '#fff', borderRadius: 8, padding: 24 }}>
         <TasksTable key={refreshKey} />
@@ -77,7 +77,7 @@ export default function TasksPage() {
       <Modal isOpen={isOpen} onClose={onClose} size="lg">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Neue Task</ModalHeader>
+          <ModalHeader>Neue Aufgabe</ModalHeader>
           <ModalCloseButton />
           <form onSubmit={handleSubmit}>
             <ModalBody pb={6}>
@@ -86,21 +86,21 @@ export default function TasksPage() {
                 <Input name="title" value={form.title} onChange={handleChange} />
               </FormControl>
               <FormControl mb={3}>
-                <FormLabel>Beschrieb</FormLabel>
+                <FormLabel>Beschreibung</FormLabel>
                 <Textarea name="description" value={form.description} onChange={handleChange} />
               </FormControl>
               <FormControl mb={3}>
                 <FormLabel>Status</FormLabel>
                 <Select name="status" value={form.status} onChange={handleChange}>
-                  <option value="OPEN">Offe</option>
-                  <option value="IN_PROGRESS">Am mache</option>
+                  <option value="OPEN">Offen</option>
+                  <option value="IN_PROGRESS">In Bearbeitung</option>
                   <option value="DONE">Erledigt</option>
                 </Select>
               </FormControl>
               <FormControl mb={3}>
                 <FormLabel>Priorität</FormLabel>
                 <Select name="priority" value={form.priority} onChange={handleChange}>
-                  <option value="LOW">Nid so wichtig</option>
+                  <option value="LOW">Nicht so wichtig</option>
                   <option value="MEDIUM">Mittel</option>
                   <option value="HIGH">Wichtig</option>
                 </Select>
@@ -110,33 +110,33 @@ export default function TasksPage() {
                 <Input name="dueDate" type="date" value={form.dueDate} onChange={handleChange} />
               </FormControl>
               <FormControl mb={3}>
-                <FormLabel>Zuewiesene</FormLabel>
-                <Select name="assignedToUserId" value={form.assignedToUserId} onChange={handleChange} placeholder="Kei zuewiesene">
+                <FormLabel>Zugewiesen an</FormLabel>
+                <Select name="assignedToUserId" value={form.assignedToUserId} onChange={handleChange} placeholder="Keine zugewiesen">
                   {Array.isArray(users) && users.map((u) => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
                 </Select>
               </FormControl>
               <FormControl mb={3}>
                 <FormLabel>Konto</FormLabel>
-                <Select name="accountId" value={form.accountId} onChange={handleChange} placeholder="Keins">
+                <Select name="accountId" value={form.accountId} onChange={handleChange} placeholder="Kein Konto">
                   {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                 </Select>
               </FormControl>
               <FormControl mb={3}>
                 <FormLabel>Kontakt</FormLabel>
-                <Select name="contactId" value={form.contactId} onChange={handleChange} placeholder="Keins">
+                <Select name="contactId" value={form.contactId} onChange={handleChange} placeholder="Kein Kontakt">
                   {contacts.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
               </FormControl>
               <FormControl mb={3}>
                 <FormLabel>Deal</FormLabel>
-                <Select name="dealId" value={form.dealId} onChange={handleChange} placeholder="Keins">
+                <Select name="dealId" value={form.dealId} onChange={handleChange} placeholder="Kein Deal">
                   {deals.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </Select>
               </FormControl>
             </ModalBody>
             <ModalFooter>
-              <Button colorScheme="blue" mr={3} type="submit" isLoading={loading}>Erstelle</Button>
-              <Button onClick={onClose}>Abbreche</Button>
+              <Button colorScheme="blue" mr={3} type="submit" isLoading={loading}>Erstellen</Button>
+              <Button onClick={onClose}>Abbrechen</Button>
             </ModalFooter>
           </form>
         </ModalContent>

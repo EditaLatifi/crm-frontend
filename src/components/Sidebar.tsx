@@ -4,12 +4,12 @@ import { useAuth } from '../auth/AuthProvider';
 import Link from 'next/link';
 
 const navItems = [
-  { label: 'Deals Board', href: '/deals', admin: false },
-  { label: 'Tasks Board', href: '/tasks', admin: false },
-  { label: 'Accounts', href: '/accounts', admin: false },
-  { label: 'Time', href: '/time', admin: false },
-  { label: 'Reports', href: '/reports', admin: true },
-  { label: 'Users', href: '/users', admin: true },
+  { label: 'Deals Übersicht', href: '/deals', admin: false },
+  { label: 'Aufgaben Übersicht', href: '/tasks', admin: false },
+  { label: 'Konten', href: '/accounts', admin: false },
+  { label: 'Zeit', href: '/time', admin: false },
+  { label: 'Berichte', href: '/reports', admin: true },
+  { label: 'Benutzer', href: '/users', admin: true },
 ];
 
 export default function Sidebar() {

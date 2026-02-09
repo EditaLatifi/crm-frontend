@@ -169,13 +169,13 @@ export default function TaskDetailsPage() {
     });
     fetchTask();
     setAssigning(false);
-    toast({ status: 'success', title: 'Task zuegwise!' });
+    toast({ status: 'success', title: 'Task zugewiesen!' });
   };
 
 
   const statusOptions = [
-    { key: 'OPEN', label: 'Offe' },
-    { key: 'IN_PROGRESS', label: 'Am mache' },
+    { key: 'OPEN', label: 'Offen' },
+    { key: 'IN_PROGRESS', label: 'In Bearbeitung' },
     { key: 'DONE', label: 'Erledigt' },
   ];
 
@@ -203,7 +203,7 @@ export default function TaskDetailsPage() {
       fetchTask();
       toast({ status: 'success', title: 'Kommentar hinzugefügt!' });
     } catch (e: any) {
-      toast({ status: 'error', title: 'Kommentar konnt nöd hinzugefügt werde', description: e?.message || String(e) });
+      toast({ status: 'error', title: 'Kommentar konnte nicht hinzugefügt werden', description: e?.message || String(e) });
     }
     setLoadingComment(false);
   };
@@ -214,7 +214,7 @@ export default function TaskDetailsPage() {
     try {
       const accountId = task?.accountId;
       if (!accountId) {
-        toast({ status: 'error', title: 'Kei Konto isch mit däm Task verknüpft.' });
+        toast({ status: 'error', title: 'Kein Konto ist mit dieser Aufgabe verknüpft.' });
         setLoadingTime(false);
         return;
       }
@@ -226,13 +226,13 @@ export default function TaskDetailsPage() {
       if (res.ok) {
         setNewTime({ startedAt: '', endedAt: '', durationMinutes: '', description: '' });
         fetchTask();
-        toast({ status: 'success', title: 'Zyt erfasst!' });
+        toast({ status: 'success', title: 'Zeit erfasst!' });
       } else {
         const err = await res.text();
-        toast({ status: 'error', title: 'Zyt erfasse isch fehlgschlage', description: err });
+        toast({ status: 'error', title: 'Zeiterfassung fehlgeschlagen', description: err });
       }
     } catch (e) {
-      toast({ status: 'error', title: 'Zyt erfasse isch fehlgschlage', description: String(e) });
+      toast({ status: 'error', title: 'Zeiterfassung fehlgeschlagen', description: String(e) });
     }
     setLoadingTime(false);
   };
@@ -295,13 +295,13 @@ export default function TaskDetailsPage() {
           <Tag colorScheme="blue" size="lg">TASK-{task.id?.slice(0, 6).toUpperCase()}</Tag>
           <Tag colorScheme="purple">{task.status}</Tag>
           <Select value={priority} onChange={handlePriorityChange} size="sm" width="140px" minW="140px">
-            <option value="LOW">Nid so wichtig</option>
+            <option value="LOW">Nicht so wichtig</option>
             <option value="MEDIUM">Mittel</option>
             <option value="HIGH">Wichtig</option>
           </Select>
           <Menu>
             <MenuButton as={Button} size="sm" colorScheme="blue" variant="outline">
-              Verschiebe zu...
+              Verschieben zu...
             </MenuButton>
             <MenuList>
               {statusOptions.filter(opt => opt.key !== task.status).map(opt => (
@@ -320,7 +320,7 @@ export default function TaskDetailsPage() {
             minW="120px"
             isDisabled={assigning}
           >
-            <option value="">Kei zuewiesene</option>
+            <option value="">Keine zugewiesen</option>
             {Array.isArray(users) && users.map(u => (
               <option key={u.id} value={u.id}>{u.name || u.email || u.id}</option>
             ))}
@@ -371,7 +371,7 @@ export default function TaskDetailsPage() {
             </HStack>
           </>
         ) : (
-          <Text color="gray.600" mb={4}>{task.description || <i>Kei Beschreibung</i>}</Text>
+          <Text color="gray.600" mb={4}>{task.description || <i>Keine Beschreibung</i>}</Text>
         )}
         <Divider my={4} />
         {/* Subtasks/Parent */}
@@ -398,10 +398,10 @@ export default function TaskDetailsPage() {
         {/* Time Tracking */}
         <Box bg="#fff" p={4} borderRadius="lg" boxShadow="md">
           <Heading size="md" mb={2} display="flex" alignItems="center" gap={2}>
-            <Icon as={FiClock} /> Zyt Erfassung
+            <Icon as={FiClock} /> Zeiterfassung
           </Heading>
           <VStack align="stretch" spacing={2} maxH="150px" overflowY="auto">
-            {timeEntries.length === 0 && <Text color="gray.400">No Zyt erfasst.</Text>}
+            {timeEntries.length === 0 && <Text color="gray.400">Noch keine Zeit erfasst.</Text>}
             {timeEntries.map((t, i) => (
               <Box key={i} p={2} bg="gray.50" borderRadius="md">
                 <HStack spacing={2} mb={1}>
@@ -433,8 +433,8 @@ export default function TaskDetailsPage() {
             <Input type="datetime-local" size="sm" value={newTime.startedAt} onChange={e => setNewTime(nt => ({ ...nt, startedAt: e.target.value }))} placeholder="Start" />
             <Input type="datetime-local" size="sm" value={newTime.endedAt} onChange={e => setNewTime(nt => ({ ...nt, endedAt: e.target.value }))} placeholder="End" />
             <Input type="number" size="sm" value={newTime.durationMinutes} onChange={e => setNewTime(nt => ({ ...nt, durationMinutes: e.target.value }))} placeholder="Minutes" min={1} />
-            <Input size="sm" value={newTime.description} onChange={e => setNewTime(nt => ({ ...nt, description: e.target.value }))} placeholder="Beschrieb" />
-            <Button colorScheme="blue" size="sm" onClick={handleAddTime} isLoading={loadingTime}>Hinzufüge</Button>
+            <Input size="sm" value={newTime.description} onChange={e => setNewTime(nt => ({ ...nt, description: e.target.value }))} placeholder="Beschreibung" />
+            <Button colorScheme="blue" size="sm" onClick={handleAddTime} isLoading={loadingTime} minWidth="110px" px={5}>Hinzufügen</Button>
           </Stack>
         </Box>
 
@@ -444,7 +444,7 @@ export default function TaskDetailsPage() {
             <Icon as={FiMessageCircle} /> Kommentare
           </Heading>
           <VStack align="stretch" spacing={3} maxH="250px" overflowY="auto">
-            {comments.length === 0 && <Text color="gray.400">No kei Kommentare.</Text>}
+            {comments.length === 0 && <Text color="gray.400">Noch keine Kommentare.</Text>}
             {comments.map((c, i) => (
               <Box key={i} p={2} bg="gray.50" borderRadius="md">
                 <HStack spacing={2} mb={1}>
@@ -458,12 +458,12 @@ export default function TaskDetailsPage() {
           </VStack>
           <HStack mt={3} spacing={2}>
             <Input
-              placeholder="Kommentar schriebe..."
+              placeholder="Kommentar schreiben..."
               value={newComment}
               onChange={e => setNewComment(e.target.value)}
               size="sm"
             />
-            <Button colorScheme="blue" size="sm" onClick={handleAddComment} isLoading={loadingComment}>Kommentiere</Button>
+            <Button colorScheme="blue" size="sm" onClick={handleAddComment} isLoading={loadingComment}>Kommentieren</Button>
           </HStack>
         </Box>
 
@@ -473,7 +473,7 @@ export default function TaskDetailsPage() {
             <Icon as={FiList} /> Verlauf
           </Heading>
           <VStack align="stretch" spacing={2} maxH="150px" overflowY="auto">
-            {history.length === 0 && <Text color="gray.400">No kei Verlauf.</Text>}
+            {history.length === 0 && <Text color="gray.400">Noch kein Verlauf.</Text>}
             {history.map((h, i) => (
               <Box key={i} p={2} bg="gray.50" borderRadius="md">
                 <HStack spacing={2} mb={1}>

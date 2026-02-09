@@ -14,8 +14,8 @@ interface Task {
 }
 
 const statusColumns = [
-  { key: 'OPEN', label: 'Offe', color: 'gray' },
-  { key: 'IN_PROGRESS', label: 'Am mache', color: 'blue' },
+  { key: 'OPEN', label: 'Offen', color: 'gray' },
+  { key: 'IN_PROGRESS', label: 'In Bearbeitung', color: 'blue' },
   { key: 'DONE', label: 'Erledigt', color: 'green' },
 ];
 
@@ -85,7 +85,7 @@ export default function TasksTable() {
           <Box key={col.key} mb={4} className="tasks-mobile-status-group" bg="#f8f9fb" borderRadius="lg" p={2}>
             <Text fontWeight="bold" fontSize="lg" color={col.color + ".600"} mb={2} ml={1}>{col.label}</Text>
             {tasksByStatus[col.key].length === 0 ? (
-              <Text color="gray.400" fontSize="md" ml={2}>Kei Tasks</Text>
+              <Text color="gray.400" fontSize="md" ml={2}>Keine Aufgaben</Text>
             ) : (
               tasksByStatus[col.key].map((t: Task) => (
                 <Link key={t.id} href={`/tasks/${t.id}`} style={{ textDecoration: 'none' }}>
@@ -95,8 +95,8 @@ export default function TasksTable() {
                       <Tag colorScheme={col.color} size="sm">{t.priority}</Tag>
                     </Flex>
                     <Flex align="center" gap={2} fontSize="sm" color="gray.600">
-                      <Avatar size="xs" name={t.assigneeName || t.assignedToUserId || 'Kei zuewiesene'} />
-                      <Text>{t.assigneeName || t.assignedToUserId || 'Kei zuewiesene'}</Text>
+                      <Avatar size="xs" name={t.assigneeName || t.assignedToUserId || 'Keine Zuweisung'} />
+                      <Text>{t.assigneeName || t.assignedToUserId || 'Keine Zuweisung'}</Text>
                       {t.dueDate && <Text ml={2}>Fällig: {new Date(t.dueDate).toLocaleDateString()}</Text>}
                     </Flex>
                   </Box>
@@ -129,7 +129,7 @@ export default function TasksTable() {
                 <Heading size="md" mb={4} color={col.color + '.600'}>{col.label}</Heading>
                 <VStack align="stretch" spacing={4} minH="80px">
                   {tasksByStatus[col.key].length === 0 && (
-                    <Text color="gray.400" fontSize="sm">Kei Tasks</Text>
+                    <Text color="gray.400" fontSize="sm">Keine Aufgaben</Text>
                   )}
                   {tasksByStatus[col.key].map((t: Task, idx: number) => (
                     <Draggable draggableId={t.id} index={idx} key={t.id}>
@@ -150,8 +150,8 @@ export default function TasksTable() {
                                 <Tag colorScheme={col.color} size="sm">{t.priority}</Tag>
                               </Flex>
                               <Flex align="center" gap={2} fontSize="sm" color="gray.600">
-                                <Avatar size="xs" name={t.assigneeName || t.assignedToUserId || 'Kei zuewiesene'} />
-                                <Text>{t.assigneeName || t.assignedToUserId || 'Kei zuewiesene'}</Text>
+                                <Avatar size="xs" name={t.assigneeName || t.assignedToUserId || 'Keine Zuweisung'} />
+                                <Text>{t.assigneeName || t.assignedToUserId || 'Keine Zuweisung'}</Text>
                                 {t.dueDate && <Text ml={2}>Fällig: {new Date(t.dueDate).toLocaleDateString()}</Text>}
                               </Flex>
                             </Box>
