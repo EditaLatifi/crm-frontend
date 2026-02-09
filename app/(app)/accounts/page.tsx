@@ -156,14 +156,7 @@ export default function AccountsPage() {
             <option value="ownerUserId-desc">Sortiere: Verantwortlich Z-A</option>
           </select>
         </div>
-        <div className="accounts-filters-actions" style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-          {/* Export/Import CSV buttons disabled, since ref is removed. You can re-implement CSV export/import via callback/prop pattern if needed. */}
-            <button className="accounts-export-btn" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #2563eb', background: '#2563eb', color: '#fff', padding: '6px 14px', cursor: 'pointer', height: 32, boxShadow: 'none' }} onClick={() => handleExportCSV(accounts)}>CSV exportieren</button>
-          <label className="accounts-import-label" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #36a2eb', background: '#fff', color: '#36a2eb', padding: '6px 14px', cursor: 'pointer', height: 32, display: 'flex', alignItems: 'center', boxShadow: 'none' }}>
-            CSV importieren
-            <input type="file" accept=".csv" disabled style={{ display: 'none' }} />
-          </label>
-        </div>
+        {/* Export/Import CSV buttons moved to AccountsTable */}
       </div>
       <div className="page-section-white accounts-table-section">
         <AccountsTable
