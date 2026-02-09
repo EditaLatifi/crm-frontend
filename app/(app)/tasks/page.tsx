@@ -34,7 +34,7 @@ export default function TasksPage() {
           setUsers(Array.isArray(data) ? data : []);
         });
       fetch('/api/accounts').then(res => res.json()).then(setAccounts);
-      fetch('/api/contacts').then(res => res.json()).then(setContacts);
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/contacts`).then(res => res.json()).then(setContacts);
       fetch('/api/deals').then(res => res.json()).then(setDeals);
     }
   }, [isOpen]);
