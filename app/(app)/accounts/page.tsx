@@ -4,6 +4,8 @@ import AccountsTable from '../../../components/tables/AccountsTable';
 import Modal from '../../../components/ui/Modal';
 import AccountForm from '../../../components/forms/AccountForm';
 import React, { useState, useEffect, useRef } from 'react';
+import { fetchWithAuth } from '../../../src/api/client';
+import { useAuth } from '../../../src/auth/AuthProvider';
 import './accounts-desktop.css';
 
 
@@ -31,7 +33,9 @@ const handleExportCSV = (accounts: any[]) => {
   window.URL.revokeObjectURL(url);
 };
 
+
 export default function AccountsPage() {
+  const { user } = useAuth();
   const tableRef = useRef<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -56,18 +60,6 @@ export default function AccountsPage() {
       });
   }, []);
 
-  // Fetch all users and use the first user's id for account creation
-  const [userId, setUserId] = useState<string | null>(null);
-  useEffect(() => {
-    fetch('/users')
-      .then(res => res.json())
-      .then(users => {
-        if (users && users.length > 0) {
-          setUserId(users[0].id);
-        }
-      });
-  }, []);
-
   const handleCreate = async (data: any) => {
     // Map UI type to backend enum
     const typeMap: Record<string, string> = {
@@ -76,18 +68,19 @@ export default function AccountsPage() {
       'Potential Client': 'POTENTIAL_CLIENT',
     };
     try {
+      if (!user || !user.id) throw new Error('No logged-in user found');
       const payload = {
         ...data,
         type: typeMap[data.type] || 'CLIENT',
-        ownerUserId: userId || 'REPLACE_WITH_USER_ID',
-        createdByUserId: userId || 'REPLACE_WITH_USER_ID',
+        ownerUserId: user.id,
+        createdByUserId: user.id,
       };
-      const res = await fetch('/accounts', {
+      const res = await fetchWithAuth('/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('Failed to create account');
+      if (!res) throw new Error('Failed to create account');
       setTableKey(k => k + 1); // trigger table reload
     } catch (err) {
       alert('Error creating account: ' + (err as Error).message);
@@ -165,7 +158,6 @@ export default function AccountsPage() {
         </div>
         <div className="accounts-filters-actions" style={{ display: 'flex', gap: 8, marginTop: 4 }}>
           {/* Export/Import CSV buttons disabled, since ref is removed. You can re-implement CSV export/import via callback/prop pattern if needed. */}
-          <button className="accounts-export-btn" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #2563eb', background: '#2563eb', color: '#fff', padding: '6px 14px', cursor: 'pointer', height: 32, boxShadow: 'none' }} onClick={() => handleExportCSV(accounts)}>CSV exportiere</button>
             <button className="accounts-export-btn" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #2563eb', background: '#2563eb', color: '#fff', padding: '6px 14px', cursor: 'pointer', height: 32, boxShadow: 'none' }} onClick={() => handleExportCSV(accounts)}>CSV exportieren</button>
           <label className="accounts-import-label" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #36a2eb', background: '#fff', color: '#36a2eb', padding: '6px 14px', cursor: 'pointer', height: 32, display: 'flex', alignItems: 'center', boxShadow: 'none' }}>
             CSV importieren
