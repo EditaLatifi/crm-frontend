@@ -86,7 +86,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessTokenState(null);
   }
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: '#f8f9fa',
+      }}>
+        <img
+          src="/logoip3.png"
+          alt="Logo"
+          style={{
+            width: 180,
+            height: 180,
+            marginBottom: 0,
+            animation: 'bounce 1.2s infinite',
+            display: 'block',
+          }}
+        />
+        <style>{`
+          @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            20% { transform: translateY(-30px); }
+            40% { transform: translateY(-50px); }
+            60% { transform: translateY(-30px); }
+            80% { transform: translateY(-10px); }
+          }
+        `}</style>
+      </div>
+    );
+  }
   return (
     <AuthContext.Provider value={{ user, role: user?.role || null, accessToken, login, logout, loading, error }}>
       {children}

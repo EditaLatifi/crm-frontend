@@ -5,6 +5,11 @@ import TimerWidget from './TopBar/TimerWidget';
 
 export default function TopBar() {
   const { user, logout } = useAuth();
+  const router = require('next/navigation').useRouter();
+    const handleLogout = () => {
+      logout();
+      router.replace('/login');
+  };
   return (
     <header className="flex items-center justify-between h-14 px-6 border-b bg-white">
       <div className="font-bold text-lg tracking-tight">CRM</div>
@@ -19,7 +24,7 @@ export default function TopBar() {
         <TimerWidget />
         <span className="text-sm text-gray-700">{user?.name}</span>
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="text-xs px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200"
         >
           Logout

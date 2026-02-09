@@ -35,7 +35,9 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
   const isAdmin = user?.role === 'ADMIN';
   const handleLogout = () => {
     logout();
-    router.replace('/login');
+    if (typeof window !== 'undefined') {
+      router.replace('/login');
+    }
     if (onClose) onClose();
   };
   return (
