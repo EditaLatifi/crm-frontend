@@ -9,6 +9,7 @@ import './deals-desktop.css';
 
 export default function DealsPage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [dealsTableKey, setDealsTableKey] = useState(0); // force DealsTable to re-render
   const handleCreate = async (data: any) => {
     await fetch('/api/deals', {
       method: 'POST',
@@ -16,8 +17,7 @@ export default function DealsPage() {
       body: JSON.stringify(data),
     });
     setModalOpen(false);
-    // Optionally trigger a refresh (could use router.refresh or state)
-    window.location.reload();
+    setDealsTableKey(k => k + 1); // trigger DealsTable to reload data
   };
   return (
     <div className="deals-page-container" style={{ background: '#f4f6fa', minHeight: '100vh' }}>
@@ -30,7 +30,7 @@ export default function DealsPage() {
         </button>
       </div>
       <div className="deals-section" style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: 32, marginBottom: 32 }}>
-        <DealsTable />
+        <DealsTable key={dealsTableKey} />
       </div>
       <div className="deals-section" style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: 32 }}>
         <DealsAnalytics />
