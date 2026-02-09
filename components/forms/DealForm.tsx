@@ -20,7 +20,7 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
   React.useEffect(() => {
-    fetch('/accounts')
+    fetch('/api/accounts')
       .then(res => res.json())
       .then(data => setAccounts(Array.isArray(data) ? data : []))
       .catch(() => setAccounts([]));

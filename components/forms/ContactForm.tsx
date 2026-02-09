@@ -14,7 +14,7 @@ export default function ContactForm({ onSubmit, initialData }: {
 
   useEffect(() => {
     setLoadingAccounts(true);
-    fetch('/accounts')
+    fetch('/api/accounts')
       .then(res => res.json())
       .then(data => {
         setAccounts(Array.isArray(data) ? data : []);
