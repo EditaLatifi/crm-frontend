@@ -29,7 +29,7 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
         setLoading(false);
       });
     // Fetch accounts for mapping
-    fetch('/api/accounts')
+    fetch('/accounts')
       .then(res => res.json())
       .then(data => setAccounts(Array.isArray(data) ? data : []))
       .catch(() => setAccounts([]));

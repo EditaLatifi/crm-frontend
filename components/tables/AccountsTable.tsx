@@ -285,7 +285,7 @@ function AccountsTable({ search = "", typeFilter = "", ownerFilter = "", dateFro
   const handleBulkType = () => { setShowBulkBar(false); setSelected([]); };
 
   useEffect(() => {
-    api.get('/api/accounts')
+    api.get('/accounts')
       .then(data => {
         setAccounts(data);
         setLoading(false);
@@ -386,7 +386,7 @@ function AccountsTable({ search = "", typeFilter = "", ownerFilter = "", dateFro
         // Don't send type if not changed
         delete payload.type;
       }
-      await api.patch(`/api/accounts/${editAccount.id}`, payload);
+      await api.patch(`/accounts/${editAccount.id}`, payload);
       setAccounts(accs => accs.map((a: any) => a.id === editAccount.id ? { ...a, ...payload } : a));
     } catch (err) {
       alert('Error updating account');
@@ -396,7 +396,7 @@ function AccountsTable({ search = "", typeFilter = "", ownerFilter = "", dateFro
   };
   const handleDelete = async (accountId: string) => {
     try {
-      await api.delete(`/api/accounts/${accountId}`);
+      await api.delete(`/accounts/${accountId}`);
       setAccounts(accs => accs.filter((a: any) => a.id !== accountId));
     } catch (err) {
       alert('Error deleting account');

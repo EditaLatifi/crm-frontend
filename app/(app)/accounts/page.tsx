@@ -47,7 +47,7 @@ export default function AccountsPage() {
 
   // Fetch unique owners/types for filters (simulate API or get from /api/accounts)
   useEffect(() => {
-    fetch('/api/accounts')
+    fetch('/accounts')
       .then(res => res.json())
       .then(data => {
         const arr = Array.isArray(data) ? data : [];
@@ -59,7 +59,7 @@ export default function AccountsPage() {
   // Fetch all users and use the first user's id for account creation
   const [userId, setUserId] = useState<string | null>(null);
   useEffect(() => {
-    fetch('/api/users')
+    fetch('/users')
       .then(res => res.json())
       .then(users => {
         if (users && users.length > 0) {
@@ -82,7 +82,7 @@ export default function AccountsPage() {
         ownerUserId: userId || 'REPLACE_WITH_USER_ID',
         createdByUserId: userId || 'REPLACE_WITH_USER_ID',
       };
-      const res = await fetch('/api/accounts', {
+      const res = await fetch('/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -101,7 +101,7 @@ export default function AccountsPage() {
 
   // 3. Fetch accounts and update state
   useEffect(() => {
-    fetch('/api/accounts')
+    fetch('/accounts')
       .then(res => res.json())
       .then(data => setAccounts(Array.isArray(data) ? data : []));
   }, [tableKey]);

@@ -28,7 +28,7 @@ export default function TasksPage() {
   useEffect(() => {
     loadTokenFromStorage(); // Ensure token is loaded from localStorage
     if (isOpen) {
-      fetchWithAuth('/api/users')
+      fetchWithAuth('/users')
         .then(data => {
           console.log('[TasksPage] /api/users response:', data);
           setUsers(Array.isArray(data) ? data : []);

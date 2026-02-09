@@ -153,7 +153,7 @@ export default function TaskDetailsPage() {
   useEffect(() => {
     fetchTask();
     loadTokenFromStorage(); // Ensure token is loaded from localStorage
-    fetchWithAuth('/api/users')
+    fetchWithAuth('/users')
       .then(data => {
         console.log('[TaskDetailsPage] /api/users response:', data);
         setUsers(Array.isArray(data) ? data : []);

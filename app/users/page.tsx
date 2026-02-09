@@ -22,7 +22,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     if (user?.role === 'ADMIN') {
-      api.get('/api/users').then((data) => {
+      api.get('/users').then((data) => {
         console.log('[UsersPage] GET /api/users result:', data);
         setUsers(data);
         setAllUsers(data);
@@ -33,11 +33,11 @@ export default function UsersPage() {
   const handleAddUser = async () => {
     setLoading(true);
     try {
-      const created = await api.post('/api/users', newUser);
+      const created = await api.post('/users', newUser);
       setUsers((prev) => [...prev, created]);
       setNewUser({ email: '', name: '', role: 'USER', password: '' });
       // Fetch all users again to refresh the second table
-      const fresh = await api.get('/api/users');
+      const fresh = await api.get('/users');
       console.log('[UsersPage] After add, GET /api/users result:', fresh);
       setAllUsers(fresh);
     } finally {
