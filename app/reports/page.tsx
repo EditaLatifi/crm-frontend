@@ -37,7 +37,7 @@ export default function ReportsPage() {
   const [activityData, setActivityData] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] });
 
   useEffect(() => {
-    fetch("/api/time-entries")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/time-entries`)
       .then(res => res.json())
       .then((data: TimeEntry[]) => {
         setAllEntries(data);

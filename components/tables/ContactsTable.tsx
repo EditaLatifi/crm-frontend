@@ -17,8 +17,9 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
 
   useEffect(() => {
     setLoading(true);
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
     // Fetch contacts
-    fetch(adminView ? '/api/contacts?admin=1' : '/api/contacts')
+    fetch(adminView ? `${API_URL}/contacts?admin=1` : `${API_URL}/contacts`)
       .then(async res => {
         try {
           const data = await res.json();
@@ -29,7 +30,7 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
         setLoading(false);
       });
     // Fetch accounts for mapping
-    fetch('/accounts')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/accounts`)
       .then(res => res.json())
       .then(data => setAccounts(Array.isArray(data) ? data : []))
       .catch(() => setAccounts([]));
@@ -70,7 +71,7 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
               if (!window.confirm(`Sind Sie sicher, dass Sie die ${selected.length} ausgewählten Kontakte löschen möchten?`)) return;
               setDeleting(true);
               try {
-                const res = await fetch('/api/contacts/bulk', {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/contacts/bulk`, {
                   method: 'DELETE',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ ids: selected }),
@@ -122,7 +123,7 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
                       onClick={async () => {
                         if (!window.confirm(`Sind Sie sicher, dass Sie den Kontakt '${c.name}' löschen möchten?`)) return;
                         try {
-                          const res = await fetch(`/api/contacts/${c.id}`, {
+                          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/contacts/${c.id}`, {
                             method: 'DELETE',
                             headers: { 'Content-Type': 'application/json' },
                           });
@@ -196,7 +197,7 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
                         onClick={async () => {
                           if (!window.confirm(`Sind Sie sicher, dass Sie den Kontakt '${c.name}' löschen möchten?`)) return;
                           try {
-                            const res = await fetch(`/api/contacts/${c.id}`, {
+                            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/contacts/${c.id}`, {
                               method: 'DELETE',
                               headers: { 'Content-Type': 'application/json' },
                             });

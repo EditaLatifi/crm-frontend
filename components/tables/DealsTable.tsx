@@ -1,6 +1,7 @@
 
 "use client";
 import { useEffect, useState } from 'react';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 import DealForm from '../forms/DealForm';
 import './deals-table-desktop.css';
 
@@ -12,7 +13,7 @@ export default function DealsTable() {
 
   const fetchDeals = () => {
     setLoading(true);
-    fetch('/api/deals')
+    fetch(`${API_URL}/deals`)
       .then(async res => {
         try {
           const data = await res.json();
@@ -31,7 +32,7 @@ export default function DealsTable() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Diesen Deal wirklich löschen?')) return;
-    await fetch(`/api/deals/${id}`, { method: 'DELETE' });
+    await fetch(`${API_URL}/deals/${id}`, { method: 'DELETE' });
     fetchDeals();
   };
 
@@ -41,7 +42,7 @@ export default function DealsTable() {
   };
 
   const handleEditSubmit = async (data: any) => {
-    await fetch(`/api/deals/${editDeal.id}`, {
+    await fetch(`${API_URL}/deals/${editDeal.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),

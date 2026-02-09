@@ -1,6 +1,7 @@
 
 "use client";
 import { useEffect, useState } from "react";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function DealDetailsPage({ params }: { params: { id: string } }) {
   const [notes, setNotes] = useState<any[]>([]);
@@ -15,28 +16,28 @@ export default function DealDetailsPage({ params }: { params: { id: string } }) 
   const [contacts, setContacts] = useState<any[]>([]);
 
   const fetchNotes = async () => {
-    const res = await fetch(`/api/deals/${params.id}/notes`);
+    const res = await fetch(`${API_URL}/deals/${params.id}/notes`);
     setNotes(await res.json());
   };
   const fetchAttachments = async () => {
-    const res = await fetch(`/api/deals/${params.id}/attachments`);
+    const res = await fetch(`${API_URL}/deals/${params.id}/attachments`);
     setAttachments(await res.json());
   };
   const fetchDeal = async () => {
-    const res = await fetch(`/api/deals/${params.id}`);
+    const res = await fetch(`${API_URL}/deals/${params.id}`);
     const d = await res.json();
     setDeal(d);
     // Fetch related account
     if (d.accountId) {
-      const accRes = await fetch(`/api/accounts/${d.accountId}`);
+      const accRes = await fetch(`${API_URL}/accounts/${d.accountId}`);
       setAccount(await accRes.json());
     }
     // Fetch related tasks
-    const tasksRes = await fetch(`/api/tasks?dealId=${params.id}`);
+    const tasksRes = await fetch(`${API_URL}/tasks?dealId=${params.id}`);
     setTasks(await tasksRes.json());
     // Fetch related contacts (via account)
     if (d.accountId) {
-      const contactsRes = await fetch(`/api/contacts?accountId=${d.accountId}`);
+      const contactsRes = await fetch(`${API_URL}/contacts?accountId=${d.accountId}`);
       setContacts(await contactsRes.json());
     }
   };
@@ -48,7 +49,7 @@ export default function DealDetailsPage({ params }: { params: { id: string } }) 
 
   const handleAddNote = async (e: any) => {
     e.preventDefault();
-    await fetch(`/api/deals/${params.id}/notes`, {
+    await fetch(`${API_URL}/deals/${params.id}/notes`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: noteContent }),
@@ -59,7 +60,7 @@ export default function DealDetailsPage({ params }: { params: { id: string } }) 
 
   const handleAddAttachment = async (e: any) => {
     e.preventDefault();
-    await fetch(`/api/deals/${params.id}/attachments`, {
+    await fetch(`${API_URL}/deals/${params.id}/attachments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: attachmentUrl, filename: attachmentFilename }),

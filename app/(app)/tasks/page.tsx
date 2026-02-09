@@ -33,9 +33,10 @@ export default function TasksPage() {
           console.log('[TasksPage] /api/users response:', data);
           setUsers(Array.isArray(data) ? data : []);
         });
-      fetch('/api/accounts').then(res => res.json()).then(setAccounts);
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/contacts`).then(res => res.json()).then(setContacts);
-      fetch('/api/deals').then(res => res.json()).then(setDeals);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      fetch(`${API_URL}/accounts`).then(res => res.json()).then(setAccounts);
+      fetch(`${API_URL}/contacts`).then(res => res.json()).then(setContacts);
+      fetch(`${API_URL}/deals`).then(res => res.json()).then(setDeals);
     }
   }, [isOpen]);
 
@@ -50,7 +51,8 @@ export default function TasksPage() {
     // You may want to get the current user from context/auth for createdByUserId
     let createdByUserId = users[0]?.id || '';
     try {
-      const res = await fetch('/api/tasks', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, createdByUserId }),

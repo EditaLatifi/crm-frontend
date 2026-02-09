@@ -138,9 +138,10 @@ export default function TaskDetailsPage() {
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
   const fetchTask = () => {
     if (!taskId) return;
-    fetch(`/api/tasks/${taskId}`)
+    fetch(`${API_URL}/tasks/${taskId}`)
       .then(res => res.json())
       .then(data => {
         setTask(data);
@@ -162,7 +163,7 @@ export default function TaskDetailsPage() {
   const handleAssignUser = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const userId = e.target.value;
     setAssigning(true);
-    await fetch(`/api/tasks/${taskId}`, {
+    await fetch(`${API_URL}/tasks/${taskId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ assignedToUserId: userId })
@@ -181,7 +182,7 @@ export default function TaskDetailsPage() {
 
   const handleMove = async (newStatus: string) => {
     if (newStatus === task.status) return;
-    await fetch(`/api/tasks/${task.id}/status`, {
+    await fetch(`${API_URL}/tasks/${task.id}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus })
@@ -218,7 +219,7 @@ export default function TaskDetailsPage() {
         setLoadingTime(false);
         return;
       }
-      const res = await fetch(`/api/tasks/${taskId}/time-entries`, {
+      const res = await fetch(`${API_URL}/tasks/${taskId}/time-entries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...newTime, userId: user?.id, accountId }),
@@ -240,7 +241,7 @@ export default function TaskDetailsPage() {
   const handlePriorityChange = async (e: any) => {
     const newPriority = e.target.value;
     setPriority(newPriority);
-    await fetch(`/api/tasks/${taskId}/priority`, {
+    await fetch(`${API_URL}/tasks/${taskId}/priority`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ priority: newPriority })
@@ -261,7 +262,7 @@ export default function TaskDetailsPage() {
   const saveEdit = async () => {
     setSaving(true);
     try {
-      await fetch(`/api/tasks/${taskId}`, {
+      await fetch(`${API_URL}/tasks/${taskId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -21,7 +21,7 @@ function AdminTimePageContent() {
   const [entries, setEntries] = useState<TimeEntry[]>([]);
 
   useEffect(() => {
-    fetch("/api/time-entries")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/time-entries`)
       .then(res => res.json())
       .then(data => setEntries(data))
       .catch(() => setEntries([]));

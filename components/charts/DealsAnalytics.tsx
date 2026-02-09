@@ -2,13 +2,14 @@
 import './deals-analytics-desktop.css';
 import './deals-analytics-mobile.css';
 import { useEffect, useState } from "react";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function DealsAnalytics() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/deals/analytics")
+    fetch(`${API_URL}/deals/analytics`)
       .then(res => res.json())
       .then(data => {
         setAnalytics(data);

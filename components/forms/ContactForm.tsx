@@ -14,7 +14,7 @@ export default function ContactForm({ onSubmit, initialData }: {
 
   useEffect(() => {
     setLoadingAccounts(true);
-    fetch('/api/accounts')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/accounts`)
       .then(res => res.json())
       .then(data => {
         setAccounts(Array.isArray(data) ? data : []);

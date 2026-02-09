@@ -1,6 +1,7 @@
 
 "use client";
 import React, { useEffect, useState } from 'react';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { getMe } from '../../src/api/client';
 
@@ -38,7 +39,7 @@ export default function UserProfilePage() {
           userData = null;
         }
       }
-      const tasksRes = await fetch('/api/tasks?assignedToMe=true');
+      const tasksRes = await fetch(`${API_URL}/tasks?assignedToMe=true`);
       let tasksData: Task[] = [];
       try {
         const data = await tasksRes.json();

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, use } from "react";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 import Modal from '../../../../components/ui/Modal';
 import AccountEditForm from '../../../../components/forms/AccountEditForm';
 
@@ -12,7 +13,7 @@ export default function AccountDetailsPage({ params }: { params: Promise<{ id: s
   const [editOpen, setEditOpen] = useState(false);
 
   const fetchAccount = () => {
-    fetch(`/api/accounts/${id}`)
+    fetch(`${API_URL}/accounts/${id}`)
       .then(res => res.json())
       .then(data => {
         setAccount(data);
@@ -25,7 +26,7 @@ export default function AccountDetailsPage({ params }: { params: Promise<{ id: s
   }, [id]);
 
   const handleEdit = async (data: any) => {
-    await fetch(`/api/accounts/${id}`, {
+    await fetch(`${API_URL}/accounts/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),

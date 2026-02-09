@@ -51,7 +51,7 @@ export default function AccountsPage() {
 
   // Fetch unique owners/types for filters (simulate API or get from /api/accounts)
   useEffect(() => {
-    fetch('/accounts')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/accounts`)
       .then(res => res.json())
       .then(data => {
         const arr = Array.isArray(data) ? data : [];

@@ -10,8 +10,9 @@ import './deals-desktop.css';
 export default function DealsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [dealsTableKey, setDealsTableKey] = useState(0); // force DealsTable to re-render
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
   const handleCreate = async (data: any) => {
-    await fetch('/api/deals', {
+    await fetch(`${API_URL}/deals`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),

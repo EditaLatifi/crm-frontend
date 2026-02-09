@@ -28,7 +28,8 @@ export default function ActivityLog({ accountId, onClose }: { accountId: string,
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/activity?entityType=Account&entityId=${accountId}`)
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    fetch(`${API_URL}/activity?entityType=Account&entityId=${accountId}`)
       .then(async res => {
         try {
           const data = await res.json();

@@ -12,6 +12,7 @@ interface Task {
   assigneeName?: string;
   assignedToUserId?: string;
 }
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const statusColumns = [
   { key: 'OPEN', label: 'Offen', color: 'gray' },
@@ -24,9 +25,9 @@ export default function TasksTable() {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Fetch tasks
+  // Fetch tasks using API_URL from env
   const fetchTasks = () => {
-    fetch('/api/tasks')
+    fetch(`${API_URL}/tasks`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -69,7 +70,7 @@ export default function TasksTable() {
     const taskId = draggableId;
     const newStatus = destination.droppableId;
     setTasks(prev => prev.map((t: Task) => t.id === taskId ? { ...t, status: newStatus } : t));
-    await fetch(`/api/tasks/${taskId}/status`, {
+    await fetch(`${API_URL}/tasks/${taskId}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus })

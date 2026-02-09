@@ -28,7 +28,7 @@ export default function DashboardPage() {
 	useEffect(() => {
 		if (!user) return;
 		// Fetch tasks summary
-		fetch('/api/tasks')
+		fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/tasks`)
 			.then(res => res.json())
 			.then(data => {
 				if (Array.isArray(data)) {
@@ -50,7 +50,7 @@ export default function DashboardPage() {
 				}
 			});
 		// Fetch deals summary
-		fetch('/api/deals')
+		fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/deals`)
 			.then(res => res.json())
 			.then(data => {
 				if (Array.isArray(data)) {
@@ -71,7 +71,7 @@ export default function DashboardPage() {
 				}
 			});
 		// Fetch time entries summary
-		fetch('/api/time-entries')
+		fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/time-entries`)
 			.then(res => res.json())
 			.then(data => {
 				if (Array.isArray(data)) {

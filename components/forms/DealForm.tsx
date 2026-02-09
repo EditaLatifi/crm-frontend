@@ -20,11 +20,11 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
   React.useEffect(() => {
-    fetch('/api/accounts')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/accounts`)
       .then(res => res.json())
       .then(data => setAccounts(Array.isArray(data) ? data : []))
       .catch(() => setAccounts([]));
-    fetch('/api/deals/deal-stages')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/deals/deal-stages`)
       .then(res => res.json())
       .then(data => setStages(Array.isArray(data) ? data : []))
       .catch(() => setStages([]));

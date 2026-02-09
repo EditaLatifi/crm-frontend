@@ -24,7 +24,8 @@ export default function ActivityFeedPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/activity?limit=20')
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    fetch(`${API_URL}/activity?limit=20`)
       .then(async res => {
         try {
           const data = await res.json();
