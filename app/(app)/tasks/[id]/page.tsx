@@ -194,7 +194,7 @@ export default function TaskDetailsPage() {
     setLoadingComment(true);
     try {
       // Use fetchWithAuth for authenticated requests
-      const res = await fetchWithAuth(`/api/tasks/${taskId}/comments`, {
+      const res = await fetchWithAuth(`/tasks/${taskId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: newComment })
