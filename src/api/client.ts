@@ -55,5 +55,5 @@ export async function login(email: string, password: string) {
 }
 
 export async function getMe(email: string) {
-  return api.post('/api/users/me', {});
+  return api.post('/users/me', {});
 }
