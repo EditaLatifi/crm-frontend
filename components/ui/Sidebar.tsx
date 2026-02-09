@@ -57,7 +57,7 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
       <Flex align="center" mb={4} gap={0} px={3} py={3} bg="transparent" borderBottom="1px solid #d1d5db">
         <img src="/logoip3.png" alt="Logo" style={{ height: 36, marginRight: 12, display: 'block' }} />
         {onClose && (
-          <Button aria-label="Close sidebar" onClick={onClose} ml="auto" size="sm" bg="#f4f5f7" color="#23272f" _hover={{ bg: '#e5e7eb' }} borderRadius="sm">
+          <Button aria-label="Close sidebar" onClick={onClose} ml="auto" size="sm" bg="#f4f5f7" color="#23272f" _hover={{ bg: '#e5e7eb' }} borderRadius="sm"   display={{ base: "flex", md: "none" }}>
             ×
           </Button>
         )}
