@@ -15,7 +15,21 @@ export async function fetchWithAuth(input: RequestInfo, init: RequestInit = {}, 
   let url = typeof input === 'string' && /^https?:\/\//.test(input) ? input : `${API_BASE_URL}${input}`;
   // Debug log for token and headers
   console.log('fetchWithAuth', { url, token, headers: Object.fromEntries(headers.entries()) });
-  let res = await fetch(url, { ...init, headers, credentials: 'include' });
+
+  // Add timeout to fetch
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000); // 15 seconds
+  let res;
+  try {
+    res = await fetch(url, { ...init, headers, credentials: 'include', signal: controller.signal });
+  } catch (err) {
+    clearTimeout(timeout);
+    if (err.name === 'AbortError') {
+      throw { status: 408, message: 'Server is slow or waking up. Please try again.' };
+    }
+    throw err;
+  }
+  clearTimeout(timeout);
   if (res.status === 401 && retry) {
     // Try refresh
     const refreshed = await refreshToken();

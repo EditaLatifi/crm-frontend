@@ -29,10 +29,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // On mount, try to load token from storage (if fallback is used) and validate it
+  // Helper: decode JWT and check expiration
+  function isTokenExpired(token: string | null): boolean {
+    if (!token) return true;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (!payload.exp) return false;
+      const now = Math.floor(Date.now() / 1000);
+      return payload.exp < now;
+    } catch {
+      return true;
+    }
+  }
+
   useEffect(() => {
     loadTokenFromStorage();
     const token = getAccessToken();
+    if (token && isTokenExpired(token)) {
+      clearAccessToken();
+      clearTokenFromStorage();
+      setAccessTokenState(null);
+      setUser(null);
+      setLoading(false);
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+      return;
+    }
     setAccessTokenState(token || null);
     if (token) {
       // Validate token by calling bootstrapUser
@@ -61,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err: any) {
       setUser(null);
       if (err.status === 401) clearAccessToken();
+      if (err.status === 408) setError('Server is waking up or slow. Please wait a moment and try again.');
     } finally {
       setLoading(false);
     }
