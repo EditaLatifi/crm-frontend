@@ -6,7 +6,7 @@ import Modal from '../../../components/ui/Modal';
 import DealForm from '../../../components/forms/DealForm';
 import React, { useState } from 'react';
 import './deals-desktop.css';
-
+import DealInsightsWidget from '../../../components/deals/DealInsightsWidget';
 export default function DealsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [dealsTableKey, setDealsTableKey] = useState(0); // force DealsTable to re-render
@@ -30,15 +30,17 @@ export default function DealsPage() {
           + Neuer Deal
         </button>
       </div>
+      {/* AI Insights Widget Section */}
       <div className="deals-section" style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: 32, marginBottom: 32 }}>
         <DealsTable key={dealsTableKey} />
       </div>
       <div className="deals-section" style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: 32 }}>
         <DealsAnalytics />
       </div>
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Neuer Deal">
-        <DealForm onSubmit={handleCreate} />
-      </Modal>
+      <div className="deals-section" style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: 32, marginBottom: 32 }}>
+        {/* AI Insights Widget */}
+        <DealInsightsWidget />
+      </div>
     </div>
   );
 }
