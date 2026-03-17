@@ -1,6 +1,7 @@
 
 "use client";
 import React, { useEffect, useState } from 'react';
+import './profile-mobile.css';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { api, getMe } from '../../src/api/client';
 
@@ -53,8 +54,8 @@ export default function UserProfilePage() {
   }, [authUser]);
 
   return (
-    <div style={{ padding: 40, maxWidth: 640, margin: '0 auto', background: '#f5f6f7', borderRadius: 12, boxShadow: '0 2px 8px #e5e7eb33' }}>
-      <h1 style={{ marginBottom: 28, fontSize: 26, fontWeight: 700, color: '#222', letterSpacing: 0.5, borderBottom: '1px solid #e0e2e5', paddingBottom: 12 }}>Benutzer-Profil</h1>
+    <div className="profile-container" style={{ padding: 40, maxWidth: 640, margin: '0 auto', background: '#f5f6f7', borderRadius: 12, boxShadow: '0 2px 8px #e5e7eb33' }}>
+      <h1 className="profile-title" style={{ marginBottom: 28, fontSize: 26, fontWeight: 700, color: '#222', letterSpacing: 0.5, borderBottom: '1px solid #e0e2e5', paddingBottom: 12 }}>Benutzer-Profil</h1>
       <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #e0e2e5', padding: 28, marginBottom: 28 }}>
         {user ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

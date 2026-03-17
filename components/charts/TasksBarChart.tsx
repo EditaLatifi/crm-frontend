@@ -18,6 +18,7 @@ export default function TasksBarChart({ data }: { data: { labels: string[], valu
         }}
         options={{
           responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
             title: { display: true, text: 'Aufgabenübersicht' },

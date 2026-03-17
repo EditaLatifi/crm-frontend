@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import './reports-mobile.css';
 import TimeLineChart from "../../components/charts/TimeLineChart";
 import { api } from "../../src/api/client";
 
@@ -137,7 +138,7 @@ export default function ReportsPage() {
   return (
     <div style={{ padding: '28px 32px', maxWidth: 1400, margin: '0 auto' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+      <div className="reports-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, color: '#1e293b', margin: 0 }}>Berichte</h1>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {/* Date range selector */}
@@ -159,7 +160,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Time KPIs */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 28, flexWrap: 'wrap' }}>
+      <div className="reports-kpi-row" style={{ display: 'flex', gap: 16, marginBottom: 28, flexWrap: 'wrap' }}>
         <StatCard title="Gesamtzeit (gefiltert)" value={fmt(totalMinutes)} color="#2563eb" />
         <StatCard title="Diese Woche" value={fmt(weekMins)} color="#0891b2" />
         <StatCard title="Top Mitglied" value={topUsers[0]?.name || '-'} color="#7c3aed" />
@@ -167,7 +168,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Deal Revenue KPIs */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 28, flexWrap: 'wrap' }}>
+      <div className="reports-kpi-row" style={{ display: 'flex', gap: 16, marginBottom: 28, flexWrap: 'wrap' }}>
         <StatCard title="Pipeline-Wert" value={`${pipelineValue.toLocaleString('de-CH')} CHF`} color="#7c3aed" />
         <StatCard title="Gewonnener Umsatz" value={`${revenueWon.toLocaleString('de-CH')} CHF`} color="#16a34a" />
         <StatCard title="Gewinnrate" value={`${winRate}%`} color="#16a34a" />
@@ -175,7 +176,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Charts row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, marginBottom: 28 }}>
+      <div className="reports-charts-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, marginBottom: 28 }}>
         <div style={{ background: '#fff', borderRadius: 12, border: '1.5px solid #e5e7eb', padding: '20px 24px' }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 16 }}>Aktivitäts-Report (Letzte 7 Tage)</div>
           <TimeLineChart data={activityData} />
@@ -207,7 +208,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Tables row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div className="reports-tables-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
         {/* Top users */}
         <div style={{ background: '#fff', borderRadius: 12, border: '1.5px solid #e5e7eb', overflow: 'hidden' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', fontSize: 14, fontWeight: 700, color: '#1e293b' }}>

@@ -18,9 +18,10 @@ export default function DealsPieChart({ data }: { data: { labels: string[], valu
         }}
         options={{
           responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: { position: 'bottom' },
-            title: { display: true, text: 'Deals nach Phase' }, // Already standard German, no change needed
+            title: { display: true, text: 'Deals nach Phase' },
           },
         }}
       />

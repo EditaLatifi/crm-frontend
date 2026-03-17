@@ -1,0 +1,9 @@
+@media (max-width: 1019px) {
+  .calendar-container {
+    margin-top: 40px !important;
+  }
+
+  .calendar-nav {
+    gap: 0 !important;
+  }
+}

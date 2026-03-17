@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, use } from "react";
+import './contact-id-mobile.css';
 import Link from "next/link";
 import { api } from "../../../../src/api/client";
 import Modal from "../../../../components/ui/Modal";
@@ -64,7 +65,7 @@ export default function ContactDetailsPage({ params }: { params: Promise<{ id: s
   return (
     <div style={{ padding: "28px 32px", maxWidth: 900, margin: "0 auto" }}>
       {/* Breadcrumb */}
-      <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}>
+      <div className="contact-breadcrumb" style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}>
         <Link href="/contacts" style={{ color: "#2563eb", textDecoration: "none", fontWeight: 600 }}>Kontakte</Link>
         <span style={{ margin: "0 6px" }}>›</span>
         <span style={{ color: "#1e293b" }}>{contact.name}</span>

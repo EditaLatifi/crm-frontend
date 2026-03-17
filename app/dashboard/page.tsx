@@ -215,7 +215,7 @@ export default function DashboardPage() {
     <div className="dashboard-responsive" style={{ padding: '28px 32px 40px', maxWidth: 1400, margin: '0 auto' }}>
 
       {/* Header */}
-      <div style={{
+      <div className="dash-header" style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)',
         borderRadius: 18, padding: '28px 32px', marginBottom: 24,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -232,7 +232,7 @@ export default function DashboardPage() {
             {activeTasks.length} offene Aufgaben · {openDeals.length} Deals in der Pipeline
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div className="dash-header-badge" style={{ display: 'flex', gap: 12 }}>
           {overdueTasks.length > 0 && (
             <Link href="/tasks" style={{ textDecoration: 'none' }}>
               <div style={{
@@ -251,7 +251,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+      <div className="dash-kpi-row" style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
         <StatCard
           label="Aktive Aufgaben" value={activeTasks.length}
           sub={overdueTasks.length > 0 ? `${overdueTasks.length} überfällig` : 'Alle pünktlich'}
@@ -276,26 +276,26 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 24 }}>
+      <div className="dash-charts-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 24 }}>
         <SectionCard title="Aufgaben nach Status">
-          <div style={{ padding: '12px 16px 20px', minHeight: 200 }}>
+          <div className="dash-chart-inner" style={{ padding: '12px 16px 20px', minHeight: 200 }}>
             <TasksBarChart data={tasksChart} />
           </div>
         </SectionCard>
         <SectionCard title="Deals nach Phase">
-          <div style={{ padding: '12px 16px 20px', minHeight: 200 }}>
+          <div className="dash-chart-inner" style={{ padding: '12px 16px 20px', minHeight: 200 }}>
             <DealsPieChart data={dealsChart} />
           </div>
         </SectionCard>
         <SectionCard title="Erfasste Zeit (7 Tage)">
-          <div style={{ padding: '12px 16px 20px', minHeight: 200 }}>
+          <div className="dash-chart-inner" style={{ padding: '12px 16px 20px', minHeight: 200 }}>
             <TimeLineChart data={timeChart} />
           </div>
         </SectionCard>
       </div>
 
       {/* Bottom row — 3 columns */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+      <div className="dash-bottom-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
 
         {/* Upcoming tasks */}
         <SectionCard title="Anstehende Aufgaben" linkHref="/tasks" linkLabel="Alle Aufgaben">

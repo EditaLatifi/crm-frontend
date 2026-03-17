@@ -211,7 +211,7 @@ export default function TaskDetailsPage() {
 
       <div className="task-detail-wrap" style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 24px" }}>
         {/* Header breadcrumb */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, color: "#64748b", fontSize: 13 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, marginTop: 30, color: "#64748b", fontSize: 13 }}>
           <a href="/tasks" style={{ color: "#64748b", textDecoration: "none" }}>Aufgaben</a>
           <span>/</span>
           <span style={{ color: "#0f172a", fontWeight: 500 }}>

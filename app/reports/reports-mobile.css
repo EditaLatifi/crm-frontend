@@ -1,0 +1,28 @@
+@media (max-width: 1019px) {
+  .reports-header {
+    margin-top: 30px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  .reports-kpi-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  .reports-kpi-row > * {
+    min-width: 0 !important;
+    flex: none !important;
+  }
+
+  .reports-charts-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .reports-tables-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}

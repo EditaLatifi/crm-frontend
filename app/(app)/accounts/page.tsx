@@ -9,6 +9,7 @@ import { fetchWithAuth, api } from '../../../src/api/client';
 import { useAuth } from '../../../src/auth/AuthProvider';
 import { useToast } from '../../../components/ui/Toast';
 import './accounts-desktop.css';
+import './accounts-mobile.css';
 
 
 // Demo tags for filter dropdown (should be fetched from API in real app)

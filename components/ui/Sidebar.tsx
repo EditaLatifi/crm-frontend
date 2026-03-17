@@ -160,6 +160,7 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
       <div style={{
         borderTop: "1px solid rgba(255,255,255,0.07)",
         padding: "14px 16px",
+        paddingBottom: "calc(14px + env(safe-area-inset-bottom))",
       }}>
         <div style={{
           display: "flex",

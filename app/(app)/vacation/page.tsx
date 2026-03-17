@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../../src/api/client";
 import { useToast } from "../../../components/ui/Toast";
+import './vacation-mobile.css';
 import Modal from "../../../components/ui/Modal";
 
 interface VacationRequest {
@@ -103,7 +104,7 @@ export default function VacationPage() {
   return (
     <div style={{ padding: "28px 32px", maxWidth: 900, margin: "0 auto" }}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
+      <div className="vacation-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1e293b", margin: 0 }}>Meine Urlaubsanträge</h1>
           <div style={{ fontSize: 14, color: "#64748b", marginTop: 4 }}>

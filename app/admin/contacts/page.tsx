@@ -35,7 +35,7 @@ function AdminContactsPageContent() {
       <div style={{
         background: 'linear-gradient(135deg, #f8f9fb 60%, #e9effd 100%)',
         borderRadius: 18, boxShadow: '0 4px 16px rgba(30,41,59,0.10)',
-        padding: '28px 28px 22px', marginBottom: 18,
+        padding: '28px 28px 22px', marginBottom: 18, marginTop: 30,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div>

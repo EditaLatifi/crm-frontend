@@ -1,0 +1,13 @@
+@media (max-width: 1019px) {
+  .profile-container {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 16px !important;
+    margin-top: 0 !important;
+  }
+
+  .profile-title {
+    margin-top: 30px !important;
+  }
+}

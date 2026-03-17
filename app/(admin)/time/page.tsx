@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import './time-mobile.css';
 import TimeEntriesTable from '../../../components/tables/TimeEntriesTable';
 import { api } from '../../../src/api/client';
 import { useAuth } from '../../../src/auth/AuthProvider';
@@ -46,7 +47,7 @@ function TimePageContent() {
 
   return (
     <div style={{ padding: 32, fontFamily: 'Inter, system-ui, sans-serif' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div className="time-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', margin: 0 }}>
             {isAdmin ? 'Zeiterfassung – Alle Benutzer' : 'Meine Zeiterfassung'}

@@ -8,6 +8,7 @@ import DealForm from '../../../components/forms/DealForm';
 import { useState } from 'react';
 import { api } from '../../../src/api/client';
 import './deals-desktop.css';
+import './responsive.css';
 
 type ViewMode = 'kanban' | 'table';
 
@@ -76,11 +77,11 @@ export default function DealsPage() {
       </div>
 
       {/* Analytics + Insights */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
-        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: 28 }}>
+      <div className="deals-analytics-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
+        <div className="deals-analytics-card" style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: 28 }}>
           <DealsAnalytics />
         </div>
-        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: 28 }}>
+        <div className="deals-analytics-card" style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: 28 }}>
           <DealInsightsWidget />
         </div>
       </div>

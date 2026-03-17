@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
+import './activity-mobile.css';
 import { api } from '../../src/api/client';
 
 interface Activity {
@@ -78,7 +79,7 @@ export default function ActivityFeedPage() {
 
   return (
     <div style={{ padding: '28px 32px', maxWidth: 800, margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div className="activity-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1e293b', margin: 0 }}>Aktivitäten</h1>
           <div style={{ fontSize: 13, color: '#64748b', marginTop: 3 }}>

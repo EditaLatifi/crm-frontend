@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import './calendar-mobile.css';
 import { api } from "../../../src/api/client";
 import Modal from "../../../components/ui/Modal";
 import { useToast } from "../../../components/ui/Toast";
@@ -136,10 +137,10 @@ export default function CalendarPage() {
   }
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
+    <div className="calendar-container" style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1e293b", margin: 0 }}>Kalender</h1>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="calendar-nav" style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button onClick={prevMonth} style={{ background: "#f1f5f9", border: "none", borderRadius: 7, padding: "7px 14px", cursor: "pointer", fontWeight: 700, fontSize: 16 }}>‹</button>
           <span style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", minWidth: 160, textAlign: "center" }}>{MONTHS[month]} {year}</span>
           <button onClick={nextMonth} style={{ background: "#f1f5f9", border: "none", borderRadius: 7, padding: "7px 14px", cursor: "pointer", fontWeight: 700, fontSize: 16 }}>›</button>

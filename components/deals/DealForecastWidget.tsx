@@ -65,7 +65,7 @@ export default function DealForecastWidget() {
         Gewichtet gesamt: <b style={{ color: "#2563eb" }}>{Math.round(totalWeighted).toLocaleString("de-CH")} CHF</b>
       </div>
 
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 120 }}>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 120, width: '100%', overflow: 'hidden' }}>
         {buckets.map((b) => {
           const heightPct = (b.expected / maxVal) * 100;
           const weightedPct = (b.weighted / maxVal) * 100;
@@ -88,7 +88,7 @@ export default function DealForecastWidget() {
                   minHeight: b.weighted > 0 ? 4 : 0,
                 }} />
               </div>
-              <div style={{ fontSize: 10, color: "#64748b", fontWeight: 600 }}>{b.label}</div>
+              <div style={{ fontSize: 9, color: "#64748b", fontWeight: 600, textAlign: 'center', wordBreak: 'break-all' }}>{b.label}</div>
             </div>
           );
         })}

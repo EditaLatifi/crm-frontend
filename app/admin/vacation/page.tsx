@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import './admin-vacation-mobile.css';
 import { api } from "../../../src/api/client";
 import { useToast } from "../../../components/ui/Toast";
 import Modal from "../../../components/ui/Modal";
@@ -99,7 +100,7 @@ export default function AdminVacationPage() {
   return (
     <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
+      <div className="admin-vacation-header" style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1e293b", margin: 0 }}>Urlaubsverwaltung</h1>
         <div style={{ fontSize: 14, color: "#64748b", marginTop: 4 }}>Übersicht und Genehmigung aller Urlaubsanträge.</div>
       </div>
