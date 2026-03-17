@@ -25,13 +25,13 @@ export default function AccountEditForm({ initialData, onSubmit, onCancel }: {
           <option value="Partner">Partner</option>
           <option value="Potential Client">Potenzielle Kunde</option>
         </select>
-        <label style={{ fontWeight: 700, fontSize: 16, color: '#23272f', alignSelf: 'center' }}>Adress</label>
+        <label style={{ fontWeight: 700, fontSize: 16, color: '#23272f', alignSelf: 'center' }}>Adresse</label>
         <input value={address} onChange={e => setAddress(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 6, border: '1.5px solid #b3bac5', fontSize: 16, background: '#f8f9fb', color: '#23272f' }} />
         <label style={{ fontWeight: 700, fontSize: 16, color: '#23272f', alignSelf: 'center' }}>Telefon</label>
         <input value={phone} onChange={e => setPhone(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 6, border: '1.5px solid #b3bac5', fontSize: 16, background: '#f8f9fb', color: '#23272f' }} />
         <label style={{ fontWeight: 700, fontSize: 16, color: '#23272f', alignSelf: 'center' }}>E-Mail</label>
         <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 6, border: '1.5px solid #b3bac5', fontSize: 16, background: '#f8f9fb', color: '#23272f' }} />
-        <label style={{ fontWeight: 700, fontSize: 16, color: '#23272f', alignSelf: 'center' }}>Notize</label>
+        <label style={{ fontWeight: 700, fontSize: 16, color: '#23272f', alignSelf: 'center' }}>Notizen</label>
         <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 6, border: '1.5px solid #b3bac5', fontSize: 16, background: '#f8f9fb', color: '#23272f', minHeight: 60 }} />
       </div>
       <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 8 }}>

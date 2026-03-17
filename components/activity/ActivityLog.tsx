@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { api } from '../../src/api/client';
 
 interface Activity {
   id: string;
@@ -28,17 +29,9 @@ export default function ActivityLog({ accountId, onClose }: { accountId: string,
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    fetch(`${API_URL}/activity?entityType=Account&entityId=${accountId}`)
-      .then(async res => {
-        try {
-          const data = await res.json();
-          setActivities(Array.isArray(data) ? data : []);
-        } catch {
-          setActivities([]);
-        }
-        setLoading(false);
-      });
+    api.get(`/activity?entityType=Account&entityId=${accountId}`)
+      .then((data: any) => { setActivities(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => { setActivities([]); setLoading(false); });
   }, [accountId]);
 
   return (
@@ -47,7 +40,7 @@ export default function ActivityLog({ accountId, onClose }: { accountId: string,
         <h2 style={{ fontSize: 18, fontWeight: 700, color: '#23272f', margin: 0 }}>Audit-Logs</h2>
         <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#64748b' }}>×</button>
       </div>
-      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 18 }}>Überwache Hauptänderige und Kommentare für die Firma.</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 18 }}>Überwacht wichtige Änderungen und Kommentare für das Unternehmen.</div>
       {loading ? (
         <div style={{ padding: 32, textAlign: 'center', color: '#888' }}>Lade...</div>
       ) : (
@@ -65,7 +58,7 @@ export default function ActivityLog({ accountId, onClose }: { accountId: string,
             </thead>
             <tbody>
               {activities.length === 0 ? (
-                <tr><td colSpan={6} style={{ padding: 32, textAlign: 'center', color: '#888' }}>Kei Aktivität gfunde.</td></tr>
+                <tr><td colSpan={6} style={{ padding: 32, textAlign: 'center', color: '#888' }}>Keine Aktivität gefunden.</td></tr>
               ) : (
                 activities.map(act => (
                   <tr key={act.id} style={{ borderBottom: '1px solid #f0f0f0', transition: 'background 0.2s' }}>

@@ -1,120 +1,221 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  Box,
-  VStack,
-  Flex,
-  Text,
-  Icon,
-  Button,
-} from "@chakra-ui/react";
 import { useAuth } from '../../src/auth/AuthProvider';
-import { FiGrid, FiUsers, FiUser, FiBriefcase, FiCheckSquare, FiClock, FiSettings } from "react-icons/fi";
+import {
+  FiGrid, FiUsers, FiUser, FiBriefcase, FiCheckSquare,
+  FiClock, FiBarChart2, FiLogOut, FiX, FiChevronRight,
+  FiActivity, FiSettings, FiCalendar, FiSun,
+} from "react-icons/fi";
 
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: FiGrid },
-  { href: "/accounts", label: "Kunden", icon: FiUsers },
-  { href: "/contacts", label: "Kontakte", icon: FiUser, admin: true },
-  { href: "/deals", label: "Deals", icon: FiBriefcase },
-  { href: "/tasks", label: "Aufgaben", icon: FiCheckSquare },
-  { href: "/time", label: "Zeiterfassung", icon: FiClock, admin: true },
-  { href: "/users", label: "Benutzer", icon: FiUsers, admin: true },
-  { href: "/profile", label: "Profil", icon: FiUser },
-  { href: "/reports", label: "Berichte", icon: FiSettings, admin: true },
+const NAV_GROUPS = [
+  {
+    label: "Hauptmenü",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: FiGrid },
+      { href: "/accounts", label: "Firmen", icon: FiUsers },
+      { href: "/contacts", label: "Kontakte", icon: FiUser },
+      { href: "/deals", label: "Deals", icon: FiBriefcase },
+      { href: "/tasks", label: "Aufgaben", icon: FiCheckSquare },
+      { href: "/calendar", label: "Kalender", icon: FiCalendar },
+      { href: "/vacation", label: "Urlaub", icon: FiSun },
+      { href: "/profile", label: "Profil", icon: FiSettings },
+    ],
+  },
+  {
+    label: "Verwaltung",
+    admin: true,
+    items: [
+      { href: "/time", label: "Zeiterfassung", icon: FiClock, admin: true },
+      { href: "/admin/vacation", label: "Urlaubsverwaltung", icon: FiSun, admin: true },
+      { href: "/activity", label: "Aktivitäten", icon: FiActivity, admin: true },
+      { href: "/users", label: "Benutzer", icon: FiUsers, admin: true },
+      { href: "/reports", label: "Berichte", icon: FiBarChart2, admin: true },
+    ],
+  },
 ];
-
-
 
 export default function Sidebar({ className = "", onClose }: { className?: string; onClose?: () => void }) {
   const pathname = usePathname() || "";
   const router = useRouter();
   const { user, logout } = useAuth();
-  console.log('[Sidebar] user from useAuth:', JSON.stringify(user, null, 2));
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === "ADMIN";
+
   const handleLogout = () => {
     logout();
-    if (typeof window !== 'undefined') {
-      router.replace('/login');
-    }
+    router.replace("/login");
     if (onClose) onClose();
   };
+
+  const initials = user?.name
+    ? user.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()
+    : user?.email?.[0]?.toUpperCase() || "?";
+
   return (
-    <Box
+    <div
       className={className}
-      bg="#f4f5f7"
-      minH="100vh"
-      w="220px"
-      px={0}
-      py={0}
-      position="fixed"
-      left={0}
-      top={0}
-      borderRight="1px solid #d1d5db"
-      boxShadow="0 0 8px 0 rgba(0,0,0,0.03)"
-      zIndex={10}
-      fontFamily="'Inter', system-ui, 'Segoe UI', 'Roboto', 'Arial', sans-serif"
+      style={{
+        width: 240,
+        background: "#0f172a",
+        display: "flex",
+        flexDirection: "column",
+        position: "fixed",
+        left: 0,
+        top: 0,
+        bottom: 0,
+        zIndex: 10,
+        fontFamily: "'Inter', system-ui, sans-serif",
+      }}
     >
-      <Flex align="center" mb={4} gap={0} px={3} py={3} bg="transparent" borderBottom="1px solid #d1d5db">
-        <img src="/logoip3.png" alt="Logo" style={{ height: 36, marginRight: 12, display: 'block' }} />
+      {/* Logo */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "20px 20px 16px",
+        borderBottom: "1px solid rgba(255,255,255,0.07)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <img src="/logoip3.png" alt="Logo" style={{ height: 32, display: "block" }} />
+        </div>
         {onClose && (
-          <Button aria-label="Close sidebar" onClick={onClose} ml="auto" size="sm" bg="#f4f5f7" color="#23272f" _hover={{ bg: '#e5e7eb' }} borderRadius="sm"   display={{ base: "flex", md: "none" }}>
-            ×
-          </Button>
+          <button
+            onClick={onClose}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", padding: 4, display: "flex" }}
+          >
+            <FiX size={18} />
+          </button>
         )}
-      </Flex>
-      <Box px={3} pt={2} pb={1}>
-        <Text fontSize="13px" fontWeight={600} color="#23272f" mb={2} letterSpacing="0.02em">Navigation</Text>
-      </Box>
-      <VStack align="stretch" spacing={0} px={2}>
-        {navItems.map((item) => {
-          if (item.admin && !isAdmin) return null;
-          const isActive = pathname.startsWith(item.href);
+      </div>
+
+      {/* Nav groups */}
+      <nav className="sidebar-nav" style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 12px" }}>
+        {NAV_GROUPS.map((group) => {
+          const visibleItems = group.items.filter((item: any) => !item.admin || isAdmin);
+          if (group.admin && !isAdmin) return null;
+          if (visibleItems.length === 0) return null;
+
           return (
-            <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
-              <Button
-                leftIcon={<item.icon size={17} color={isActive ? '#1e293b' : '#6b7280'} />}
-                variant="solid"
-                fontWeight={isActive ? 700 : 500}
-                justifyContent="flex-start"
-                w="full"
-                size="sm"
-                borderRadius="sm"
-                bg={isActive ? '#e5e7eb' : 'transparent'}
-                color={isActive ? '#1e293b' : '#6b7280'}
-                _hover={{ bg: '#e5e7eb', color: '#23272f' }}
-                mb={0}
-                fontSize="13px"
-                pl={4}
-                pr={2}
-                style={{ letterSpacing: '0.02em', transition: 'background 0.15s, color 0.15s' }}
-                onClick={onClose}
-              >
-                {item.label}
-              </Button>
-            </Link>
+            <div key={group.label} style={{ marginBottom: 24 }}>
+              <div style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: "#94a3b8",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                padding: "0 8px",
+                marginBottom: 6,
+              }}>
+                {group.label}
+              </div>
+              {visibleItems.map((item) => {
+                const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    style={{ textDecoration: "none" }}
+                    onClick={onClose}
+                  >
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "9px 10px",
+                      borderRadius: 8,
+                      marginBottom: 2,
+                      background: isActive ? "rgba(37,99,235,0.18)" : "transparent",
+                      borderLeft: isActive ? "3px solid #3b82f6" : "3px solid transparent",
+                      cursor: "pointer",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)"; }}
+                    onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                    >
+                      <Icon
+                        size={16}
+                        color={isActive ? "#60a5fa" : "#cbd5e1"}
+                        style={{ flexShrink: 0 }}
+                      />
+                      <span style={{
+                        fontSize: 13.5,
+                        fontWeight: isActive ? 600 : 400,
+                        color: isActive ? "#ffffff" : "#cbd5e1",
+                        flex: 1,
+                      }}>
+                        {item.label}
+                      </span>
+                      {isActive && <FiChevronRight size={13} color="#3b82f6" />}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
           );
         })}
-      </VStack>
-      <Box px={3} pt={2} pb={1} mt={6} borderTop="1px solid #d1d5db">
-        <Text fontSize="13px" fontWeight={600} color="#23272f" mb={2} letterSpacing="0.02em">Account</Text>
-        <Button
+      </nav>
+
+      {/* User section */}
+      <div style={{
+        borderTop: "1px solid rgba(255,255,255,0.07)",
+        padding: "14px 16px",
+      }}>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginBottom: 10,
+        }}>
+          <Link href="/profile" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
+            <div style={{
+              width: 34,
+              height: 34,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #2563eb, #7c3aed)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: 13,
+              flexShrink: 0,
+            }}>
+              {initials}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {user?.name || user?.email || "Profil"}
+              </div>
+              <div style={{ fontSize: 11, color: "#64748b" }}>
+                {user?.role === "ADMIN" ? "Administrator" : "Benutzer"}
+              </div>
+            </div>
+          </Link>
+        </div>
+        <button
           onClick={handleLogout}
-          w="full"
-          bg="#f4f5f7"
-          color="#1e293b"
-          variant="outline"
-          borderRadius="sm"
-          fontWeight={600}
-          fontSize="13px"
-          leftIcon={<FiSettings size={16} color="#1e293b" />}
-          borderColor="#d1d5db"
-          _hover={{ bg: '#e5e7eb', color: '#23272f', borderColor: '#d1d5db' }}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 10px",
+            borderRadius: 7,
+            border: "none",
+            background: "transparent",
+            color: "#cbd5e1",
+            fontSize: 13,
+            cursor: "pointer",
+            transition: "background 0.15s, color 0.15s",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.12)"; (e.currentTarget as HTMLElement).style.color = "#f87171"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#cbd5e1"; }}
         >
-          Abmelde
-        </Button>
-      </Box>
-    </Box>
+          <FiLogOut size={15} />
+          Abmelden
+        </button>
+      </div>
+    </div>
   );
 }

@@ -3,9 +3,11 @@
 import AccountsTable from '../../../components/tables/AccountsTable';
 import Modal from '../../../components/ui/Modal';
 import AccountForm from '../../../components/forms/AccountForm';
+import CsvImportModal from '../../../components/ui/CsvImportModal';
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchWithAuth } from '../../../src/api/client';
+import { fetchWithAuth, api } from '../../../src/api/client';
 import { useAuth } from '../../../src/auth/AuthProvider';
+import { useToast } from '../../../components/ui/Toast';
 import './accounts-desktop.css';
 
 
@@ -36,6 +38,7 @@ const handleExportCSV = (accounts: any[]) => {
 
 export default function AccountsPage() {
   const { user } = useAuth();
+  const toast = useToast();
   const tableRef = useRef<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -43,21 +46,26 @@ export default function AccountsPage() {
   const [ownerFilter, setOwnerFilter] = useState('');
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [owners, setOwners] = useState<string[]>([]);
+  const [owners, setOwners] = useState<{id: string; name: string}[]>([]);
   const [types, setTypes] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('createdAt-desc');
   const [tagFilter, setTagFilter] = useState('');
   const [tableKey, setTableKey] = useState(0);
 
-  // Fetch unique owners/types for filters (simulate API or get from /api/accounts)
+  // Fetch unique owners (with names) and types for filters
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/accounts`)
-      .then(res => res.json())
-      .then(data => {
-        const arr = Array.isArray(data) ? data : [];
-        setOwners(Array.from(new Set(arr.map((a: any) => a.ownerUserId).filter(Boolean))));
-        setTypes(Array.from(new Set(arr.map((a: any) => a.type).filter(Boolean))));
-      });
+    Promise.all([api.get('/accounts'), api.get('/users')])
+      .then(([accData, usersData]: any) => {
+        const arr = Array.isArray(accData) ? accData : [];
+        const users: any[] = Array.isArray(usersData) ? usersData : [];
+        const ownerIds = Array.from(new Set(arr.map((a: any) => a.ownerUserId).filter(Boolean))) as string[];
+        setOwners(ownerIds.map((id: string) => {
+          const u = users.find((u: any) => u.id === id);
+          return { id, name: u?.name || u?.email || id };
+        }));
+        setTypes(Array.from(new Set(arr.map((a: any) => a.type).filter(Boolean))) as string[]);
+      })
+      .catch(() => {});
   }, []);
 
   const handleCreate = async (data: any) => {
@@ -81,9 +89,10 @@ export default function AccountsPage() {
         body: JSON.stringify(payload),
       });
       if (!res) throw new Error('Failed to create account');
-      setTableKey(k => k + 1); // trigger table reload
+      setTableKey(k => k + 1);
+      toast.success('Konto erfolgreich erstellt.');
     } catch (err) {
-      alert('Error creating account: ' + (err as Error).message);
+      toast.error('Konto konnte nicht erstellt werden: ' + (err as Error).message);
     } finally {
       setModalOpen(false);
     }
@@ -91,12 +100,13 @@ export default function AccountsPage() {
 
   // 2. Add state to store accounts
   const [accounts, setAccounts] = useState<any[]>([]);
+  const [csvOpen, setCsvOpen] = useState(false);
 
   // 3. Fetch accounts and update state
   useEffect(() => {
-    fetch('/accounts')
-      .then(res => res.json())
-      .then(data => setAccounts(Array.isArray(data) ? data : []));
+    api.get('/accounts')
+      .then((data: any) => setAccounts(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, [tableKey]);
 
   return (
@@ -108,15 +118,18 @@ export default function AccountsPage() {
             <h1 className="accounts-title" style={{ fontSize: 32, fontWeight: 700, color: '#1e293b', marginBottom: 0, letterSpacing: '-0.5px', textAlign: 'left' }}>Firmen</h1>
               <div style={{ fontSize: 15, color: '#23272f', fontWeight: 500, marginTop: 6, letterSpacing: '0.2px' }}>Verwalte deine Geschäftsfirmen effizient und sicher.</div>
           </div>
-          <button className="accounts-new-btn" style={{ fontSize: 15, fontWeight: 600, borderRadius: 6, border: '1.5px solid #2563eb', background: '#2563eb', color: '#fff', padding: '8px 20px', cursor: 'pointer', boxShadow: 'none', transition: 'background 0.15s, border 0.15s, color 0.15s' }} onClick={() => setModalOpen(true)}>+ Neue Firma</button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={() => handleExportCSV(accounts)} style={{ fontSize: 13, fontWeight: 600, borderRadius: 6, border: '1.5px solid #d1d5db', background: '#f1f5f9', color: '#64748b', padding: '8px 18px', cursor: 'pointer' }}>CSV exportieren</button>
+            <button onClick={() => setCsvOpen(true)} style={{ fontSize: 13, fontWeight: 600, borderRadius: 6, border: '1.5px solid #d1d5db', background: '#f1f5f9', color: '#64748b', padding: '8px 18px', cursor: 'pointer' }}>CSV importieren</button>
+            <button className="accounts-new-btn" style={{ fontSize: 15, fontWeight: 600, borderRadius: 6, border: '1.5px solid #2563eb', background: '#2563eb', color: '#fff', padding: '8px 20px', cursor: 'pointer', boxShadow: 'none', transition: 'background 0.15s, border 0.15s, color 0.15s' }} onClick={() => setModalOpen(true)}>+ Neue Firma</button>
+          </div>
         </div>
       </div>
       {/* Filters and actions in a white card overlapping the header */}
       <div className="accounts-filters-card">
         <div className="accounts-filters-row" style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 12 }}>
           <select value={tagFilter} onChange={e => setTagFilter(e.target.value)} className="accounts-filter-select" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, minWidth: 110, height: 32 }}>
-            <option value="">Alli Status/Tags</option>
-              <option value="">Alle Status/Tags</option>
+            <option value="">Alle Status/Tags</option>
             {DEMO_TAGS.map(tag => <option key={tag} value={tag}>{tag}</option>)}
           </select>
             <input
@@ -128,14 +141,12 @@ export default function AccountsPage() {
             style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, minWidth: 120, height: 32 }}
           />
           <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="accounts-filter-select" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, minWidth: 110, height: 32 }}>
-            <option value="">Alli Typen</option>
-              <option value="">Alle Typen</option>
+            <option value="">Alle Typen</option>
             {types.map(type => <option key={type} value={type}>{type}</option>)}
           </select>
           <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)} className="accounts-filter-select" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, minWidth: 110, height: 32 }}>
-            <option value="">Alli Verantwortlichi</option>
-              <option value="">Alle Verantwortlichen</option>
-            {owners.map(owner => <option key={owner} value={owner}>{owner}</option>)}
+            <option value="">Alle Verantwortlichen</option>
+            {owners.map((owner: any) => <option key={owner.id} value={owner.id}>{owner.name}</option>)}
           </select>
           <div className="accounts-filter-date-row" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <label className="accounts-filter-date-label" style={{ fontSize: 13 }}>Erstellt:</label>
@@ -143,17 +154,16 @@ export default function AccountsPage() {
             <span className="accounts-filter-date-sep" style={{ fontSize: 13 }}>bis</span>
             <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="accounts-filter-date" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, height: 32 }} />
           </div>
-          <button className="accounts-filter-clear" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #2563eb', background: '#fff', color: '#2563eb', padding: '6px 14px', cursor: 'pointer', marginLeft: 0, height: 32 }} onClick={() => { setSearch(""); setTypeFilter(""); setOwnerFilter(""); setDateFrom(""); setDateTo(""); }}>Filter lösche</button>
-            <button className="accounts-filter-clear" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #2563eb', background: '#fff', color: '#2563eb', padding: '6px 14px', cursor: 'pointer', marginLeft: 0, height: 32 }} onClick={() => { setSearch(""); setTypeFilter(""); setOwnerFilter(""); setDateFrom(""); setDateTo(""); }}>Filter löschen</button>
+          <button className="accounts-filter-clear" style={{ fontSize: 13, fontWeight: 500, borderRadius: 4, border: '1px solid #2563eb', background: '#fff', color: '#2563eb', padding: '6px 14px', cursor: 'pointer', marginLeft: 0, height: 32 }} onClick={() => { setSearch(""); setTypeFilter(""); setOwnerFilter(""); setDateFrom(""); setDateTo(""); }}>Filter löschen</button>
           <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="accounts-filter-select" style={{ fontSize: 13, padding: '6px 10px', borderRadius: 4, minWidth: 110, height: 32 }}>
-            <option value="createdAt-desc">Sortiere: Neuschte</option>
-            <option value="createdAt-asc">Sortiere: Ältesti</option>
-            <option value="name-asc">Sortiere: Name A-Z</option>
-            <option value="name-desc">Sortiere: Name Z-A</option>
-            <option value="type-asc">Sortiere: Typ A-Z</option>
-            <option value="type-desc">Sortiere: Typ Z-A</option>
-            <option value="ownerUserId-asc">Sortiere: Verantwortlich A-Z</option>
-            <option value="ownerUserId-desc">Sortiere: Verantwortlich Z-A</option>
+            <option value="createdAt-desc">Neueste zuerst</option>
+            <option value="createdAt-asc">Älteste zuerst</option>
+            <option value="name-asc">Name A-Z</option>
+            <option value="name-desc">Name Z-A</option>
+            <option value="type-asc">Typ A-Z</option>
+            <option value="type-desc">Typ Z-A</option>
+            <option value="ownerUserId-asc">Verantwortlich A-Z</option>
+            <option value="ownerUserId-desc">Verantwortlich Z-A</option>
           </select>
         </div>
         {/* Export/Import CSV buttons moved to AccountsTable */}
@@ -170,6 +180,7 @@ export default function AccountsPage() {
           tagFilter={tagFilter}
         />
       </div>
+      <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} entityType="accounts" onImported={() => setTableKey(k => k + 1)} />
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Neue Firma">
         <AccountForm onSubmit={handleCreate} />
       </Modal>

@@ -13,7 +13,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="de">
       <head>
         <link rel="icon" href="/logoip3.png" type="image/png" />
         <title>IP3 CRM</title>

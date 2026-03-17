@@ -1,7 +1,7 @@
 
 "use client";
 import { useEffect, useState } from 'react';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { api } from '../../src/api/client';
 import DealForm from '../forms/DealForm';
 import './deals-table-desktop.css';
 
@@ -13,17 +13,12 @@ export default function DealsTable() {
 
   const fetchDeals = () => {
     setLoading(true);
-    fetch(`${API_URL}/deals`)
-      .then(async res => {
-        try {
-          const data = await res.json();
-          console.log('Fetched deals:', data);
-          setDeals(Array.isArray(data) ? data : []);
-        } catch (e) {
-          setDeals([]);
-        }
+    api.get('/deals')
+      .then(data => {
+        setDeals(Array.isArray(data) ? data : []);
         setLoading(false);
-      });
+      })
+      .catch(() => { setDeals([]); setLoading(false); });
   };
 
   useEffect(() => {
@@ -32,7 +27,7 @@ export default function DealsTable() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Diesen Deal wirklich löschen?')) return;
-    await fetch(`${API_URL}/deals/${id}`, { method: 'DELETE' });
+    await api.delete(`/deals/${id}`);
     fetchDeals();
   };
 
@@ -42,11 +37,7 @@ export default function DealsTable() {
   };
 
   const handleEditSubmit = async (data: any) => {
-    await fetch(`${API_URL}/deals/${editDeal.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+    await api.patch(`/deals/${editDeal.id}`, data);
     setShowEditModal(false);
     setEditDeal(null);
     fetchDeals();
@@ -66,8 +57,8 @@ export default function DealsTable() {
             <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>Wahrscheinlichkeit</th>
             <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>Score</th>
             <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>Besitzer</th>
-            <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>Erwartets Enddatum</th>
-            <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>Aktione</th>
+            <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>Erwartetes Enddatum</th>
+            <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>Aktionen</th>
           </tr>
         </thead>
         <tbody>

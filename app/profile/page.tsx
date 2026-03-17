@@ -1,9 +1,8 @@
 
 "use client";
 import React, { useEffect, useState } from 'react';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 import { useAuth } from '../../src/auth/AuthProvider';
-import { getMe } from '../../src/api/client';
+import { api, getMe } from '../../src/api/client';
 
 interface User {
   id: string;
@@ -34,15 +33,14 @@ export default function UserProfilePage() {
       let userData = null;
       if (authUser?.email) {
         try {
-          userData = await getMe(authUser.email);
+          userData = await getMe();
         } catch {
           userData = null;
         }
       }
-      const tasksRes = await fetch(`${API_URL}/tasks?assignedToMe=true`);
       let tasksData: Task[] = [];
       try {
-        const data = await tasksRes.json();
+        const data = await api.get('/tasks?assignedToMe=true');
         tasksData = Array.isArray(data) ? data : [];
       } catch {
         tasksData = [];

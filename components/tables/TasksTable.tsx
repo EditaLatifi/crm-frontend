@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Box, Flex, Heading, VStack, Text, Tag, Avatar, Spinner } from '@chakra-ui/react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import Link from 'next/link';
+import { api } from '../../src/api/client';
 interface Task {
   id: string;
   title: string;
@@ -12,7 +13,6 @@ interface Task {
   assigneeName?: string;
   assignedToUserId?: string;
 }
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const statusColumns = [
   { key: 'OPEN', label: 'Offen', color: 'gray' },
@@ -25,20 +25,15 @@ export default function TasksTable() {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Fetch tasks using API_URL from env
   const fetchTasks = () => {
-    fetch(`${API_URL}/tasks`)
-      .then(res => res.json())
+    api.get('/tasks')
       .then(data => {
-        if (Array.isArray(data)) {
-          setTasks(data);
-        } else if (data && Array.isArray(data.tasks)) {
-          setTasks(data.tasks);
-        } else {
-          setTasks([]);
-        }
+        if (Array.isArray(data)) setTasks(data);
+        else if (data && Array.isArray(data.tasks)) setTasks(data.tasks);
+        else setTasks([]);
         setLoading(false);
-      });
+      })
+      .catch(() => { setTasks([]); setLoading(false); });
   };
   useEffect(() => {
     fetchTasks();
@@ -70,11 +65,7 @@ export default function TasksTable() {
     const taskId = draggableId;
     const newStatus = destination.droppableId;
     setTasks(prev => prev.map((t: Task) => t.id === taskId ? { ...t, status: newStatus } : t));
-    await fetch(`${API_URL}/tasks/${taskId}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus })
-    });
+    await api.patch(`/tasks/${taskId}/status`, { status: newStatus });
     fetchTasks();
   };
 

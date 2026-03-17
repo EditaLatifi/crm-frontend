@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { api } from '../../src/api/client';
 
 /* ================================
    Types
@@ -146,15 +147,11 @@ export default function DealInsightsWidget() {
   const [insights, setInsights] = useState<DealInsight[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
   useEffect(() => {
     async function fetchInsights() {
       setLoading(true);
       try {
-        const res = await fetch(`${API_URL}/deals/insights`);
-        const data = await res.json();
+        const data = await api.get('/deals/insights');
         setInsights(data.insights || []);
       } catch {
         setInsights([]);
@@ -163,7 +160,7 @@ export default function DealInsightsWidget() {
     }
 
     fetchInsights();
-  }, [API_URL]);
+  }, []);
 
   return (
     <div

@@ -24,7 +24,6 @@
     box-shadow: 0 8px 32px rgba(30,41,59,0.13);
     padding: 44px 32px;
     margin-top: -24px;
-    margin-bottom: 56px;
     width: 100%;
     border: 2px solid #e5e7eb;
   }
@@ -130,7 +129,7 @@
   .accounts-table-section {
     overflow-x: auto;
     width: 100%;
-    margin-bottom: 56px;
+
   }
   .accounts-table {
     width: 100%;

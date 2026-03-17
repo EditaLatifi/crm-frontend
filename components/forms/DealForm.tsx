@@ -1,10 +1,18 @@
 "use client";
 import React, { useState } from 'react';
+import { api } from '../../src/api/client';
 
 type DealFormProps = {
   onSubmit: (data: any) => void;
   initialData?: any;
 };
+
+const errStyle: React.CSSProperties = { color: '#dc2626', fontSize: 12, marginTop: 3 };
+const inputStyle = (hasErr: boolean): React.CSSProperties => ({
+  width: '100%', padding: 8, borderRadius: 4,
+  border: `1px solid ${hasErr ? '#dc2626' : '#ccc'}`,
+  outline: 'none',
+});
 
 export default function DealForm({ onSubmit, initialData }: DealFormProps) {
   const [name, setName] = useState(initialData?.name || '');
@@ -19,14 +27,14 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
   const [stageId, setStageId] = useState(initialData?.stageId || '');
   const [accounts, setAccounts] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   React.useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/accounts`)
-      .then(res => res.json())
-      .then(data => setAccounts(Array.isArray(data) ? data : []))
+    api.get('/accounts')
+      .then((data: any) => setAccounts(Array.isArray(data) ? data : []))
       .catch(() => setAccounts([]));
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/deals/deal-stages`)
-      .then(res => res.json())
-      .then(data => setStages(Array.isArray(data) ? data : []))
+    api.get('/deals/deal-stages')
+      .then((data: any) => setStages(Array.isArray(data) ? data : []))
       .catch(() => setStages([]));
   }, []);
 
@@ -36,77 +44,95 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
   const handleAddCustomField = () => setCustomFields(fields => [...fields, { key: '', value: '' }]);
   const handleRemoveCustomField = (idx: number) => setCustomFields(fields => fields.filter((_, i) => i !== idx));
 
-  // Optionally add more fields: accountId, stageId, probability, etc.
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!name.trim()) e.name = 'Name ist erforderlich';
+    else if (name.trim().length < 2) e.name = 'Name muss mindestens 2 Zeichen haben';
+    if (!accountId) e.accountId = 'Konto ist erforderlich';
+    if (!stageId) e.stageId = 'Phase ist erforderlich';
+    if (amount === '' || amount === null) e.amount = 'Betrag ist erforderlich';
+    else if (isNaN(parseFloat(String(amount))) || parseFloat(String(amount)) < 0) e.amount = 'Betrag muss eine positive Zahl sein';
+    return e;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    setErrors({});
+    const customFieldsObj = customFields.reduce((acc, { key, value }) => key ? { ...acc, [key]: value } : acc, {} as Record<string, string>);
+    onSubmit({
+      name: name.trim(),
+      accountId,
+      stageId,
+      amount: parseFloat(String(amount)),
+      currency,
+      expectedCloseDate: expectedCloseDate || undefined,
+      probability: parseInt(String(probability)),
+      customFields: customFieldsObj,
+    });
+  };
 
   return (
-    <form onSubmit={e => {
-      e.preventDefault();
-      const customFieldsObj = customFields.reduce((acc, { key, value }) => key ? { ...acc, [key]: value } : acc, {} as Record<string, string>);
-      onSubmit({
-        name,
-        accountId,
-        stageId,
-        amount: parseFloat(amount),
-        currency,
-        expectedCloseDate,
-        probability: parseInt(probability),
-        customFields: customFieldsObj
-      });
-    }}>
-                  <div style={{ marginBottom: 16 }}>
-                          <div style={{ marginBottom: 16 }}>
-                            <label>Konto</label><br />
-                            <select value={accountId} onChange={e => setAccountId(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}>
-                              <option value="">Konto auswählen</option>
-                              {accounts.map((a: any) => (
-                                <option key={a.id} value={a.id}>{a.name}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div style={{ marginBottom: 16 }}>
-                            <label>Phase</label><br />
-                            <select value={stageId} onChange={e => setStageId(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}>
-                              <option value="">Phase auswählen</option>
-                              {stages.map((s: any) => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
-                              ))}
-                            </select>
-                          </div>
-                    <label>Benutzerdefinierte Felder</label>
-                    {customFields.map((f, idx) => (
-                      <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-                        <input placeholder="Schlüssel" value={f.key} onChange={e => handleCustomFieldChange(idx, 'key', e.target.value)} style={{ width: 100, padding: 6, borderRadius: 4, border: '1px solid #ccc' }} />
-                        <input placeholder="Wert" value={f.value} onChange={e => handleCustomFieldChange(idx, 'value', e.target.value)} style={{ width: 160, padding: 6, borderRadius: 4, border: '1px solid #ccc' }} />
-                        <button type="button" onClick={() => handleRemoveCustomField(idx)} style={{ background: '#eee', border: 'none', borderRadius: 4, padding: '4px 8px', cursor: 'pointer' }}>Entfernen</button>
-                      </div>
-                    ))}
-                    <button type="button" onClick={handleAddCustomField} style={{ background: '#f4f5f7', color: '#0052cc', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer', marginTop: 4 }}>+ Feld hinzufügen</button>
-                  </div>
-            <div style={{ marginBottom: 16 }}>
-              <label>Wahrscheinlichkeit (%)</label><br />
-              <input type="number" min={0} max={100} value={probability} onChange={e => setProbability(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
-            </div>
+    <form onSubmit={handleSubmit} noValidate>
       <div style={{ marginBottom: 16 }}>
-        <label>Name</label><br />
-        <input value={name} onChange={e => setName(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
+        <label>Name *</label><br />
+        <input value={name} onChange={e => setName(e.target.value)} style={inputStyle(!!errors.name)} />
+        {errors.name && <div style={errStyle}>{errors.name}</div>}
       </div>
       <div style={{ marginBottom: 16 }}>
-        <label>Betrag</label><br />
-        <input type="number" value={amount} onChange={e => setAmount(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
+        <label>Konto *</label><br />
+        <select value={accountId} onChange={e => setAccountId(e.target.value)} style={inputStyle(!!errors.accountId)}>
+          <option value="">Konto auswählen</option>
+          {accounts.map((a: any) => (
+            <option key={a.id} value={a.id}>{a.name}</option>
+          ))}
+        </select>
+        {errors.accountId && <div style={errStyle}>{errors.accountId}</div>}
+      </div>
+      <div style={{ marginBottom: 16 }}>
+        <label>Phase *</label><br />
+        <select value={stageId} onChange={e => setStageId(e.target.value)} style={inputStyle(!!errors.stageId)}>
+          <option value="">Phase auswählen</option>
+          {stages.map((s: any) => (
+            <option key={s.id} value={s.id}>{s.name}</option>
+          ))}
+        </select>
+        {errors.stageId && <div style={errStyle}>{errors.stageId}</div>}
+      </div>
+      <div style={{ marginBottom: 16 }}>
+        <label>Betrag *</label><br />
+        <input type="number" min={0} value={amount} onChange={e => setAmount(e.target.value)} style={inputStyle(!!errors.amount)} />
+        {errors.amount && <div style={errStyle}>{errors.amount}</div>}
       </div>
       <div style={{ marginBottom: 16 }}>
         <label>Währung</label><br />
-        <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}>
+        <select value={currency} onChange={e => setCurrency(e.target.value)} style={inputStyle(false)}>
           <option value="EUR">EUR</option>
           <option value="CHF">CHF</option>
         </select>
       </div>
       <div style={{ marginBottom: 16 }}>
-        <label>Erwartets Enddatum</label><br />
-        <input type="date" value={expectedCloseDate} onChange={e => setExpectedCloseDate(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
+        <label>Erwartetes Enddatum</label><br />
+        <input type="date" value={expectedCloseDate} onChange={e => setExpectedCloseDate(e.target.value)} style={inputStyle(false)} />
+      </div>
+      <div style={{ marginBottom: 16 }}>
+        <label>Wahrscheinlichkeit (%)</label><br />
+        <input type="number" min={0} max={100} value={probability} onChange={e => setProbability(e.target.value)} style={inputStyle(false)} />
+      </div>
+      <div style={{ marginBottom: 16 }}>
+        <label>Benutzerdefinierte Felder</label>
+        {customFields.map((f, idx) => (
+          <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 4, marginTop: 4 }}>
+            <input placeholder="Schlüssel" value={f.key} onChange={e => handleCustomFieldChange(idx, 'key', e.target.value)} style={{ width: 100, padding: 6, borderRadius: 4, border: '1px solid #ccc' }} />
+            <input placeholder="Wert" value={f.value} onChange={e => handleCustomFieldChange(idx, 'value', e.target.value)} style={{ width: 160, padding: 6, borderRadius: 4, border: '1px solid #ccc' }} />
+            <button type="button" onClick={() => handleRemoveCustomField(idx)} style={{ background: '#eee', border: 'none', borderRadius: 4, padding: '4px 8px', cursor: 'pointer' }}>Entfernen</button>
+          </div>
+        ))}
+        <button type="button" onClick={handleAddCustomField} style={{ background: '#f4f5f7', color: '#0052cc', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer', marginTop: 4 }}>+ Feld hinzufügen</button>
       </div>
       <button type="submit" style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 20px', fontWeight: 600, cursor: 'pointer' }}>
-        Speichere
+        Speichern
       </button>
     </form>
   );

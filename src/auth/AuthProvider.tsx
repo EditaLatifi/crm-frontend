@@ -1,8 +1,8 @@
 "use client";
 // src/auth/AuthProvider.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getMe, login as apiLogin } from '../api/client';
-import { getAccessToken, setAccessToken, clearAccessToken, loadTokenFromStorage, saveTokenToStorage, clearTokenFromStorage} from './tokenStore';
+import { login as apiLogin, getMe } from '../api/client';
+import { getAccessToken, setAccessToken, clearAccessToken, loadTokenFromStorage, saveTokenToStorage, clearTokenFromStorage } from './tokenStore';
 
 export type User = {
   id: string;
@@ -23,101 +23,107 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Decode JWT payload without verification — for immediate local use only
+function decodeToken(token: string): any | null {
+  try {
+    return JSON.parse(atob(token.split('.')[1]));
+  } catch {
+    return null;
+  }
+}
+
+function isTokenExpired(token: string): boolean {
+  const payload = decodeToken(token);
+  if (!payload?.exp) return false;
+  return payload.exp < Math.floor(Date.now() / 1000);
+}
+
+// Build a minimal user object from JWT payload (no network needed)
+function userFromToken(token: string): Partial<User> | null {
+  const payload = decodeToken(token);
+  if (!payload?.sub) return null;
+  return { id: payload.sub, role: payload.role };
+}
+
+function clearAuth(setAccessTokenState: (t: null) => void) {
+  clearAccessToken();
+  clearTokenFromStorage();
+  setAccessTokenState(null);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Helper: decode JWT and check expiration
-  function isTokenExpired(token: string | null): boolean {
-    if (!token) return true;
+  // Fetch full profile in the background — does NOT block or log out on failure
+  async function fetchProfile() {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (!payload.exp) return false;
-      const now = Math.floor(Date.now() / 1000);
-      return payload.exp < now;
+      const me = await getMe();
+      if (me && me.id) setUser(me);
     } catch {
-      return true;
+      // Profile fetch failed (server cold start or network issue)
+      // We keep the minimal user from JWT — the user stays logged in
     }
   }
 
   useEffect(() => {
     loadTokenFromStorage();
     const token = getAccessToken();
-    if (token && isTokenExpired(token)) {
-      clearAccessToken();
-      clearTokenFromStorage();
-      setAccessTokenState(null);
-      setUser(null);
+
+    if (!token || isTokenExpired(token)) {
+      clearAuth(setAccessTokenState);
       setLoading(false);
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-      }
       return;
     }
-    setAccessTokenState(token || null);
-    if (token) {
-      // Validate token by calling bootstrapUser
-      bootstrapUser()
-        .then(() => setLoading(false))
-        .catch(() => {
-          // If invalid, clear token from everywhere
-          clearAccessToken();
-          clearTokenFromStorage();
-          setAccessTokenState(null);
-          setUser(null);
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
-    // eslint-disable-next-line
-  }, []);
 
-  async function bootstrapUser(email?: string) {
-    setLoading(true);
-    setError(null);
-    try {
-      const me = await getMe(email!);
-      setUser(me);
-    } catch (err: any) {
-      setUser(null);
-      if (err.status === 401) clearAccessToken();
-      if (err.status === 408) setError('Server is waking up or slow. Please wait a moment and try again.');
-    } finally {
-      setLoading(false);
-    }
-  }
+    // Set minimal user from JWT immediately — app is usable right away
+    const basic = userFromToken(token);
+    if (basic) setUser(basic as User);
+    setAccessTokenState(token);
+    setLoading(false); // Don't block on profile fetch
+
+    // Fetch full profile (name, email) in background
+    fetchProfile();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function login(email: string, password: string) {
     setLoading(true);
     setError(null);
     try {
       const data = await apiLogin(email, password);
-      console.log('[AuthProvider] login response:', data);
-      if (data.access_token) {
-        setAccessToken(data.access_token);
-        saveTokenToStorage();
-        setAccessTokenState(data.access_token);
-        console.log('[AuthProvider] set and saved accessToken:', data.access_token);
-      } else {
-        // No access token, treat as failed login
-        clearAccessToken();
-        clearTokenFromStorage();
-        setAccessTokenState(null);
-        setUser(null);
-        setError('No access token received');
+
+      if (!data?.access_token) {
+        setError('Ungültige Anmeldedaten');
+        setLoading(false);
         return;
       }
-      await bootstrapUser(email);
+
+      setAccessToken(data.access_token);
+      saveTokenToStorage();
+      setAccessTokenState(data.access_token);
+
+      // Login response already contains user — no extra API call needed
+      if (data.user?.id) {
+        setUser(data.user);
+      } else {
+        // Fallback: decode JWT for minimal user, fetch profile in background
+        const basic = userFromToken(data.access_token);
+        if (basic) setUser(basic as User);
+        fetchProfile();
+      }
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      if (err.status === 408) {
+        setError('Der Server startet gerade hoch. Bitte einen Moment warten und erneut versuchen.');
+      } else if (err.status === 401 || (err.message && err.message.toLowerCase().includes('invalid'))) {
+        setError('Ungültige E-Mail-Adresse oder Passwort');
+      } else {
+        setError(err.message || 'Anmeldung fehlgeschlagen');
+      }
       setUser(null);
-      clearAccessToken();
-      clearTokenFromStorage();
-      setAccessTokenState(null);
-      console.error('[AuthProvider] login error:', err);
+      clearAuth(setAccessTokenState);
     } finally {
       setLoading(false);
     }
@@ -125,10 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   function logout() {
     setUser(null);
-    clearAccessToken();
-    clearTokenFromStorage();
-    setAccessTokenState(null);
-    // Defensive: also clear error and role if needed
+    clearAuth(setAccessTokenState);
     setError(null);
   }
 
@@ -140,31 +143,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         alignItems: 'center',
         justifyContent: 'center',
         height: '100vh',
-        background: '#f8f9fa',
+        background: '#ffffff',
+        fontFamily: 'Inter, system-ui, sans-serif',
       }}>
-        <img
-          src="/logoip3.png"
-          alt="Logo"
-          style={{
-            width: 180,
-            height: 180,
-            marginBottom: 0,
-            animation: 'bounce 1.2s infinite',
-            display: 'block',
-          }}
-        />
         <style>{`
-          @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            20% { transform: translateY(-30px); }
-            40% { transform: translateY(-50px); }
-            60% { transform: translateY(-30px); }
-            80% { transform: translateY(-10px); }
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+          @keyframes pulse-ring {
+            0%   { transform: scale(0.92); opacity: 0.6; }
+            50%  { transform: scale(1.04); opacity: 0.15; }
+            100% { transform: scale(0.92); opacity: 0.6; }
+          }
+          @keyframes dot-flash {
+            0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+            40%            { opacity: 1;   transform: scale(1); }
           }
         `}</style>
+
+        <div style={{ animation: 'fadeIn 0.4s ease both', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+          {/* Logo with subtle pulse halo */}
+          <div style={{ position: 'relative', width: 72, height: 72, marginBottom: 28 }}>
+            <div style={{
+              position: 'absolute', inset: -10, borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%)',
+              animation: 'pulse-ring 2s ease-in-out infinite',
+            }} />
+            <img
+              src="/logoip3.png"
+              alt="Logo"
+              style={{ width: 72, height: 72, borderRadius: 16, display: 'block', position: 'relative', zIndex: 1 }}
+            />
+          </div>
+
+          {/* Spinner */}
+          <div style={{
+            width: 32, height: 32,
+            border: '3px solid #e2e8f0',
+            borderTopColor: '#2563eb',
+            borderRadius: '50%',
+            animation: 'spin 0.75s linear infinite',
+            marginBottom: 20,
+          }} />
+
+          {/* Dots */}
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[0, 160, 320].map(delay => (
+              <div key={delay} style={{
+                width: 6, height: 6, borderRadius: '50%', background: '#93c5fd',
+                animation: `dot-flash 1.2s ease-in-out ${delay}ms infinite`,
+              }} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
+
   return (
     <AuthContext.Provider value={{ user, role: user?.role || null, accessToken, login, logout, loading, error }}>
       {children}

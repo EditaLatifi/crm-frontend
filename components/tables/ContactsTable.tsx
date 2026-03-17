@@ -1,50 +1,61 @@
-
 "use client";
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { api, fetchWithAuth } from '../../src/api/client';
+import { useToast } from '../ui/Toast';
+import { FiTrash2, FiChevronRight, FiMail, FiPhone } from 'react-icons/fi';
 
+function Avatar({ name }: { name: string }) {
+  const initials = name
+    ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+    : '?';
+  const colors = ['#2563eb', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2'];
+  const color = colors[name.charCodeAt(0) % colors.length];
+  return (
+    <div style={{
+      width: 36, height: 36, borderRadius: '50%',
+      background: color + '18', color,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontWeight: 700, fontSize: 13, flexShrink: 0,
+      border: `1.5px solid ${color}30`,
+    }}>
+      {initials}
+    </div>
+  );
+}
 
-
-
-export default function ContactsTable({ search = "", refresh = 0, adminView = false }: { search?: string, refresh?: number, adminView?: boolean }) {
-  // All hooks at the top
+export default function ContactsTable({
+  search = "",
+  refresh = 0,
+  adminView = false,
+  onRefresh,
+}: {
+  search?: string;
+  refresh?: number;
+  adminView?: boolean;
+  onRefresh?: () => void;
+}) {
+  const toast = useToast();
+  const router = useRouter();
   const [contacts, setContacts] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    // Fetch contacts
-    fetch(adminView ? `${API_URL}/contacts?admin=1` : `${API_URL}/contacts`)
-      .then(async res => {
-        try {
-          const data = await res.json();
-          setContacts(Array.isArray(data) ? data : []);
-        } catch (e) {
-          setContacts([]);
-        }
-        setLoading(false);
-      });
-    // Fetch accounts for mapping
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/accounts`)
-      .then(res => res.json())
-      .then(data => setAccounts(Array.isArray(data) ? data : []))
-      .catch(() => setAccounts([]));
+    Promise.all([
+      api.get(adminView ? '/contacts?admin=1' : '/contacts'),
+      api.get('/accounts'),
+    ]).then(([cData, aData]) => {
+      setContacts(Array.isArray(cData) ? cData : []);
+      setAccounts(Array.isArray(aData) ? aData : []);
+    }).catch(() => {
+      setContacts([]);
+      setAccounts([]);
+    }).finally(() => setLoading(false));
   }, [refresh, adminView]);
-
-  useEffect(() => {
-    setHydrated(true);
-    function handleResize() {
-      setIsMobile(window.innerWidth <= 700);
-    }
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const filtered = search
     ? contacts.filter((c: any) =>
@@ -54,171 +65,238 @@ export default function ContactsTable({ search = "", refresh = 0, adminView = fa
       )
     : contacts;
 
-  const showCards = hydrated && isMobile;
+  const allSelected = filtered.length > 0 && selected.length === filtered.length;
 
-  if (loading) return <div style={{ padding: 32, textAlign: 'center', color: '#888' }}>Lade Kontakte...</div>;
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`${selected.length} Kontakte wirklich löschen?`)) return;
+    setDeleting(true);
+    try {
+      await fetchWithAuth('/contacts/bulk', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selected }),
+      });
+      setContacts(contacts.filter(c => !selected.includes(c.id)));
+      setSelected([]);
+      toast.success(`${selected.length} Kontakte gelöscht.`);
+    } catch {
+      toast.error('Bulk-Löschen fehlgeschlagen');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDelete = async (c: any) => {
+    if (!window.confirm(`Kontakt '${c.name}' löschen?`)) return;
+    try {
+      await api.delete(`/contacts/${c.id}`);
+      setContacts(contacts.filter(x => x.id !== c.id));
+      toast.success('Kontakt gelöscht.');
+    } catch {
+      toast.error('Löschen fehlgeschlagen');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ padding: 48, textAlign: 'center', color: '#94a3b8', fontSize: 14 }}>
+        Lade Kontakte...
+      </div>
+    );
+  }
 
   return (
-    <div className="contacts-table-responsive">
-      {adminView && (
-        <div className="mb-6 flex items-center gap-4 bg-gray-50 rounded-xl px-6 py-4 shadow-sm" style={{ maxWidth: 600 }}>
-          <span className="font-bold text-lg text-gray-700">Ausgewählte löschen ({selected.length})</span>
+    <div>
+      {/* Bulk action bar — only when items selected */}
+      {adminView && selected.length > 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '10px 20px', background: '#fef2f2',
+          borderBottom: '1px solid #fecaca',
+        }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#dc2626' }}>
+            {selected.length} ausgewählt
+          </span>
           <button
-            className="ml-8 mr-4 pl-4 px-6 py-2 rounded-lg bg-red-600 text-white font-bold shadow hover:bg-red-700 transition disabled:opacity-50 text-lg"
-            style={{ background: '#e53935', color: '#fff', fontWeight: 700, fontSize: 18, minWidth: 100 , marginLeft: 10, marginBottom: 2}}
-            disabled={selected.length === 0 || deleting}
-            onClick={async () => {
-              if (!window.confirm(`Sind Sie sicher, dass Sie die ${selected.length} ausgewählten Kontakte löschen möchten?`)) return;
-              setDeleting(true);
-              try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/contacts/bulk`, {
-                  method: 'DELETE',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ ids: selected }),
-                });
-                if (res.ok) {
-                  setContacts(contacts.filter(c => !selected.includes(c.id)));
-                  setSelected([]);
-                } else {
-                  alert('Bulk delete failed');
-                }
-              } finally {
-                setDeleting(false);
-              }
+            onClick={handleBulkDelete}
+            disabled={deleting}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: '#dc2626', color: '#fff', border: 'none',
+              borderRadius: 7, padding: '6px 14px', fontSize: 13,
+              fontWeight: 600, cursor: deleting ? 'not-allowed' : 'pointer',
+              opacity: deleting ? 0.6 : 1,
             }}
           >
-            Löschen
+            <FiTrash2 size={13} />
+            {deleting ? 'Lösche...' : 'Ausgewählte löschen'}
+          </button>
+          <button
+            onClick={() => setSelected([])}
+            style={{ fontSize: 13, color: '#64748b', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            Abbrechen
           </button>
         </div>
       )}
-      {showCards ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {filtered.length === 0 ? (
-            <div style={{ padding: 24, textAlign: 'center', color: '#888', background: '#fff', borderRadius: 10 }}>Keine Kontakte gefunden.</div>
-          ) : (
-            filtered.map((c: any) => (
-              <div key={c.id} style={{ background: '#fff', borderRadius: 10, boxShadow: '0 2px 10px rgba(80,120,200,0.10)', border: '1.5px solid #f0f4fa', padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {adminView && (
-                  <div style={{ marginBottom: 4 }}>
-                    <input
-                      type="checkbox"
-                      checked={selected.includes(c.id)}
-                      onChange={e => setSelected(e.target.checked ? [...selected, c.id] : selected.filter(id => id !== c.id))}
-                      aria-label={`Select contact ${c.name}`}
-                      style={{ verticalAlign: 'middle', transform: 'scale(1.25)', marginRight: 8 }}
-                    />
-                  </div>
-                )}
-                <div><span style={{ fontWeight: 700, color: '#2563eb' }}>Name:</span> {c.name}</div>
-                <div><span style={{ fontWeight: 700, color: '#2563eb' }}>E-Mail:</span> {c.email}</div>
-                <div><span style={{ fontWeight: 700, color: '#2563eb' }}>Telefon:</span> {c.phone}</div>
-                <div><span style={{ fontWeight: 700, color: '#2563eb' }}>Firma:</span> {c.accountId
-                  ? <span style={{ color: '#0052cc' }}>{accounts.find((acc: any) => acc.id === c.accountId)?.name || <span style={{ color: '#bbb' }}>Unbekannt</span>}</span>
-                  : <span style={{ color: '#bbb' }}>Keine Firma</span>
-                }</div>
-                {adminView && (
-                  <div style={{ marginTop: 8 }}>
-                    <button
-                      style={{ background: '#e53935', color: '#fff', fontWeight: 700, fontSize: 16, width: '100%', borderRadius: 8, padding: '12px 0', letterSpacing: '0.5px', boxShadow: '0 1px 4px rgba(229,57,53,0.07)' }}
-                      onClick={async () => {
-                        if (!window.confirm(`Sind Sie sicher, dass Sie den Kontakt '${c.name}' löschen möchten?`)) return;
-                        try {
-                          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/contacts/${c.id}`, {
-                            method: 'DELETE',
-                            headers: { 'Content-Type': 'application/json' },
-                          });
-                          if (res.ok) {
-                            setContacts(contacts.filter(contact => contact.id !== c.id));
-                          } else {
-                            alert('Delete failed');
-                          }
-                        } catch {
-                          alert('Delete failed');
-                        }
-                      }}
-                    >Löschen</button>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      ) : (
-        <table className="contacts-table" style={{ width: '100%' }}>
+
+      {/* Table */}
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
           <thead>
-            <tr className="bg-gray-100 text-gray-800 font-semibold">
+            <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
               {adminView && (
-                <th className="px-4 py-3 text-left">
+                <th style={{ width: 44, padding: '12px 16px' }}>
                   <input
                     type="checkbox"
-                    checked={selected.length === filtered.length && filtered.length > 0}
+                    checked={allSelected}
                     onChange={e => setSelected(e.target.checked ? filtered.map(c => c.id) : [])}
-                    aria-label="Select all"
+                    style={{ cursor: 'pointer', width: 15, height: 15 }}
                   />
                 </th>
               )}
-              <th className="px-6 py-3 text-left rounded-tl-lg text-xl font-bold">Name</th>
-              <th className="px-6 py-3 text-left text-xl font-bold">E-Mail</th>
-              <th className="px-6 py-3 text-left text-xl font-bold">Telefon</th>
-              <th className="px-6 py-3 text-left rounded-tr-lg text-xl font-bold">Firma</th>
-              {adminView && <th className="px-6 py-3 text-left text-xl font-bold">Aktionen</th>}
+              <th style={thStyle}>Kontakt</th>
+              <th style={thStyle}>E-Mail</th>
+              <th style={thStyle}>Telefon</th>
+              <th style={thStyle}>Firma</th>
+              {adminView && <th style={{ ...thStyle, width: 60 }}></th>}
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={adminView ? 6 : 4} className="py-8 text-center text-gray-400">Keine Kontakte gefunden.</td></tr>
+              <tr>
+                <td
+                  colSpan={adminView ? 6 : 5}
+                  style={{ padding: '48px 24px', textAlign: 'center', color: '#94a3b8', fontSize: 14 }}
+                >
+                  Keine Kontakte gefunden.
+                </td>
+              </tr>
             ) : (
-              filtered.map((c: any) => (
-                <tr key={c.id} className="border-b last:border-b-0 hover:bg-gray-50 transition" style={{ height: 72 }}>
-                  {adminView && (
-                    <td className="px-4 py-3" style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                      <input
-                        type="checkbox"
-                        checked={selected.includes(c.id)}
-                        onChange={e => setSelected(e.target.checked ? [...selected, c.id] : selected.filter(id => id !== c.id))}
-                        aria-label={`Select contact ${c.name}`}
-                        style={{ verticalAlign: 'middle', transform: 'scale(1.25)' }}
-                      />
+              filtered.map((c: any, idx) => {
+                const account = accounts.find((a: any) => a.id === c.accountId);
+                const isSelected = selected.includes(c.id);
+                return (
+                  <tr
+                    key={c.id}
+                    style={{
+                      borderBottom: idx < filtered.length - 1 ? '1px solid #f1f5f9' : 'none',
+                      background: isSelected ? '#eff6ff' : '#fff',
+                      transition: 'background 0.1s',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isSelected ? '#eff6ff' : '#fff'; }}
+                    onClick={() => router.push(`/contacts/${c.id}`)}
+                  >
+                    {adminView && (
+                      <td style={{ padding: '14px 16px' }} onClick={e => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={e => setSelected(e.target.checked
+                            ? [...selected, c.id]
+                            : selected.filter(id => id !== c.id)
+                          )}
+                          style={{ cursor: 'pointer', width: 15, height: 15 }}
+                        />
+                      </td>
+                    )}
+                    <td style={{ padding: '14px 16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <Avatar name={c.name || '?'} />
+                        <div>
+                          <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 14 }}>{c.name}</div>
+                        </div>
+                      </div>
                     </td>
-                  )}
-                  <td data-label="Name">{c.name}</td>
-                  <td data-label="Email">{c.email}</td>
-                  <td data-label="Phone">{c.phone}</td>
-                  <td data-label="Account">
-                    {c.accountId
-                      ? <span className="contacts-account">{accounts.find((acc: any) => acc.id === c.accountId)?.name || <span className="contacts-no-account">Unbekannt</span>}</span>
-                      : <span className="contacts-no-account">Keine Firma</span>
-                    }
-                  </td>
-                  {adminView && (
-                    <td data-label="Actions">
-                      <button
-                        className="contacts-delete-btn"
-                        onClick={async () => {
-                          if (!window.confirm(`Sind Sie sicher, dass Sie den Kontakt '${c.name}' löschen möchten?`)) return;
-                          try {
-                            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/contacts/${c.id}`, {
-                              method: 'DELETE',
-                              headers: { 'Content-Type': 'application/json' },
-                            });
-                            if (res.ok) {
-                              setContacts(contacts.filter(contact => contact.id !== c.id));
-                            } else {
-                              alert('Delete failed');
-                            }
-                          } catch {
-                            alert('Delete failed');
-                          }
-                        }}
-                      >Löschen</button>
+                    <td style={tdStyle}>
+                      {c.email ? (
+                        <a
+                          href={`mailto:${c.email}`}
+                          onClick={e => e.stopPropagation()}
+                          style={{ color: '#2563eb', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5 }}
+                        >
+                          <FiMail size={13} />
+                          {c.email}
+                        </a>
+                      ) : <span style={{ color: '#cbd5e1' }}>—</span>}
                     </td>
-                  )}
-                </tr>
-              ))
+                    <td style={tdStyle}>
+                      {c.phone ? (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#475569' }}>
+                          <FiPhone size={13} />
+                          {c.phone}
+                        </span>
+                      ) : <span style={{ color: '#cbd5e1' }}>—</span>}
+                    </td>
+                    <td style={tdStyle}>
+                      {account ? (
+                        <span style={{
+                          display: 'inline-block', background: '#eff6ff', color: '#2563eb',
+                          borderRadius: 6, padding: '3px 10px', fontSize: 12, fontWeight: 500,
+                        }}>
+                          {account.name}
+                        </span>
+                      ) : (
+                        <span style={{ color: '#cbd5e1', fontSize: 13 }}>Keine Firma</span>
+                      )}
+                    </td>
+                    {adminView && (
+                      <td style={{ padding: '14px 16px', textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleDelete(c)}
+                          title="Kontakt löschen"
+                          style={{
+                            background: 'none', border: '1px solid #fecaca',
+                            borderRadius: 7, padding: '5px 8px',
+                            cursor: 'pointer', color: '#ef4444',
+                            display: 'flex', alignItems: 'center',
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={e => {
+                            (e.currentTarget as HTMLElement).style.background = '#fef2f2';
+                          }}
+                          onMouseLeave={e => {
+                            (e.currentTarget as HTMLElement).style.background = 'none';
+                          }}
+                        >
+                          <FiTrash2 size={14} />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Footer count */}
+      {filtered.length > 0 && (
+        <div style={{ padding: '12px 20px', borderTop: '1px solid #f1f5f9', fontSize: 12, color: '#94a3b8' }}>
+          {filtered.length} Kontakt{filtered.length !== 1 ? 'e' : ''}
+          {search && contacts.length !== filtered.length && ` von ${contacts.length}`}
+        </div>
       )}
     </div>
   );
 }
+
+const thStyle: React.CSSProperties = {
+  padding: '12px 16px',
+  textAlign: 'left',
+  fontSize: 12,
+  fontWeight: 600,
+  color: '#64748b',
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+};
+
+const tdStyle: React.CSSProperties = {
+  padding: '14px 16px',
+  color: '#475569',
+  fontSize: 14,
+  verticalAlign: 'middle',
+};

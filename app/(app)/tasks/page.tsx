@@ -1,11 +1,12 @@
 "use client";
 import TasksTable from '../../../components/tables/TasksTable';
 import React, { useState, useEffect } from 'react';
-import { fetchWithAuth } from '../../../src/api/client';
+import { api } from '../../../src/api/client';
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Button, FormControl, FormLabel, Input, Select, Textarea, useDisclosure, Spinner } from '@chakra-ui/react';
-import { loadTokenFromStorage } from '../../../src/auth/tokenStore';
+import { useAuth } from '../../../src/auth/AuthProvider';
 
 export default function TasksPage() {
+  const { user } = useAuth();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [form, setForm] = useState({
     title: '',
@@ -26,17 +27,11 @@ export default function TasksPage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    loadTokenFromStorage(); // Ensure token is loaded from localStorage
     if (isOpen) {
-      fetchWithAuth('/users')
-        .then(data => {
-          console.log('[TasksPage] /api/users response:', data);
-          setUsers(Array.isArray(data) ? data : []);
-        });
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      fetch(`${API_URL}/accounts`).then(res => res.json()).then(setAccounts);
-      fetch(`${API_URL}/contacts`).then(res => res.json()).then(setContacts);
-      fetch(`${API_URL}/deals`).then(res => res.json()).then(setDeals);
+      api.get('/users').then(data => setUsers(Array.isArray(data) ? data : [])).catch(() => {});
+      api.get('/accounts').then(data => setAccounts(Array.isArray(data) ? data : [])).catch(() => {});
+      api.get('/contacts').then(data => setContacts(Array.isArray(data) ? data : [])).catch(() => {});
+      api.get('/deals').then(data => setDeals(Array.isArray(data) ? data : [])).catch(() => {});
     }
   }, [isOpen]);
 
@@ -48,20 +43,11 @@ export default function TasksPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // You may want to get the current user from context/auth for createdByUserId
-    let createdByUserId = users[0]?.id || '';
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${API_URL}/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, createdByUserId }),
-      });
-      if (res.ok) {
-        setForm({ title: '', description: '', status: 'OPEN', priority: 'LOW', dueDate: '', assignedToUserId: '', accountId: '', contactId: '', dealId: '' });
-        onClose();
-        setRefreshKey(k => k + 1);
-      }
+      await api.post('/tasks', form);
+      setForm({ title: '', description: '', status: 'OPEN', priority: 'LOW', dueDate: '', assignedToUserId: '', accountId: '', contactId: '', dealId: '' });
+      onClose();
+      setRefreshKey(k => k + 1);
     } finally {
       setLoading(false);
     }

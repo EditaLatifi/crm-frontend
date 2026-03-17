@@ -23,7 +23,6 @@ export default function UsersPage() {
   useEffect(() => {
     if (user?.role === 'ADMIN') {
       api.get('/users').then((data) => {
-        console.log('[UsersPage] GET /api/users result:', data);
         setUsers(data);
         setAllUsers(data);
       });
@@ -38,7 +37,6 @@ export default function UsersPage() {
       setNewUser({ email: '', name: '', role: 'USER', password: '' });
       // Fetch all users again to refresh the second table
       const fresh = await api.get('/users');
-      console.log('[UsersPage] After add, GET /api/users result:', fresh);
       setAllUsers(fresh);
     } finally {
       setLoading(false);

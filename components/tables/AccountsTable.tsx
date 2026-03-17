@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FiActivity, FiEdit2, FiTrash2 } from "react-icons/fi";
 
 import { api } from "../../src/api/client";
+import { useToast } from "../ui/Toast";
 import Modal from "../ui/Modal";
 import AccountEditForm from "../forms/AccountEditForm";
 import ActivityLog from "../activity/ActivityLog";
@@ -91,6 +92,7 @@ type InlineCardProps = {
   onOpenEditModal: (account: Account) => void;
   onDelete: (id: string) => void;
   onShowActivity: (id: string) => void;
+  ownerName?: string;
 };
 
 function InlineEditableAccountCard({
@@ -102,6 +104,7 @@ function InlineEditableAccountCard({
   onOpenEditModal,
   onDelete,
   onShowActivity,
+  ownerName,
 }: InlineCardProps) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(acc.name);
@@ -351,7 +354,7 @@ function InlineEditableAccountCard({
             }}
           >
             Besitzer:{" "}
-            <span style={{ fontWeight: 400 }}>{acc.ownerUserId || "-"}</span>
+            <span style={{ fontWeight: 400 }}>{ownerName || "-"}</span>
           </div>
 
           <div style={{ fontSize: 11, color: "#888", fontWeight: 500 }}>
@@ -415,6 +418,12 @@ function InlineEditableAccountCard({
    AccountsTable
 --------------------------------------------- */
 
+const TYPE_LABELS: Record<string, string> = {
+  CLIENT: "Kunde",
+  POTENTIAL_CLIENT: "Interessent",
+  PARTNER: "Partner",
+};
+
 type Props = {
   search?: string;
   typeFilter?: string;
@@ -434,7 +443,9 @@ function AccountsTable({
   sortBy = "createdAt-desc",
   tagFilter = "",
 }: Props) {
+  const toast = useToast();
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [users, setUsers] = useState<{ id: string; name?: string; email?: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -443,19 +454,23 @@ function AccountsTable({
   const [selected, setSelected] = useState<string[]>([]);
   const [activityAccountId, setActivityAccountId] = useState<string | null>(null);
 
-  // Load accounts
+  // Load accounts + users
   useEffect(() => {
     let alive = true;
 
     (async () => {
       try {
         setLoading(true);
-        const res = await api.get("/accounts");
+        const [res, usersRes] = await Promise.all([
+          api.get("/accounts"),
+          api.get("/users").catch(() => []),
+        ]);
         const data = (res?.data ?? res) as any;
-
-        // Support both array response or {data: []}
         const list: Account[] = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
-        if (alive) setAccounts(list);
+        if (alive) {
+          setAccounts(list);
+          setUsers(Array.isArray(usersRes) ? usersRes : []);
+        }
       } catch {
         if (alive) setAccounts([]);
       } finally {
@@ -463,9 +478,7 @@ function AccountsTable({
       }
     })();
 
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, []);
 
   // Tags helper
@@ -651,7 +664,7 @@ function AccountsTable({
         accs.map((a) => (a.id === editAccount.id ? { ...a, ...payload } : a))
       );
     } catch {
-      alert("Error updating account");
+      toast.error("Konto konnte nicht gespeichert werden.");
     } finally {
       setEditModalOpen(false);
       setEditAccount(null);
@@ -663,33 +676,31 @@ function AccountsTable({
       await api.delete(`/accounts/${accountId}`);
       setAccounts((accs) => accs.filter((a) => a.id !== accountId));
       setSelected((prev) => prev.filter((id) => id !== accountId));
+      toast.success("Konto gelöscht.");
     } catch {
-      alert("Error deleting account");
+      toast.error("Konto konnte nicht gelöscht werden.");
     }
   };
 
   async function handleBulkDelete() {
     if (!selected.length) return;
-    if (!window.confirm(`Delete ${selected.length} accounts?`)) return;
+    if (!window.confirm(`${selected.length} Konten wirklich löschen?`)) return;
 
     for (const id of selected) {
-      // best-effort: keep going even if one fails
-      try {
-        await api.delete(`/accounts/${id}`);
-      } catch {}
+      try { await api.delete(`/accounts/${id}`); } catch {}
     }
 
     setAccounts((prev) => prev.filter((a) => !selected.includes(a.id)));
     setSelected([]);
+    toast.success(`${selected.length} Konten gelöscht.`);
   }
 
   function handleBulkAssign() {
-    // Keep it compiling + safe: you can replace with your real UI later.
-    alert("Assign Owner: implement your UI here (e.g., open a modal)");
+    toast.info("Funktion demnächst verfügbar.");
   }
 
   function handleBulkType() {
-    alert("Change Type: implement your UI here (e.g., open a modal)");
+    toast.info("Funktion demnächst verfügbar.");
   }
 
   /* ---------------------------------------------
@@ -698,142 +709,37 @@ function AccountsTable({
 
   return (
     <>
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <button
-          className="accounts-export-btn"
-          style={{
-            fontSize: 13,
-            fontWeight: 500,
-            borderRadius: 4,
-            border: "1px solid #2563eb",
-            background: "#2563eb",
-            color: "#fff",
-            padding: "6px 14px",
-            cursor: "pointer",
-            height: 32,
-            boxShadow: "none",
-            opacity: loading ? 0.6 : 1,
-          }}
-          onClick={handleExportCSV}
-          disabled={loading}
-        >
-          CSV exportieren
-        </button>
-
-        <label
-          className="accounts-import-label"
-          style={{
-            fontSize: 13,
-            fontWeight: 500,
-            borderRadius: 4,
-            border: "1px solid #36a2eb",
-            background: "#fff",
-            color: "#36a2eb",
-            padding: "6px 14px",
-            cursor: "pointer",
-            height: 32,
-            display: "flex",
-            alignItems: "center",
-            boxShadow: "none",
-            opacity: loading ? 0.6 : 1,
-          }}
-        >
-          CSV importieren
-          <input
-            type="file"
-            accept=".csv"
-            style={{ display: "none" }}
-            onChange={handleImportCSV}
-            disabled={loading}
-          />
-        </label>
-      </div>
-
       {selected.length > 0 && (
-        <div
-          className="accounts-bulk-bar"
-          style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 10,
-            background: "#f4f5f7",
-            borderBottom: "1.5px solid #b3bac5",
-            padding: 12,
-            display: "flex",
-            alignItems: "center",
-            gap: 16,
-            marginBottom: 12,
-          }}
-        >
-          <span style={{ fontWeight: 600 }}>{selected.length} selected</span>
-
-          <div className="accounts-bulk-buttons" style={{ display: "flex", gap: 10 }}>
-            <button
-              onClick={handleBulkDelete}
-              style={{
-                background: "#fff0f0",
-                color: "#d32f2f",
-                border: "1.5px solid #d32f2f",
-                borderRadius: 6,
-                padding: "6px 16px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Delete
-            </button>
-
-            <button
-              onClick={handleBulkAssign}
-              style={{
-                background: "#e9f2ff",
-                color: "#0052cc",
-                border: "1.5px solid #0052cc",
-                borderRadius: 6,
-                padding: "6px 16px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Assign Owner
-            </button>
-
-            <button
-              onClick={handleBulkType}
-              style={{
-                background: "#f4f5f7",
-                color: "#222",
-                border: "1.5px solid #b3bac5",
-                borderRadius: 6,
-                padding: "6px 16px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Change Type
-            </button>
-
-            <button
-              onClick={() => setSelected([])}
-              style={{
-                marginLeft: 8,
-                background: "#fff",
-                color: "#0052cc",
-                border: "1.5px solid #b3bac5",
-                borderRadius: 6,
-                padding: "6px 16px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Clear
-            </button>
-          </div>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 12,
+          padding: "10px 16px", background: "#fef2f2",
+          borderBottom: "1px solid #fecaca", marginBottom: 12,
+        }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#dc2626" }}>
+            {selected.length} ausgewählt
+          </span>
+          <button
+            onClick={handleBulkDelete}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              background: "#dc2626", color: "#fff", border: "none",
+              borderRadius: 7, padding: "6px 14px", fontSize: 13,
+              fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            <FiTrash2 size={13} /> Ausgewählte löschen
+          </button>
+          <button
+            onClick={() => setSelected([])}
+            style={{ fontSize: 13, color: "#64748b", background: "none", border: "none", cursor: "pointer" }}
+          >
+            Abbrechen
+          </button>
         </div>
       )}
 
       {loading ? (
-        <div style={{ color: "#666", fontSize: 13 }}>Loading accounts…</div>
+        <div style={{ padding: "40px 24px", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>Lade Firmen...</div>
       ) : (
         <div
           className="accounts-table-section"
@@ -866,18 +772,17 @@ function AccountsTable({
                     style={{
                       textAlign: "center",
                       fontWeight: 700,
-                      fontSize: 14,
+                      fontSize: 13,
                       letterSpacing: 0.2,
                       color: "#2563eb",
-                      textTransform: "uppercase",
-                      background: "#f6f7f9",
-                      borderRadius: 4,
-                      padding: "4px 0",
+                      background: "#eff6ff",
+                      borderRadius: 6,
+                      padding: "5px 0",
                       flex: 1,
-                      border: "1px solid #d1d5db",
+                      border: "1px solid #bfdbfe",
                     }}
                   >
-                    {col.type}
+                    {TYPE_LABELS[col.type] || col.type}
                   </div>
 
                   <input
@@ -908,32 +813,37 @@ function AccountsTable({
                   </div>
                 )}
 
-                {col.accounts.map((acc) => (
-                  <div
-                    key={acc.id}
-                    className="account-card"
-                    style={{
-                      marginBottom: 10,
-                      borderBottom: "1px solid #e5e7eb",
-                      paddingBottom: 8,
-                    }}
-                  >
-                    <InlineEditableAccountCard
-                      acc={acc}
-                      selected={selected.includes(acc.id)}
-                      onSelect={(checked) => handleSelect(acc.id, checked)}
-                      onInlinePatch={(patch) =>
-                        setAccounts((accs) =>
-                          accs.map((a) => (a.id === acc.id ? { ...a, ...patch } : a))
-                        )
-                      }
-                      getTags={getTags}
-                      onOpenEditModal={handleOpenEditModal}
-                      onDelete={handleDelete}
-                      onShowActivity={(id) => setActivityAccountId(id)}
-                    />
-                  </div>
-                ))}
+                {col.accounts.map((acc) => {
+                  const owner = users.find(u => u.id === acc.ownerUserId);
+                  const ownerName = owner?.name || owner?.email || (acc.ownerUserId ? acc.ownerUserId.slice(0, 8) + "…" : "-");
+                  return (
+                    <div
+                      key={acc.id}
+                      className="account-card"
+                      style={{
+                        marginBottom: 10,
+                        borderBottom: "1px solid #e5e7eb",
+                        paddingBottom: 8,
+                      }}
+                    >
+                      <InlineEditableAccountCard
+                        acc={acc}
+                        selected={selected.includes(acc.id)}
+                        onSelect={(checked) => handleSelect(acc.id, checked)}
+                        onInlinePatch={(patch) =>
+                          setAccounts((accs) =>
+                            accs.map((a) => (a.id === acc.id ? { ...a, ...patch } : a))
+                          )
+                        }
+                        getTags={getTags}
+                        onOpenEditModal={handleOpenEditModal}
+                        onDelete={handleDelete}
+                        onShowActivity={(id) => setActivityAccountId(id)}
+                        ownerName={ownerName}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             );
           })}

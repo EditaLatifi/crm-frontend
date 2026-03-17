@@ -138,15 +138,13 @@
   }
   .tasks-title {
     font-size: 20px;
+  }
   .tasks-title-mobile {
     font-size: 24px !important;
     font-weight: 800 !important;
     margin-bottom: 0 !important;
     margin-top: 18px !important;
     letter-spacing: 0.2px !important;
-    min-width: 240px;
-    padding: 10px 6px;
-    border-radius: 8px;
   }
   .tasks-card {
     padding: 10px 6px;
@@ -464,7 +462,6 @@
   border-bottom-left-radius: 18px;
   border-bottom-right-radius: 18px;
   padding: 24px;
-  margin-top: 32px;
 }
 /* Responsive card grid for accounts table */
 .accounts-table-section {
@@ -731,6 +728,9 @@
 }
 /* Desktop sidebar and main content layout */
 /* Desktop sidebar and main content layout */
+.topbar {
+  left: 240px;
+}
 .sidebar-desktop {
   display: block;
 }
@@ -739,30 +739,24 @@
 }
 .main-content {
   margin-left: 250px;
-  min-width: calc(100vw - 250px);
+  min-width: 0;
+  width: calc(100vw - 250px);
   transition: margin-left 0.3s;
 }
 /* Responsive styles for mobile and tablet */
 
-/* Sidebar burger menu */
+/* Sidebar burger menu — hidden on desktop, shown inline in topbar on mobile */
 .burger-menu {
   display: none;
-  position: fixed;
-  top: 18px;
-  left: 18px;
-  z-index: 100;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  width: 44px;
-  height: 44px;
   align-items: center;
   justify-content: center;
-  border: none;
-  cursor: pointer;
+  flex-shrink: 0;
 }
 
 @media (max-width: 900px) {
+  .topbar {
+    left: 0 !important;
+  }
   .burger-menu {
     display: flex;
   }
@@ -796,10 +790,61 @@
     z-index: 199;
   }
   .main-content {
-    margin-left: 0;
-    padding: 12px !important;
+    margin-left: 0 !important;
+    width: 100vw !important;
+    padding: 0 !important;
   }
-  
+}
+
+/* ── Task detail page responsive ── */
+.task-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 960px) {
+  .task-detail-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .task-detail-sidebar {
+    order: -1; /* Show sidebar above on tablet/mobile */
+  }
+}
+@media (max-width: 640px) {
+  .task-detail-wrap {
+    padding: 16px 12px !important;
+  }
+  .task-detail-grid {
+    gap: 12px !important;
+  }
+}
+
+/* ── Dashboard card min-width fix ── */
+@media (max-width: 900px) {
+  .dashboard-card,
+  .dashboard-chart {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+}
+
+/* ── Topbar: hide keyboard shortcut hint on mobile ── */
+@media (max-width: 640px) {
+  .search-kbd-hint {
+    display: none !important;
+  }
+  .topbar-search {
+    max-width: none !important;
+  }
+}
+
+/* ── Tablet padding for pages ── */
+@media (max-width: 900px) {
+  .page-pad {
+    padding: 16px !important;
+  }
 }
 
 /* Responsive tables */
@@ -870,5 +915,4 @@
     box-shadow: 0 1px 4px rgba(229,57,53,0.07);
     letter-spacing: 0.5px;
   }
-}
 }
