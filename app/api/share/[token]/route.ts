@@ -7,6 +7,11 @@ function getToken(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const token = getToken(req);
-  const res = await fetch(`${API}/share/${token}`, { cache: 'no-store' });
-  return NextResponse.json(await res.json(), { status: res.status });
+  try {
+    const res = await fetch(`${API}/share/${token}`, { cache: 'no-store' });
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
+  } catch {
+    return NextResponse.json({ message: 'Der Server ist gerade nicht erreichbar. Bitte kurz warten und erneut versuchen.' }, { status: 503 });
+  }
 }
