@@ -77,7 +77,7 @@ function VendorsContent() {
   const [editItem, setEditItem] = useState<any>(null);
 
   const load = useCallback(() => {
-    api.get('/vendors').then((d: any) => setVendors(Array.isArray(d) ? d : [])).catch(() => {}).finally(() => setLoading(false));
+    api.get('/vendors').then((d: any) => setVendors(Array.isArray(d) ? d : [])).catch(() => setVendors([])).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { load(); }, [load]);
