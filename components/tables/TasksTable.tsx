@@ -12,7 +12,15 @@ interface Task {
   dueDate?: string;
   assigneeName?: string;
   assignedToUserId?: string;
+  assignedTo?: { id: string; name?: string; email?: string } | null;
 }
+
+const PRIORITY_LABELS: Record<string, string> = { HIGH: 'Wichtig', MEDIUM: 'Mittel', LOW: 'Niedrig' };
+const PRIORITY_COLORS: Record<string, { bg: string; color: string }> = {
+  HIGH:   { bg: '#fef2f2', color: '#dc2626' },
+  MEDIUM: { bg: '#fffbeb', color: '#d97706' },
+  LOW:    { bg: '#f1f5f9', color: '#64748b' },
+};
 
 const statusColumns = [
   { key: 'OPEN', label: 'Offen', color: 'gray' },
@@ -79,21 +87,26 @@ export default function TasksTable() {
             {tasksByStatus[col.key].length === 0 ? (
               <Text color="gray.400" fontSize="md" ml={2}>Keine Aufgaben</Text>
             ) : (
-              tasksByStatus[col.key].map((t: Task) => (
-                <Link key={t.id} href={`/tasks/${t.id}`} style={{ textDecoration: 'none' }}>
-                  <Box bg="#fff" borderRadius="md" p={4} boxShadow="sm" mb={3} _hover={{ boxShadow: 'lg', bg: '#f0f4ff' }} transition="all 0.2s">
-                    <Flex align="center" justify="space-between" mb={2}>
-                      <Text fontWeight="bold" fontSize="md">{t.title}</Text>
-                      <Tag colorScheme={col.color} size="sm">{t.priority}</Tag>
-                    </Flex>
-                    <Flex align="center" gap={2} fontSize="sm" color="gray.600">
-                      <Avatar size="xs" name={t.assigneeName || t.assignedToUserId || 'Keine Zuweisung'} />
-                      <Text>{t.assigneeName || t.assignedToUserId || 'Keine Zuweisung'}</Text>
-                      {t.dueDate && <Text ml={2}>Fällig: {new Date(t.dueDate).toLocaleDateString()}</Text>}
-                    </Flex>
-                  </Box>
-                </Link>
-              ))
+              tasksByStatus[col.key].map((t: Task) => {
+                const assigneeName = t.assignedTo?.name || t.assignedTo?.email || t.assigneeName || 'Keine Zuweisung';
+                const initials = assigneeName === 'Keine Zuweisung' ? '?' : assigneeName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+                const pc = PRIORITY_COLORS[t.priority || 'LOW'];
+                return (
+                  <Link key={t.id} href={`/tasks/${t.id}`} style={{ textDecoration: 'none' }}>
+                    <Box bg="#fff" borderRadius="md" p={4} boxShadow="sm" mb={3} _hover={{ boxShadow: 'lg', bg: '#f0f4ff' }} transition="all 0.2s">
+                      <Flex align="center" justify="space-between" mb={2}>
+                        <Text fontWeight="bold" fontSize="md">{t.title}</Text>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: pc.bg, color: pc.color }}>{PRIORITY_LABELS[t.priority || 'LOW']}</span>
+                      </Flex>
+                      <Flex align="center" gap={2} fontSize="sm" color="gray.600">
+                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{initials}</div>
+                        <Text>{assigneeName}</Text>
+                        {t.dueDate && <Text ml={2} color={new Date(t.dueDate) < new Date() ? 'red.500' : 'gray.400'}>Fällig: {new Date(t.dueDate).toLocaleDateString('de-CH')}</Text>}
+                      </Flex>
+                    </Box>
+                  </Link>
+                );
+              })
             )}
           </Box>
         ))}
@@ -123,35 +136,37 @@ export default function TasksTable() {
                   {tasksByStatus[col.key].length === 0 && (
                     <Text color="gray.400" fontSize="sm">Keine Aufgaben</Text>
                   )}
-                  {tasksByStatus[col.key].map((t: Task, idx: number) => (
-                    <Draggable draggableId={t.id} index={idx} key={t.id}>
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          style={{
-                            ...provided.draggableProps.style,
-                            opacity: snapshot.isDragging ? 0.7 : 1,
-                          }}
-                        >
-                          <Link href={`/tasks/${t.id}`} style={{ textDecoration: 'none' }}>
-                            <Box bg="#fff" borderRadius="md" p={4} boxShadow="sm" _hover={{ boxShadow: 'lg', bg: '#f0f4ff' }} transition="all 0.2s">
-                              <Flex align="center" justify="space-between" mb={2}>
-                                <Text fontWeight="bold" fontSize="md">{t.title}</Text>
-                                <Tag colorScheme={col.color} size="sm">{t.priority}</Tag>
-                              </Flex>
-                              <Flex align="center" gap={2} fontSize="sm" color="gray.600">
-                                <Avatar size="xs" name={t.assigneeName || t.assignedToUserId || 'Keine Zuweisung'} />
-                                <Text>{t.assigneeName || t.assignedToUserId || 'Keine Zuweisung'}</Text>
-                                {t.dueDate && <Text ml={2}>Fällig: {new Date(t.dueDate).toLocaleDateString()}</Text>}
-                              </Flex>
-                            </Box>
-                          </Link>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
+                  {tasksByStatus[col.key].map((t: Task, idx: number) => {
+                    const assigneeName = t.assignedTo?.name || t.assignedTo?.email || t.assigneeName || 'Keine Zuweisung';
+                    const initials = assigneeName === 'Keine Zuweisung' ? '?' : assigneeName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+                    const pc = PRIORITY_COLORS[t.priority || 'LOW'];
+                    return (
+                      <Draggable draggableId={t.id} index={idx} key={t.id}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            style={{ ...provided.draggableProps.style, opacity: snapshot.isDragging ? 0.7 : 1 }}
+                          >
+                            <Link href={`/tasks/${t.id}`} style={{ textDecoration: 'none' }}>
+                              <Box bg="#fff" borderRadius="md" p={4} boxShadow="sm" _hover={{ boxShadow: 'lg', bg: '#f0f4ff' }} transition="all 0.2s">
+                                <Flex align="center" justify="space-between" mb={2}>
+                                  <Text fontWeight="bold" fontSize="md">{t.title}</Text>
+                                  <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: pc.bg, color: pc.color }}>{PRIORITY_LABELS[t.priority || 'LOW']}</span>
+                                </Flex>
+                                <Flex align="center" gap={2} fontSize="sm" color="gray.600">
+                                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{initials}</div>
+                                  <Text>{assigneeName}</Text>
+                                  {t.dueDate && <Text ml={2} color={new Date(t.dueDate) < new Date() ? 'red.500' : 'gray.400'}>Fällig: {new Date(t.dueDate).toLocaleDateString('de-CH')}</Text>}
+                                </Flex>
+                              </Box>
+                            </Link>
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
                   {provided.placeholder}
                 </VStack>
               </Box>

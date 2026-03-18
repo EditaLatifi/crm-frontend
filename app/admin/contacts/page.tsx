@@ -35,7 +35,7 @@ function AdminContactsPageContent() {
       <div style={{
         background: 'linear-gradient(135deg, #f8f9fb 60%, #e9effd 100%)',
         borderRadius: 18, boxShadow: '0 4px 16px rgba(30,41,59,0.10)',
-        padding: '28px 28px 22px', marginBottom: 18, marginTop: 30,
+        padding: '28px 28px 22px', marginBottom: 18,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div>
@@ -46,19 +46,21 @@ function AdminContactsPageContent() {
             Verwalte alle Geschäftskontakte und Ansprechpartner.
           </div>
         </div>
-        <button
-          onClick={() => setModalOpen(true)}
-          style={{
-            fontSize: 14, fontWeight: 600, borderRadius: 8,
-            border: '1.5px solid #2563eb', background: '#2563eb',
-            color: '#fff', padding: '9px 20px', cursor: 'pointer',
-            transition: 'background 0.15s', whiteSpace: 'nowrap',
-          }}
-          onMouseOver={e => (e.currentTarget.style.background = '#1d4ed8')}
-          onMouseOut={e => (e.currentTarget.style.background = '#2563eb')}
-        >
-          + Neuer Kontakt
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={() => setModalOpen(true)}
+            style={{
+              fontSize: 14, fontWeight: 600, borderRadius: 8,
+              border: '1.5px solid #2563eb', background: '#2563eb',
+              color: '#fff', padding: '9px 20px', cursor: 'pointer',
+              transition: 'background 0.15s', whiteSpace: 'nowrap',
+            }}
+            onMouseOver={e => (e.currentTarget.style.background = '#1d4ed8')}
+            onMouseOut={e => (e.currentTarget.style.background = '#2563eb')}
+          >
+            + Neuer Kontakt
+          </button>
+        </div>
       </div>
 
       {/* Filter bar */}

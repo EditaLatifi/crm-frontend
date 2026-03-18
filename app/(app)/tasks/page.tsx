@@ -2,12 +2,11 @@
 import TasksTable from '../../../components/tables/TasksTable';
 import React, { useState, useEffect } from 'react';
 import { api } from '../../../src/api/client';
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Button, FormControl, FormLabel, Input, Select, Textarea, useDisclosure, Spinner } from '@chakra-ui/react';
 import { useAuth } from '../../../src/auth/AuthProvider';
 
 export default function TasksPage() {
   const { user } = useAuth();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -23,112 +22,143 @@ export default function TasksPage() {
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
   const [contacts, setContacts] = useState<{ id: string; name: string }[]>([]);
   const [deals, setDeals] = useState<{ id: string; name: string }[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    if (isOpen) {
+    if (showForm) {
       api.get('/users').then(data => setUsers(Array.isArray(data) ? data : [])).catch(() => {});
       api.get('/accounts').then(data => setAccounts(Array.isArray(data) ? data : [])).catch(() => {});
       api.get('/contacts').then(data => setContacts(Array.isArray(data) ? data : [])).catch(() => {});
       api.get('/deals').then(data => setDeals(Array.isArray(data) ? data : [])).catch(() => {});
     }
-  }, [isOpen]);
+  }, [showForm]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
     try {
       await api.post('/tasks', form);
       setForm({ title: '', description: '', status: 'OPEN', priority: 'LOW', dueDate: '', assignedToUserId: '', accountId: '', contactId: '', dealId: '' });
-      onClose();
+      setShowForm(false);
       setRefreshKey(k => k + 1);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '9px 12px', borderRadius: 8,
+    border: '1.5px solid #e2e8f0', fontSize: 13, color: '#1e293b',
+    background: '#f8fafc', boxSizing: 'border-box', outline: 'none',
+  };
+  const labelStyle: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 5 };
+
   return (
-    <div className="tasks-page-main-container">
-      <div className="tasks-header-row tasks-header-mobile">
-        <h1 className="tasks-title tasks-title-mobile">Aufgaben</h1>
-        <Button colorScheme="blue" size="lg" className="tasks-new-btn-mobile" onClick={onOpen}>+ Neue Aufgabe</Button>
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px 40px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+
+      {/* Header */}
+      <div style={{
+        background: 'linear-gradient(135deg, #f8f9fb 60%, #e9effd 100%)',
+        borderRadius: 18, boxShadow: '0 4px 16px rgba(30,41,59,0.10)',
+        padding: '28px 28px 22px', marginBottom: 18,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}>
+        <div>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1e293b', margin: 0, letterSpacing: '-0.5px' }}>Aufgaben</h1>
+          <div style={{ fontSize: 14, color: '#64748b', fontWeight: 400, marginTop: 5 }}>Verwalte und priorisiere deine Aufgaben im Kanban-Board.</div>
+        </div>
+        <button
+          onClick={() => setShowForm(true)}
+          style={{ fontSize: 14, fontWeight: 600, borderRadius: 8, border: '1.5px solid #2563eb', background: '#2563eb', color: '#fff', padding: '9px 20px', cursor: 'pointer', transition: 'background 0.15s' }}
+          onMouseOver={e => (e.currentTarget.style.background = '#1d4ed8')}
+          onMouseOut={e => (e.currentTarget.style.background = '#2563eb')}
+        >
+          + Neue Aufgabe
+        </button>
       </div>
-      <div style={{ background: '#fff', borderRadius: 8, padding: 24 }}>
-        <TasksTable key={refreshKey} />
-      </div>
-      <Modal isOpen={isOpen} onClose={onClose} size="lg">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Neue Aufgabe</ModalHeader>
-          <ModalCloseButton />
-          <form onSubmit={handleSubmit}>
-            <ModalBody pb={6}>
-              <FormControl isRequired mb={3}>
-                <FormLabel>Titel</FormLabel>
-                <Input name="title" value={form.title} onChange={handleChange} />
-              </FormControl>
-              <FormControl mb={3}>
-                <FormLabel>Beschreibung</FormLabel>
-                <Textarea name="description" value={form.description} onChange={handleChange} />
-              </FormControl>
-              <FormControl mb={3}>
-                <FormLabel>Status</FormLabel>
-                <Select name="status" value={form.status} onChange={handleChange}>
-                  <option value="OPEN">Offen</option>
-                  <option value="IN_PROGRESS">In Bearbeitung</option>
-                  <option value="DONE">Erledigt</option>
-                </Select>
-              </FormControl>
-              <FormControl mb={3}>
-                <FormLabel>Priorität</FormLabel>
-                <Select name="priority" value={form.priority} onChange={handleChange}>
-                  <option value="LOW">Nicht so wichtig</option>
-                  <option value="MEDIUM">Mittel</option>
-                  <option value="HIGH">Wichtig</option>
-                </Select>
-              </FormControl>
-              <FormControl mb={3}>
-                <FormLabel>Fälligkeitsdatum</FormLabel>
-                <Input name="dueDate" type="date" value={form.dueDate} onChange={handleChange} />
-              </FormControl>
-              <FormControl mb={3}>
-                <FormLabel>Zugewiesen an</FormLabel>
-                <Select name="assignedToUserId" value={form.assignedToUserId} onChange={handleChange} placeholder="Keine zugewiesen">
-                  {Array.isArray(users) && users.map((u) => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
-                </Select>
-              </FormControl>
-              <FormControl mb={3}>
-                <FormLabel>Konto</FormLabel>
-                <Select name="accountId" value={form.accountId} onChange={handleChange} placeholder="Kein Konto">
-                  {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-                </Select>
-              </FormControl>
-              <FormControl mb={3}>
-                <FormLabel>Kontakt</FormLabel>
-                <Select name="contactId" value={form.contactId} onChange={handleChange} placeholder="Kein Kontakt">
-                  {contacts.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </Select>
-              </FormControl>
-              <FormControl mb={3}>
-                <FormLabel>Deal</FormLabel>
-                <Select name="dealId" value={form.dealId} onChange={handleChange} placeholder="Kein Deal">
-                  {deals.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </Select>
-              </FormControl>
-            </ModalBody>
-            <ModalFooter>
-              <Button colorScheme="blue" mr={3} type="submit" isLoading={loading}>Erstellen</Button>
-              <Button onClick={onClose}>Abbrechen</Button>
-            </ModalFooter>
-          </form>
-        </ModalContent>
-      </Modal>
+
+      {/* Kanban board */}
+      <TasksTable key={refreshKey} />
+
+      {/* Create modal */}
+      {showForm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 500, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', fontWeight: 700, fontSize: 16, color: '#0f172a' }}>Neue Aufgabe</div>
+            <form onSubmit={handleSubmit}>
+              <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={labelStyle}>Titel *</label>
+                  <input required style={inputStyle} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Aufgabentitel" />
+                </div>
+                <div>
+                  <label style={labelStyle}>Beschreibung</label>
+                  <textarea style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Beschreibung (optional)" />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={labelStyle}>Status</label>
+                    <select style={inputStyle} value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
+                      <option value="OPEN">Offen</option>
+                      <option value="IN_PROGRESS">In Bearbeitung</option>
+                      <option value="DONE">Erledigt</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Priorität</label>
+                    <select style={inputStyle} value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}>
+                      <option value="LOW">Niedrig</option>
+                      <option value="MEDIUM">Mittel</option>
+                      <option value="HIGH">Wichtig</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Fälligkeitsdatum</label>
+                  <input type="date" style={inputStyle} value={form.dueDate} onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Zugewiesen an</label>
+                  <select style={inputStyle} value={form.assignedToUserId} onChange={e => setForm(f => ({ ...f, assignedToUserId: e.target.value }))}>
+                    <option value="">Keine Zuweisung</option>
+                    {users.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
+                  </select>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={labelStyle}>Firma</label>
+                    <select style={inputStyle} value={form.accountId} onChange={e => setForm(f => ({ ...f, accountId: e.target.value }))}>
+                      <option value="">Keine Firma</option>
+                      {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Kontakt</label>
+                    <select style={inputStyle} value={form.contactId} onChange={e => setForm(f => ({ ...f, contactId: e.target.value }))}>
+                      <option value="">Kein Kontakt</option>
+                      {contacts.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Deal</label>
+                  <select style={inputStyle} value={form.dealId} onChange={e => setForm(f => ({ ...f, dealId: e.target.value }))}>
+                    <option value="">Kein Deal</option>
+                    {deals.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{ padding: '16px 24px', borderTop: '1px solid #f1f5f9', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setShowForm(false)} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}>Abbrechen</button>
+                <button type="submit" disabled={saving} style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+                  {saving ? 'Erstelle...' : 'Aufgabe erstellen'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
