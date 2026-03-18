@@ -12,7 +12,7 @@ interface Task {
   dueDate?: string;
   assigneeName?: string;
   assignedToUserId?: string;
-  assignedTo?: { id: string; name?: string; email?: string } | null;
+  assignee?: { id: string; name?: string; email?: string } | null;
 }
 
 const PRIORITY_LABELS: Record<string, string> = { HIGH: 'Wichtig', MEDIUM: 'Mittel', LOW: 'Niedrig' };
@@ -88,7 +88,7 @@ export default function TasksTable() {
               <Text color="gray.400" fontSize="md" ml={2}>Keine Aufgaben</Text>
             ) : (
               tasksByStatus[col.key].map((t: Task) => {
-                const assigneeName = t.assignedTo?.name || t.assignedTo?.email || t.assigneeName || 'Keine Zuweisung';
+                const assigneeName = t.assignee?.name || t.assignee?.email || t.assigneeName || 'Keine Zuweisung';
                 const initials = assigneeName === 'Keine Zuweisung' ? '?' : assigneeName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
                 const pc = PRIORITY_COLORS[t.priority || 'LOW'];
                 return (
@@ -137,7 +137,7 @@ export default function TasksTable() {
                     <Text color="gray.400" fontSize="sm">Keine Aufgaben</Text>
                   )}
                   {tasksByStatus[col.key].map((t: Task, idx: number) => {
-                    const assigneeName = t.assignedTo?.name || t.assignedTo?.email || t.assigneeName || 'Keine Zuweisung';
+                    const assigneeName = t.assignee?.name || t.assignee?.email || t.assigneeName || 'Keine Zuweisung';
                     const initials = assigneeName === 'Keine Zuweisung' ? '?' : assigneeName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
                     const pc = PRIORITY_COLORS[t.priority || 'LOW'];
                     return (
