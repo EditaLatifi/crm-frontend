@@ -14,6 +14,7 @@ import "./responsive.css";
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLogin = pathname === "/login";
+  const isShare = pathname?.startsWith("/share/");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -36,7 +37,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
-  if (isLogin) {
+  if (isLogin || isShare) {
     return <>{children}</>;
   }
   return (

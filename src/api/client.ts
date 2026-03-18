@@ -83,6 +83,7 @@ export const api = {
   post: (url: string, body?: any) => fetchWithAuth(url, { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } }),
   patch: (url: string, body?: any) => fetchWithAuth(url, { method: 'PATCH', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } }),
   delete: (url: string) => fetchWithAuth(url, { method: 'DELETE' }),
+  upload: (url: string, formData: FormData) => fetchWithAuth(url, { method: 'POST', body: formData }),
 };
 
 // Unauthenticated health ping — used for keep-alive

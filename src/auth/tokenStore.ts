@@ -33,5 +33,22 @@ export function saveTokenToStorage() {
 export function clearTokenFromStorage() {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('userToken');
+    localStorage.removeItem('userProfile');
+  }
+}
+
+export function saveUserToStorage(user: object) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('userProfile', JSON.stringify(user));
+  }
+}
+
+export function loadUserFromStorage(): any | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('userProfile');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
   }
 }

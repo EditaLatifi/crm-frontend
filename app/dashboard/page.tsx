@@ -10,7 +10,7 @@ import TimeLineChart from '../../components/charts/TimeLineChart';
 import DealForecastWidget from '../../components/deals/DealForecastWidget';
 import {
   FiCheckSquare, FiBriefcase, FiTrendingUp, FiClock,
-  FiAlertTriangle, FiArrowRight,
+  FiAlertTriangle, FiArrowRight, FiFileText, FiDollarSign,
 } from 'react-icons/fi';
 import './dashboard-desktop.css';
 import './dashboard-mobile.css';
@@ -110,6 +110,8 @@ export default function DashboardPage() {
   const [stages, setStages] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [timeEntries, setTimeEntries] = useState<any[]>([]);
+  const [overduePermits, setOverduePermits] = useState<any[]>([]);
+  const [budgetAlerts, setBudgetAlerts] = useState<any[]>([]);
   const [tasksChart, setTasksChart] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] });
   const [dealsChart, setDealsChart] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] });
   const [timeChart, setTimeChart] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] });
@@ -127,12 +129,22 @@ export default function DashboardPage() {
       api.get('/deals/deal-stages').catch(() => []),
       api.get('/activity').catch(() => []),
       api.get('/time-entries').catch(() => []),
-    ]).then(([tasksData, dealsData, stagesData, actData, timeData]) => {
+      api.get('/permits').catch(() => []),
+      api.get('/budget/alerts').catch(() => []),
+    ]).then(([tasksData, dealsData, stagesData, actData, timeData, permitsData, budgetAlertsData]) => {
       const taskList = Array.isArray(tasksData) ? tasksData : [];
       const dealList = Array.isArray(dealsData) ? dealsData : [];
       const stageList = Array.isArray(stagesData) ? stagesData : [];
       const actList = Array.isArray(actData) ? actData : [];
       const timeList = Array.isArray(timeData) ? timeData : [];
+      const permitList = Array.isArray(permitsData) ? permitsData : [];
+      const budgetList = Array.isArray(budgetAlertsData) ? budgetAlertsData : [];
+
+      const terminalStatuses = ['BEWILLIGT', 'ABGELEHNT', 'ZURUECKGEZOGEN'];
+      setOverduePermits(permitList.filter((p: any) =>
+        p.expectedDecisionAt && new Date(p.expectedDecisionAt) < new Date() && !terminalStatuses.includes(p.status)
+      ).slice(0, 5));
+      setBudgetAlerts(budgetList);
 
       setTasks(taskList);
       setDeals(dealList);
@@ -293,6 +305,81 @@ export default function DashboardPage() {
           </div>
         </SectionCard>
       </div>
+
+      {/* Project Alerts row */}
+      {(overduePermits.length > 0 || budgetAlerts.length > 0) && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+
+          {/* Overdue permits */}
+          <SectionCard title={`Überfällige Baubewilligungen (${overduePermits.length})`} linkHref="/admin/permits" linkLabel="Alle anzeigen">
+            {overduePermits.length === 0 ? (
+              <div style={{ padding: '20px', color: '#94a3b8', fontSize: 13 }}>Keine überfälligen Bewilligungen</div>
+            ) : (
+              overduePermits.map((p: any, idx: number) => (
+                <Link key={p.id} href={`/projects/${p.projectId}`} style={{ textDecoration: 'none' }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '11px 20px',
+                    borderBottom: idx < overduePermits.length - 1 ? '1px solid #f8fafc' : 'none',
+                    transition: 'background 0.1s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#fef2f2'}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <FiFileText size={14} color="#dc2626" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
+                      <div style={{ fontSize: 11, color: '#dc2626', marginTop: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <FiAlertTriangle size={10} />
+                        Frist: {new Date(p.expectedDecisionAt).toLocaleDateString('de-CH')}
+                        {p.project?.name && ` · ${p.project.name}`}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            )}
+          </SectionCard>
+
+          {/* Budget alerts */}
+          <SectionCard title={`Budget-Alarme (${budgetAlerts.length})`} linkHref="/projects" linkLabel="Alle Projekte">
+            {budgetAlerts.length === 0 ? (
+              <div style={{ padding: '20px', color: '#94a3b8', fontSize: 13 }}>Keine Budget-Überschreitungen</div>
+            ) : (
+              budgetAlerts.map((p: any, idx: number) => {
+                const isOver = p.pct >= 100;
+                return (
+                  <Link key={p.id} href={`/projects/${p.id}`} style={{ textDecoration: 'none' }}>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 12, padding: '11px 20px',
+                      borderBottom: idx < budgetAlerts.length - 1 ? '1px solid #f8fafc' : 'none',
+                      transition: 'background 0.1s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = isOver ? '#fef2f2' : '#fffbeb'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: isOver ? '#fef2f2' : '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <FiDollarSign size={14} color={isOver ? '#dc2626' : '#d97706'} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                        <div style={{ marginTop: 4 }}>
+                          <div style={{ height: 4, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', borderRadius: 99, background: isOver ? '#ef4444' : '#f59e0b', width: `${Math.min(p.pct, 100)}%` }} />
+                          </div>
+                          <div style={{ fontSize: 11, color: isOver ? '#dc2626' : '#d97706', marginTop: 2, fontWeight: 600 }}>
+                            {p.pct}% verbraucht · {p.totalActual.toLocaleString('de-CH')} CHF
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })
+            )}
+          </SectionCard>
+
+        </div>
+      )}
 
       {/* Bottom row — 3 columns */}
       <div className="dash-bottom-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>

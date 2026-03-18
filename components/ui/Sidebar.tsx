@@ -5,7 +5,8 @@ import { useAuth } from '../../src/auth/AuthProvider';
 import {
   FiGrid, FiUsers, FiUser, FiBriefcase, FiCheckSquare,
   FiClock, FiBarChart2, FiLogOut, FiX, FiChevronRight,
-  FiActivity, FiSettings, FiCalendar, FiSun,
+  FiActivity, FiSettings, FiCalendar, FiSun, FiLayers,
+  FiTruck, FiFileText,
 } from "react-icons/fi";
 
 const NAV_GROUPS = [
@@ -16,6 +17,8 @@ const NAV_GROUPS = [
       { href: "/accounts", label: "Firmen", icon: FiUsers },
       { href: "/contacts", label: "Kontakte", icon: FiUser },
       { href: "/deals", label: "Deals", icon: FiBriefcase },
+      { href: "/projects", label: "Projekte", icon: FiLayers },
+      { href: "/vendors", label: "Lieferanten", icon: FiTruck },
       { href: "/tasks", label: "Aufgaben", icon: FiCheckSquare },
       { href: "/calendar", label: "Kalender", icon: FiCalendar },
       { href: "/vacation", label: "Urlaub", icon: FiSun },
@@ -26,6 +29,8 @@ const NAV_GROUPS = [
     label: "Verwaltung",
     admin: true,
     items: [
+      { href: "/admin/projects", label: "Projektverwaltung", icon: FiLayers, admin: true },
+      { href: "/admin/permits", label: "Baubewilligungen", icon: FiFileText, admin: true },
       { href: "/time", label: "Zeiterfassung", icon: FiClock, admin: true },
       { href: "/admin/vacation", label: "Urlaubsverwaltung", icon: FiSun, admin: true },
       { href: "/activity", label: "Aktivitäten", icon: FiActivity, admin: true },
@@ -89,7 +94,7 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
       </div>
 
       {/* Nav groups */}
-      <nav className="sidebar-nav" style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 12px" }}>
+      <nav className="sidebar-nav" style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 12px", scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.25) transparent" }}>
         {NAV_GROUPS.map((group) => {
           const visibleItems = group.items.filter((item: any) => !item.admin || isAdmin);
           if (group.admin && !isAdmin) return null;

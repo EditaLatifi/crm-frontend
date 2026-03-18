@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
-  role?: 'ADMIN' | 'USER'; // if provided, restrict to this role
+  role?: 'ADMIN' | 'USER';
 };
 
 export default function ProtectedRoute({ children, role }: ProtectedRouteProps) {
@@ -14,17 +14,13 @@ export default function ProtectedRoute({ children, role }: ProtectedRouteProps) 
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.replace('/login');
-      } else if (role && user.role !== role) {
-        router.replace('/no-access');
-      }
-    }
+    if (loading) return;
+    if (!user) router.replace('/login');
+    else if (role && user.role !== role) router.replace('/no-access');
   }, [user, loading, role, router]);
 
-  if (loading || !user || (role && user.role !== role)) {
-    return <div className="flex items-center justify-center h-full text-lg">Loading...</div>;
-  }
+  // Still checking or redirecting — render nothing (no flash of "Loading..." text)
+  if (loading || !user || (role && user.role !== role)) return null;
+
   return <>{children}</>;
 }
