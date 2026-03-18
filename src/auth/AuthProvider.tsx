@@ -62,12 +62,12 @@ if (typeof window !== 'undefined') {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(_preUser);
-  const [accessToken, setAccessTokenState] = useState<string | null>(_preToken);
-  const [loading, setLoading] = useState(false); // no init spinner — state is already known
+  // Start with null to match SSR, then hydrate from localStorage after mount
+  const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessTokenState] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Enrich user with full profile (name, email) silently in the background
   async function fetchProfile() {
     try {
       const me = await getMe();
@@ -81,7 +81,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    if (_preToken) fetchProfile();
+    // Runs only on client after hydration — no SSR mismatch
+    if (_preUser) setUser(_preUser);
+    if (_preToken) {
+      setAccessTokenState(_preToken);
+      fetchProfile();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -23,12 +23,16 @@ export default function SharePage() {
 
   useEffect(() => {
     fetch(`/api/share/${token}`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.message) setError(d.message);
-        else setData(d);
+      .then(async r => {
+        try {
+          const d = await r.json();
+          if (!r.ok || d.message) setError(d.message || 'Link ungültig oder abgelaufen');
+          else setData(d);
+        } catch {
+          setError('Server nicht erreichbar. Bitte kurz warten und Seite neu laden.');
+        }
       })
-      .catch(() => setError('Fehler beim Laden'))
+      .catch(() => setError('Server nicht erreichbar. Bitte kurz warten und Seite neu laden.'))
       .finally(() => setLoading(false));
   }, [token]);
 
