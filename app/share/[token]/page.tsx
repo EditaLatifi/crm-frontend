@@ -22,7 +22,8 @@ export default function SharePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/share/${token}`)
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    fetch(`${backendUrl}/share/${token}`)
       .then(async r => {
         try {
           const d = await r.json();
