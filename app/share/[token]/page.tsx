@@ -78,9 +78,9 @@ export default function SharePage() {
       {/* Top bar */}
       <div className="share-topbar" style={{ background: 'linear-gradient(135deg,#0f172a,#1e293b)', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 22 }}>🏛️</span>
+          <img src="/logoip3.png" alt="ip3 Logo" style={{ height: 32, width: 'auto' }} />
           <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>ip3 Projektportal</div>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>Projektportal</div>
             {label && <div style={{ color: '#94a3b8', fontSize: 11 }}>{label}</div>}
           </div>
         </div>
