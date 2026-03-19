@@ -16,7 +16,15 @@ const ICONS: Record<string, string> = {
 export default function NotificationBell() {
   const [notifs, setNotifs] = useState<AppNotification[]>([]);
   const [open, setOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Initial load
   useEffect(() => {
@@ -87,11 +95,17 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div style={{
+        <div style={isMobile ? {
+          position: "fixed", top: 60, left: 8, right: 8, width: "auto",
+          background: "#fff", border: "1.5px solid #e5e7eb",
+          borderRadius: 12, boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+          zIndex: 1000, overflow: "hidden",
+        } : {
           position: "absolute", top: "calc(100% + 8px)", right: 0,
-          width: 340, background: "#fff", border: "1.5px solid #e5e7eb",
+          width: 340,
+          background: "#fff", border: "1.5px solid #e5e7eb",
           borderRadius: 12, boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-          zIndex: 100, overflow: "hidden",
+          zIndex: 1000, overflow: "hidden",
         }}>
           <div style={{ padding: "12px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>Benachrichtigungen</span>

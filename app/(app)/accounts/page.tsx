@@ -111,19 +111,19 @@ export default function AccountsPage() {
   }, [tableKey]);
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px 40px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div className="accounts-responsive" style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px 40px', fontFamily: 'Inter, system-ui, sans-serif', marginTop: 40 }}>
       {/* Header */}
-      <div style={{
+      <div className="accounts-header" style={{
         background: 'linear-gradient(135deg, #f8f9fb 60%, #e9effd 100%)',
         borderRadius: 18, boxShadow: '0 4px 16px rgba(30,41,59,0.10)',
         padding: '28px 28px 22px', marginBottom: 18,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
+        <div className="accounts-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1e293b', margin: 0, letterSpacing: '-0.5px' }}>Firmen</h1>
           <div style={{ fontSize: 14, color: '#64748b', fontWeight: 400, marginTop: 5 }}>Verwalte deine Geschäftsfirmen effizient und sicher.</div>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button onClick={() => handleExportCSV(accounts)} style={{ fontSize: 13, fontWeight: 600, borderRadius: 8, border: '1.5px solid #d1d5db', background: '#f1f5f9', color: '#64748b', padding: '9px 18px', cursor: 'pointer' }}>CSV exportieren</button>
           <button onClick={() => setCsvOpen(true)} style={{ fontSize: 13, fontWeight: 600, borderRadius: 8, border: '1.5px solid #d1d5db', background: '#f1f5f9', color: '#64748b', padding: '9px 18px', cursor: 'pointer' }}>CSV importieren</button>
           <button
@@ -132,6 +132,7 @@ export default function AccountsPage() {
             onMouseOver={e => (e.currentTarget.style.background = '#1d4ed8')}
             onMouseOut={e => (e.currentTarget.style.background = '#2563eb')}
           >+ Neue Firma</button>
+        </div>
         </div>
       </div>
       {/* Filters */}
