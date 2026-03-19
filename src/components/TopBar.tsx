@@ -2,6 +2,7 @@
 import React from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import TimerWidget from './TopBar/TimerWidget';
+import NotificationBell from './TopBar/NotificationBell';
 
 export default function TopBar() {
   const { user, logout } = useAuth();
@@ -22,6 +23,7 @@ export default function TopBar() {
       </div>
       <div className="flex items-center gap-4">
         <TimerWidget />
+        <NotificationBell />
         <span className="text-sm text-gray-700">{user?.name}</span>
         <button
           onClick={handleLogout}

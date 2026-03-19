@@ -1,128 +1,35 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
-import { api } from "../../src/api/client";
-import { FiBell } from "react-icons/fi";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { FiBell, FiX } from "react-icons/fi";
 import Link from "next/link";
+import { notificationsApi, AppNotification } from "../../src/api/notifications";
+import { useNotificationStream } from "../../src/hooks/useNotificationStream";
 
-interface Notification {
-  id: string;
-  type: "overdue_task" | "followup_contact" | "followup_deal" | "upcoming_appointment";
-  label: string;
-  href: string;
-  date: string;
-}
-
-const SEEN_KEY = "crm_seen_notif_ids";
-
-function loadSeenIds(): Set<string> {
-  try {
-    const raw = localStorage.getItem(SEEN_KEY);
-    return raw ? new Set(JSON.parse(raw)) : new Set();
-  } catch {
-    return new Set();
-  }
-}
-
-function saveSeenIds(ids: Set<string>) {
-  try {
-    localStorage.setItem(SEEN_KEY, JSON.stringify([...ids]));
-  } catch {}
-}
+const ICONS: Record<string, string> = {
+  TASK_ASSIGNED: "📋",
+  TASK_COMMENT: "💬",
+  DEAL_STAGE_CHANGED: "💼",
+  PERMIT_STATUS_CHANGED: "📄",
+  VACATION_REVIEWED: "🌴",
+};
 
 export default function NotificationBell() {
-  const [notifs, setNotifs] = useState<Notification[]>([]);
-  const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
+  const [notifs, setNotifs] = useState<AppNotification[]>([]);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Load seen IDs only on the client (localStorage is not available during SSR)
+  // Initial load
   useEffect(() => {
-    setSeenIds(loadSeenIds());
+    notificationsApi.getAll().then(setNotifs).catch(() => {});
   }, []);
 
-  async function fetchNotifications() {
-    try {
-      const [tasks, contacts, deals, appointments] = await Promise.all([
-        api.get("/tasks").catch(() => []),
-        api.get("/contacts").catch(() => []),
-        api.get("/deals").catch(() => []),
-        api.get("/appointments").catch(() => []),
-      ]);
-
-      const now = new Date();
-      const soon = new Date(now.getTime() + 24 * 60 * 60 * 1000); // next 24h
-      const result: Notification[] = [];
-
-      // Overdue tasks
-      (Array.isArray(tasks) ? tasks : [])
-        .filter((t: any) => t.dueDate && new Date(t.dueDate) < now && t.status !== "DONE")
-        .slice(0, 5)
-        .forEach((t: any) => {
-          result.push({
-            id: `task-${t.id}`,
-            type: "overdue_task",
-            label: `Aufgabe überfällig: ${t.title}`,
-            href: `/tasks/${t.id}`,
-            date: t.dueDate,
-          });
-        });
-
-      // Overdue contact follow-ups
-      (Array.isArray(contacts) ? contacts : [])
-        .filter((c: any) => c.followUpDate && new Date(c.followUpDate) < now)
-        .slice(0, 5)
-        .forEach((c: any) => {
-          result.push({
-            id: `contact-${c.id}`,
-            type: "followup_contact",
-            label: `Follow-up überfällig: ${c.name}`,
-            href: `/contacts/${c.id}`,
-            date: c.followUpDate,
-          });
-        });
-
-      // Overdue deal follow-ups
-      (Array.isArray(deals) ? deals : [])
-        .filter((d: any) => d.followUpDate && new Date(d.followUpDate) < now)
-        .slice(0, 5)
-        .forEach((d: any) => {
-          result.push({
-            id: `deal-${d.id}`,
-            type: "followup_deal",
-            label: `Deal-Follow-up überfällig: ${d.name}`,
-            href: `/deals/${d.id}`,
-            date: d.followUpDate,
-          });
-        });
-
-      // Upcoming appointments (next 24h)
-      (Array.isArray(appointments) ? appointments : [])
-        .filter((a: any) => {
-          const start = new Date(a.startAt);
-          return start >= now && start <= soon;
-        })
-        .slice(0, 5)
-        .forEach((a: any) => {
-          result.push({
-            id: `appt-${a.id}`,
-            type: "upcoming_appointment",
-            label: `Termin: ${a.title}`,
-            href: `/calendar`,
-            date: a.startAt,
-          });
-        });
-
-      // Sort by date ascending
-      result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      setNotifs(result);
-    } catch {}
-  }
-
-  useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 5 * 60 * 1000); // refresh every 5 min
-    return () => clearInterval(interval);
+  // Real-time SSE
+  const handleStreamEvent = useCallback((event: any) => {
+    if (event.event === 'notification' && event.data) {
+      setNotifs(prev => [event.data, ...prev]);
+    }
   }, []);
+  useNotificationStream(handleStreamEvent);
 
   // Close on outside click
   useEffect(() => {
@@ -135,30 +42,28 @@ export default function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  const ICONS: Record<string, string> = {
-    overdue_task: "⚠️",
-    followup_contact: "👤",
-    followup_deal: "💼",
-    upcoming_appointment: "📅",
-  };
+  const unread = notifs.filter(n => !n.read).length;
 
-  const unread = notifs.filter(n => !seenIds.has(n.id)).length;
+  function handleOpen() {
+    const opening = !open;
+    setOpen(opening);
+    if (opening && unread > 0) {
+      notificationsApi.markAllRead().catch(() => {});
+      setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+    }
+  }
 
-  function markAllSeen() {
-    const updated = new Set(seenIds);
-    notifs.forEach(n => updated.add(n.id));
-    setSeenIds(updated);
-    saveSeenIds(updated);
+  function handleDelete(e: React.MouseEvent, id: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    notificationsApi.deleteOne(id).catch(() => {});
+    setNotifs(prev => prev.filter(n => n.id !== id));
   }
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <button
-        onClick={() => {
-          const opening = !open;
-          setOpen(opening);
-          if (opening) markAllSeen();
-        }}
+        onClick={handleOpen}
         style={{
           background: "none", border: "none", cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -206,25 +111,35 @@ export default function NotificationBell() {
               notifs.map((n) => (
                 <Link
                   key={n.id}
-                  href={n.href}
+                  href={n.href || "#"}
                   onClick={() => setOpen(false)}
                   style={{ textDecoration: "none" }}
                 >
-                  <div style={{
-                    display: "flex", gap: 10, padding: "11px 16px",
-                    borderBottom: "1px solid #f8fafc", alignItems: "flex-start",
-                    transition: "background 0.1s",
-                  }}
+                  <div
+                    style={{
+                      display: "flex", gap: 10, padding: "11px 16px",
+                      borderBottom: "1px solid #f8fafc", alignItems: "flex-start",
+                      transition: "background 0.1s",
+                      background: n.read ? "transparent" : "#f0f9ff",
+                    }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = n.read ? "transparent" : "#f0f9ff")}
                   >
-                    <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{ICONS[n.type]}</span>
+                    <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{ICONS[n.type] ?? "🔔"}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: "#1e293b", lineHeight: 1.4 }}>{n.label}</div>
+                      <div style={{ fontSize: 13, fontWeight: n.read ? 500 : 700, color: "#1e293b", lineHeight: 1.4 }}>{n.title}</div>
+                      <div style={{ fontSize: 12, color: "#475569", marginTop: 1, lineHeight: 1.4 }}>{n.body}</div>
                       <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
-                        {new Date(n.date).toLocaleDateString("de-CH", { day: "2-digit", month: "short", year: "numeric" })}
+                        {new Date(n.createdAt).toLocaleDateString("de-CH", { day: "2-digit", month: "short", year: "numeric" })}
                       </div>
                     </div>
+                    <button
+                      onClick={(e) => handleDelete(e, n.id)}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 2, flexShrink: 0 }}
+                      title="Löschen"
+                    >
+                      <FiX size={14} />
+                    </button>
                   </div>
                 </Link>
               ))
