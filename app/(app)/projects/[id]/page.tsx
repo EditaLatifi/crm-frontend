@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '../../../../src/api/client';
+import { ROLE_LABELS } from '../../../../src/lib/labels';
 import { useAuth } from '../../../../src/auth/AuthProvider';
 import PhaseTimeline from '../../../../components/projects/PhaseTimeline';
 import ProjectForm from '../../../../components/projects/ProjectForm';
@@ -18,14 +19,16 @@ import {
 import {
   FiArrowLeft, FiEdit2, FiTrash2, FiUser, FiCalendar,
   FiMapPin, FiUsers, FiX, FiLayers, FiFileText, FiDollarSign,
-  FiFolder, FiTruck, FiLink,
+  FiFolder, FiTruck, FiLink, FiCheckSquare,
 } from 'react-icons/fi';
+import Link from 'next/link';
 import '../projects.css';
 
-type Tab = 'overview' | 'permits' | 'budget' | 'documents' | 'vendors' | 'share';
+type Tab = 'overview' | 'tasks' | 'permits' | 'budget' | 'documents' | 'vendors' | 'share';
 
 const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: 'overview',   label: 'Übersicht',       icon: FiLayers },
+  { id: 'tasks',      label: 'Aufgaben',        icon: FiCheckSquare },
   { id: 'permits',    label: 'Baubewilligung',   icon: FiFileText },
   { id: 'budget',     label: 'Budget',           icon: FiDollarSign },
   { id: 'documents',  label: 'Dokumente',        icon: FiFolder },
@@ -48,6 +51,7 @@ export default function ProjectDetailPage() {
   const [addMemberRole,   setAddMemberRole]   = useState('');
   const [memberLoading,   setMemberLoading]   = useState(false);
   const [activeTab,       setActiveTab]       = useState<Tab>('overview');
+  const [projectTasks,    setProjectTasks]    = useState<any[]>([]);
 
   const isAdmin  = user?.role === 'ADMIN';
   const isOwner  = project?.ownerUserId === user?.id || project?.owner?.id === user?.id;
@@ -65,6 +69,9 @@ export default function ProjectDetailPage() {
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    api.get('/tasks').then((d: any) => setProjectTasks((Array.isArray(d) ? d : []).filter((t: any) => t.projectId === id))).catch(() => {});
+  }, [id]);
   useEffect(() => {
     if (canEdit) api.get('/users').then((d: any) => setAllUsers(Array.isArray(d) ? d : [])).catch(() => {});
   }, [canEdit]);
@@ -183,7 +190,7 @@ export default function ProjectDetailPage() {
                   <p style={{ margin: 0, fontSize: 14, color: '#475569', maxWidth: 500 }}>{project.description}</p>
                 )}
               </div>
-              {project.budget && (
+              {isAdmin && project.budget && (
                 <div style={{ flexShrink: 0 }}>
                   <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Budget</div>
                   <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a' }}>
@@ -228,7 +235,7 @@ export default function ProjectDetailPage() {
         {/* Tabs */}
         <div style={{ marginBottom: 24 }}>
           <div className="proj-tabs-bar">
-            {TABS.map(t => {
+            {TABS.filter(t => t.id !== 'budget' || isAdmin).map(t => {
               const Icon = t.icon;
               const active = activeTab === t.id;
               return (
@@ -278,7 +285,7 @@ export default function ProjectDetailPage() {
                           </div>
                           <div>
                             <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{m.user?.name}</div>
-                            {m.role && <div style={{ fontSize: 11, color: '#94a3b8' }}>{m.role}</div>}
+                            {m.role && <div style={{ fontSize: 11, color: '#94a3b8' }}>{ROLE_LABELS[m.role] ?? m.role}</div>}
                             {m.userId === project.ownerUserId && <div style={{ fontSize: 10, color: '#3b82f6', fontWeight: 600 }}>Projektleiter</div>}
                           </div>
                         </div>
@@ -334,6 +341,123 @@ export default function ProjectDetailPage() {
                   })}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TASKS TAB */}
+          {activeTab === 'tasks' && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px 28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Aufgaben ({projectTasks.length})</h2>
+                <Link href="/tasks" style={{ fontSize: 13, color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>Alle Aufgaben →</Link>
+              </div>
+
+              {projectTasks.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '32px 0', color: '#94a3b8', fontSize: 14 }}>
+                  Keine Aufgaben mit diesem Projekt verknüpft.
+                </div>
+              ) : (
+                <>
+                  {/* Phase overview from project tasks */}
+                  {(() => {
+                    const byPhase: Record<string, { tasks: any[]; budget: number; used: number }> = {};
+                    projectTasks.forEach((t: any) => {
+                      const ph = t.phase || 'Ohne Phase';
+                      if (!byPhase[ph]) byPhase[ph] = { tasks: [], budget: 0, used: 0 };
+                      byPhase[ph].tasks.push(t);
+                      byPhase[ph].budget += t.budgetHours || 0;
+                      byPhase[ph].used += (t.timeEntries || []).reduce((s: number, e: any) => s + (e.durationMinutes || 0), 0) / 60;
+                    });
+                    const phases = Object.entries(byPhase).sort(([a], [b]) => a.localeCompare(b));
+                    const totalBudget = phases.reduce((s, [, d]) => s + d.budget, 0);
+                    const totalUsed = phases.reduce((s, [, d]) => s + d.used, 0);
+
+                    return (
+                      <div style={{ overflowX: 'auto', borderRadius: 10, border: '1px solid #e5e7eb', marginBottom: 20 }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                          <thead>
+                            <tr style={{ background: '#f8fafc' }}>
+                              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Phase</th>
+                              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Tasks</th>
+                              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Budget (h)</th>
+                              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Effektiv (h)</th>
+                              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {phases.map(([ph, data]) => {
+                              const allDone = data.tasks.every((t: any) => t.status === 'DONE');
+                              const hasProgress = data.tasks.some((t: any) => t.status === 'IN_PROGRESS' || data.used > 0);
+                              const status = allDone ? 'done' : hasProgress ? 'in_progress' : 'pending';
+                              const over = data.budget > 0 && data.used > data.budget;
+                              const statusCfg: Record<string, { label: string; color: string; bg: string }> = {
+                                pending: { label: 'Ausstehend', color: '#64748b', bg: '#f1f5f9' },
+                                in_progress: { label: 'In Bearbeitung', color: '#d97706', bg: '#fef3c7' },
+                                done: { label: 'Abgeschlossen', color: '#16a34a', bg: '#dcfce7' },
+                              };
+                              const sc = statusCfg[status];
+                              return (
+                                <tr key={ph} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                  <td style={{ padding: '10px 14px', fontWeight: 600, color: '#1e293b' }}>
+                                    {ph !== 'Ohne Phase' && <span style={{ color: '#7c3aed', marginRight: 6 }}>{ph}</span>}
+                                    {ph === 'Ohne Phase' && <span style={{ color: '#94a3b8' }}>{ph}</span>}
+                                  </td>
+                                  <td style={{ padding: '10px 14px', color: '#64748b' }}>{data.tasks.length}</td>
+                                  <td style={{ padding: '10px 14px', color: '#1e293b', fontWeight: 600 }}>{data.budget > 0 ? data.budget.toFixed(1) : '—'}</td>
+                                  <td style={{ padding: '10px 14px', color: over ? '#dc2626' : '#1e293b', fontWeight: 600 }}>
+                                    {data.used.toFixed(1)}
+                                    {over && <span style={{ marginLeft: 4, fontSize: 9, color: '#dc2626', background: '#fee2e2', borderRadius: 3, padding: '0 4px', fontWeight: 700 }}>!</span>}
+                                  </td>
+                                  <td style={{ padding: '10px 14px' }}>
+                                    <span style={{ fontSize: 10, fontWeight: 700, color: sc.color, background: sc.bg, borderRadius: 10, padding: '2px 8px' }}>{sc.label}</span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                          <tfoot>
+                            <tr style={{ background: '#f8fafc', fontWeight: 700 }}>
+                              <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb' }}>Gesamt</td>
+                              <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb' }}>{projectTasks.length}</td>
+                              <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb' }}>{totalBudget > 0 ? totalBudget.toFixed(1) : '—'}</td>
+                              <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb', color: totalBudget > 0 && totalUsed > totalBudget ? '#dc2626' : '#1e293b' }}>{totalUsed.toFixed(1)}</td>
+                              <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb' }}></td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Task list */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {projectTasks.map((t: any) => {
+                      const statusMap: Record<string, { label: string; color: string; bg: string }> = {
+                        OPEN: { label: 'Offen', color: '#1d4ed8', bg: '#dbeafe' },
+                        IN_PROGRESS: { label: 'In Arbeit', color: '#d97706', bg: '#fef3c7' },
+                        DONE: { label: 'Erledigt', color: '#16a34a', bg: '#dcfce7' },
+                      };
+                      const sc = statusMap[t.status] || statusMap.OPEN;
+                      const usedMin = (t.timeEntries || []).reduce((s: number, e: any) => s + (e.durationMinutes || 0), 0);
+                      return (
+                        <Link key={t.id} href={`/tasks/${t.id}`} style={{ textDecoration: 'none' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e5e7eb' }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 600, fontSize: 13, color: '#1e293b' }}>{t.title}</div>
+                              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2, display: 'flex', gap: 8 }}>
+                                {t.phase && <span style={{ color: '#7c3aed', fontWeight: 600 }}>Phase {t.phase}</span>}
+                                {t.assignee?.name && <span>{t.assignee.name}</span>}
+                                {usedMin > 0 && <span>{(usedMin / 60).toFixed(1)}h erfasst</span>}
+                              </div>
+                            </div>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: sc.color, background: sc.bg, borderRadius: 10, padding: '2px 8px', whiteSpace: 'nowrap' }}>{sc.label}</span>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           )}
 

@@ -3,13 +3,14 @@ import { useEffect, useState, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import Link from "next/link";
 import { api } from "../../src/api/client";
+import { formatCHF } from "../../src/lib/formatCurrency";
 import { useToast } from "../ui/Toast";
 import { FiEdit2, FiTrash2, FiCalendar, FiDollarSign } from "react-icons/fi";
 
 interface Stage { id: string; name: string; order: number; isWon: boolean; isLost: boolean; }
 interface Deal {
   id: string; name: string; amount: number; currency: string;
-  probability: number; dealScore: number; stageId: string;
+  dealScore: number; stageId: string;
   expectedCloseDate?: string;
   account?: { name: string }; owner?: { name: string };
 }
@@ -88,7 +89,7 @@ export default function DealsKanbanBoard({ onEdit, onRefresh }: { onEdit?: (deal
       {/* Summary bar */}
       <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         {[
-          { label: "Pipeline-Wert", value: `${activePipelineValue.toLocaleString("de-CH")} CHF`, color: "#2563eb" },
+          { label: "Pipeline-Wert", value: formatCHF(activePipelineValue), color: "#2563eb" },
           { label: "Deals gesamt", value: String(deals.length), color: "#64748b" },
           { label: "Gewonnen", value: String(deals.filter((d) => stages.find((s) => s.id === d.stageId)?.isWon).length), color: "#16a34a" },
           { label: "Verloren", value: String(deals.filter((d) => stages.find((s) => s.id === d.stageId)?.isLost).length), color: "#dc2626" },
@@ -127,7 +128,7 @@ export default function DealsKanbanBoard({ onEdit, onRefresh }: { onEdit?: (deal
                   </div>
                   {colValue > 0 && (
                     <span style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>
-                      {colValue.toLocaleString("de-CH")}
+                      {formatCHF(colValue)}
                     </span>
                   )}
                 </div>
@@ -179,18 +180,22 @@ export default function DealsKanbanBoard({ onEdit, onRefresh }: { onEdit?: (deal
                               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
                                 <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 13, fontWeight: 700, color: "#1e293b" }}>
                                   <FiDollarSign size={12} color="#94a3b8" />
-                                  {deal.amount?.toLocaleString("de-CH")} {deal.currency}
+                                  {formatCHF(deal.amount ?? 0)}
                                 </span>
-                                {deal.probability > 0 && (
-                                  <span style={{ fontSize: 11, color, fontWeight: 700, background: `${color}12`, borderRadius: 6, padding: "1px 7px" }}>
-                                    {deal.probability}%
-                                  </span>
-                                )}
                               </div>
                               {deal.expectedCloseDate && (
                                 <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#94a3b8", marginBottom: 4 }}>
                                   <FiCalendar size={11} />
                                   {new Date(deal.expectedCloseDate).toLocaleDateString("de-CH")}
+                                </div>
+                              )}
+                              {Array.isArray((deal as any).phases) && (deal as any).phases.length > 0 && (
+                                <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginBottom: 4 }}>
+                                  {(deal as any).phases.map((nr: number) => (
+                                    <span key={nr} style={{ fontSize: 9, fontWeight: 700, color: "#7c3aed", background: "#f3e8ff", borderRadius: 4, padding: "1px 5px" }}>
+                                      {nr}
+                                    </span>
+                                  ))}
                                 </div>
                               )}
                               <div style={{ display: "flex", gap: 6, marginTop: 8, justifyContent: "flex-end" }}>

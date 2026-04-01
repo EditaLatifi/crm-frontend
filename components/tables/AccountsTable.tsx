@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FiActivity, FiEdit2, FiTrash2 } from "react-icons/fi";
 
 import { api } from "../../src/api/client";
+import { useAuth } from "../../src/auth/AuthProvider";
 import { useToast } from "../ui/Toast";
 import Modal from "../ui/Modal";
 import AccountEditForm from "../forms/AccountEditForm";
@@ -93,6 +94,7 @@ type InlineCardProps = {
   onDelete: (id: string) => void;
   onShowActivity: (id: string) => void;
   ownerName?: string;
+  isAdmin?: boolean;
 };
 
 function InlineEditableAccountCard({
@@ -105,6 +107,7 @@ function InlineEditableAccountCard({
   onDelete,
   onShowActivity,
   ownerName,
+  isAdmin,
 }: InlineCardProps) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(acc.name);
@@ -200,34 +203,36 @@ function InlineEditableAccountCard({
           <FiEdit2 />
         </button>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (
-              window.confirm(
-                "Sind Sie sicher, dass Sie diesen Account löschen möchten?"
-              )
-            ) {
-              onDelete(acc.id);
-            }
-          }}
-          style={{
-            background: "#f6f7f9",
-            border: "1px solid #d1d5db",
-            borderRadius: 6,
-            padding: 4,
-            cursor: "pointer",
-            fontSize: 17,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#d32f2f",
-          }}
-          title="Löschen"
-        >
-          <FiTrash2 />
-        </button>
+        {isAdmin && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              if (
+                window.confirm(
+                  "Sind Sie sicher, dass Sie diesen Account löschen möchten?"
+                )
+              ) {
+                onDelete(acc.id);
+              }
+            }}
+            style={{
+              background: "#f6f7f9",
+              border: "1px solid #d1d5db",
+              borderRadius: 6,
+              padding: 4,
+              cursor: "pointer",
+              fontSize: 17,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#d32f2f",
+            }}
+            title="Löschen"
+          >
+            <FiTrash2 />
+          </button>
+        )}
 
         <button
           onClick={(e) => {
@@ -422,6 +427,7 @@ const TYPE_LABELS: Record<string, string> = {
   CLIENT: "Kunde",
   POTENTIAL_CLIENT: "Interessent",
   PARTNER: "Partner",
+  SUPPLIER: "Lieferant",
 };
 
 type Props = {
@@ -444,6 +450,8 @@ function AccountsTable({
   tagFilter = "",
 }: Props) {
   const toast = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [users, setUsers] = useState<{ id: string; name?: string; email?: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -840,6 +848,7 @@ function AccountsTable({
                         onDelete={handleDelete}
                         onShowActivity={(id) => setActivityAccountId(id)}
                         ownerName={ownerName}
+                        isAdmin={isAdmin}
                       />
                     </div>
                   );

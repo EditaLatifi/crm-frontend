@@ -181,13 +181,13 @@ export default function DealInsightsWidget() {
           fontWeight: 700
         }}
       >
-        AI Deal Insights
+        Deal-Einschätzungen
       </h3>
 
-      {loading && <div>Loading insights...</div>}
+      {loading && <div style={{ color: '#94a3b8', fontSize: 14 }}>Lade Einschätzungen...</div>}
 
       {!loading && insights.length === 0 && (
-        <div>No insights available.</div>
+        <div style={{ color: '#94a3b8', fontSize: 14 }}>Keine Einschätzungen verfügbar.</div>
       )}
 
       {!loading && insights.length > 0 && (
@@ -209,19 +209,19 @@ export default function DealInsightsWidget() {
               </div>
 
               <div style={{ marginTop: 6 }}>
-                Amount: <b>{insight.amount}</b>
+                Betrag: <b>{insight.amount?.toLocaleString('de-CH')} CHF</b>
               </div>
 
               <div>
-                Days Since Update: <b>{insight.daysSinceUpdate}</b>
+                Tage seit letztem Update: <b>{insight.daysSinceUpdate}</b>
               </div>
 
               <div style={{ color: insight.attention ? '#d32f2f' : '#388e3c' }}>
-                Needs Attention: {insight.attention ? 'Yes' : 'No'}
+                Handlungsbedarf: {insight.attention ? 'Ja' : 'Nein'}
               </div>
 
               <div style={{ color: '#1976d2' }}>
-                Close Probability:{' '}
+                Abschlusswahrscheinlichkeit:{' '}
                 <b>{(insight.closeProbability * 100).toFixed(0)}%</b>
               </div>
 

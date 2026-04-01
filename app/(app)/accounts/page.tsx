@@ -8,8 +8,51 @@ import React, { useState, useEffect, useRef } from 'react';
 import { fetchWithAuth, api } from '../../../src/api/client';
 import { useAuth } from '../../../src/auth/AuthProvider';
 import { useToast } from '../../../components/ui/Toast';
+import { useRouter } from 'next/navigation';
 import './accounts-desktop.css';
 import './accounts-mobile.css';
+
+const KANBAN_COLUMNS = [
+  { type: 'CLIENT',           label: 'Kunden',       color: '#2563eb', bg: '#dbeafe' },
+  { type: 'POTENTIAL_CLIENT', label: 'Interessenten', color: '#7c3aed', bg: '#ede9fe' },
+  { type: 'SUPPLIER',         label: 'Lieferanten',   color: '#059669', bg: '#d1fae5' },
+];
+
+function AccountsKanban({ accounts }: { accounts: any[] }) {
+  const router = useRouter();
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+      {KANBAN_COLUMNS.map(col => {
+        const items = accounts.filter(a => a.type === col.type);
+        return (
+          <div key={col.type} style={{ background: '#f8fafc', borderRadius: 12, border: '1.5px solid #e2e8f0', overflow: 'hidden' }}>
+            <div style={{ padding: '14px 16px', background: col.bg, borderBottom: '1.5px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontWeight: 700, fontSize: 14, color: col.color }}>{col.label}</span>
+              <span style={{ background: col.color, color: '#fff', borderRadius: 10, padding: '2px 9px', fontSize: 12, fontWeight: 600 }}>{items.length}</span>
+            </div>
+            <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8, minHeight: 80 }}>
+              {items.length === 0 ? (
+                <div style={{ color: '#94a3b8', fontSize: 12, textAlign: 'center', padding: '20px 0' }}>Keine Einträge</div>
+              ) : items.map(a => (
+                <div key={a.id}
+                  onClick={() => router.push(`/accounts/${a.id}`)}
+                  style={{ background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', padding: '12px 14px', cursor: 'pointer', transition: 'box-shadow 0.15s' }}
+                  onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.10)')}
+                  onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
+                >
+                  <div style={{ fontWeight: 600, fontSize: 13, color: '#1e293b', marginBottom: 2 }}>{a.name}</div>
+                  {a.email && <div style={{ fontSize: 11, color: '#64748b' }}>{a.email}</div>}
+                  {a.phone && <div style={{ fontSize: 11, color: '#64748b' }}>{a.phone}</div>}
+                  {a.address && <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{a.address}</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 
 // Demo tags for filter dropdown (should be fetched from API in real app)
@@ -41,6 +84,7 @@ export default function AccountsPage() {
   const { user } = useAuth();
   const toast = useToast();
   const tableRef = useRef<any>(null);
+  const [view, setView] = useState<'table' | 'kanban'>('table');
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState('');
@@ -120,10 +164,14 @@ export default function AccountsPage() {
       }}>
         <div className="accounts-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1e293b', margin: 0, letterSpacing: '-0.5px' }}>Firmen</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: "#1e293b", margin: 0, letterSpacing: '-0.5px' }}>Firmen</h1>
           <div style={{ fontSize: 14, color: '#64748b', fontWeight: 400, marginTop: 5 }}>Verwalte deine Geschäftsfirmen effizient und sicher.</div>
         </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', borderRadius: 8, border: '1.5px solid #d1d5db', overflow: 'hidden' }}>
+            <button onClick={() => setView('table')} style={{ fontSize: 13, fontWeight: 600, padding: '8px 14px', border: 'none', background: view === 'table' ? '#2563eb' : '#f1f5f9', color: view === 'table' ? '#fff' : '#64748b', cursor: 'pointer' }}>Tabelle</button>
+            <button onClick={() => setView('kanban')} style={{ fontSize: 13, fontWeight: 600, padding: '8px 14px', border: 'none', background: view === 'kanban' ? '#2563eb' : '#f1f5f9', color: view === 'kanban' ? '#fff' : '#64748b', cursor: 'pointer' }}>Kanban</button>
+          </div>
           <button onClick={() => handleExportCSV(accounts)} style={{ fontSize: 13, fontWeight: 600, borderRadius: 8, border: '1.5px solid #d1d5db', background: '#f1f5f9', color: '#64748b', padding: '9px 18px', cursor: 'pointer' }}>CSV exportieren</button>
           <button onClick={() => setCsvOpen(true)} style={{ fontSize: 13, fontWeight: 600, borderRadius: 8, border: '1.5px solid #d1d5db', background: '#f1f5f9', color: '#64748b', padding: '9px 18px', cursor: 'pointer' }}>CSV importieren</button>
           <button
@@ -175,19 +223,23 @@ export default function AccountsPage() {
         </select>
       </div>
 
-      {/* Table */}
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-        <AccountsTable
-          key={tableKey}
-          search={search}
-          typeFilter={typeFilter}
-          ownerFilter={ownerFilter}
-          dateFrom={dateFrom}
-          dateTo={dateTo}
-          sortBy={sortBy}
-          tagFilter={tagFilter}
-        />
-      </div>
+      {/* Table / Kanban */}
+      {view === 'kanban' ? (
+        <AccountsKanban accounts={accounts} />
+      ) : (
+        <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+          <AccountsTable
+            key={tableKey}
+            search={search}
+            typeFilter={typeFilter}
+            ownerFilter={ownerFilter}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            sortBy={sortBy}
+            tagFilter={tagFilter}
+          />
+        </div>
+      )}
       <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} entityType="accounts" onImported={() => setTableKey(k => k + 1)} />
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Neue Firma">
         <AccountForm onSubmit={handleCreate} />

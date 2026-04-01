@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../src/api/client";
+import { TASK_STATUS_LABELS } from "../../src/lib/labels";
 import { FiActivity, FiBriefcase, FiCheckSquare, FiEdit2, FiTrash2, FiMail, FiPhone } from "react-icons/fi";
 
 interface TimelineEvent {
@@ -52,7 +53,7 @@ export default function ContactTimeline({ contactId, accountId }: { contactId: s
             type: "task",
             date: t.createdAt,
             title: t.title,
-            subtitle: `Aufgabe · ${t.status}`,
+            subtitle: `Aufgabe · ${TASK_STATUS_LABELS[t.status] ?? t.status}`,
             color: t.status === "DONE" ? "#16a34a" : t.status === "IN_PROGRESS" ? "#2563eb" : "#94a3b8",
             icon: <FiCheckSquare size={13} />,
           }));

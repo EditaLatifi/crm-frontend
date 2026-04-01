@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react';
 import { api } from '../../src/api/client';
 import { BUDGET_CATEGORY_LABELS } from '../permits/permitConfig';
 import { FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { formatCurrency } from '../../src/lib/formatCurrency';
 
 const CATEGORIES = ['HONORARE','ROHBAU','ELEKTRO','SANITAER','HEIZUNG','FASSADE','DACH','INNENAUSBAU','UMGEBUNG','RESERVE','SONSTIGES'];
 
 function chf(n: number, currency = 'CHF') {
-  return n.toLocaleString('de-CH', { style: 'currency', currency, minimumFractionDigits: 0 });
+  return formatCurrency(n, currency);
 }
 
 export default function BudgetPanel({ projectId, canEdit }: { projectId: string; canEdit: boolean }) {

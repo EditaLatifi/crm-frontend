@@ -19,10 +19,17 @@ interface VacationRequest {
   reviewedBy?: { name: string };
 }
 
+interface MyStats {
+  year: number;
+  used: number;
+  quota: number | null;
+  remaining: number | null;
+}
+
 const TYPE_LABELS: Record<string, string> = {
   VACATION: "Urlaub",
   SICK: "Krankenstand",
-  UNPAID: "Unbezahlt",
+  MILITARY_SERVICE: "Militärdienst",
   OTHER: "Sonstiges",
 };
 
@@ -48,19 +55,25 @@ function calcDays(start: string, end: string): number {
 export default function VacationPage() {
   const toast = useToast();
   const [requests, setRequests] = useState<VacationRequest[]>([]);
+  const [myStats, setMyStats] = useState<MyStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ startDate: "", endDate: "", type: "VACATION", note: "" });
   const [saving, setSaving] = useState(false);
   const [previewDays, setPreviewDays] = useState(0);
 
-  const fetchRequests = () => {
-    api.get("/vacation/mine")
-      .then((d: any) => { setRequests(Array.isArray(d) ? d : []); setLoading(false); })
-      .catch(() => setLoading(false));
+  const fetchAll = () => {
+    Promise.all([
+      api.get("/vacation/mine"),
+      api.get("/vacation/my-stats"),
+    ]).then(([reqs, stats]: any) => {
+      setRequests(Array.isArray(reqs) ? reqs : []);
+      setMyStats(stats && typeof stats === "object" ? stats : null);
+      setLoading(false);
+    }).catch(() => setLoading(false));
   };
 
-  useEffect(() => { fetchRequests(); }, []);
+  useEffect(() => { fetchAll(); }, []);
 
   useEffect(() => {
     setPreviewDays(calcDays(form.startDate, form.endDate));
@@ -76,10 +89,11 @@ export default function VacationPage() {
     setSaving(true);
     try {
       const created: any = await api.post("/vacation", form);
-      setRequests((prev) => [created, ...prev]);
+      setRequests(prev => [created, ...prev]);
       setModalOpen(false);
       setForm({ startDate: "", endDate: "", type: "VACATION", note: "" });
       toast.success("Urlaubsantrag eingereicht.");
+      fetchAll();
     } catch (e: any) {
       toast.error(e.message || "Antrag konnte nicht eingereicht werden.");
     } finally {
@@ -88,18 +102,18 @@ export default function VacationPage() {
   }
 
   async function handleCancel(id: string) {
+    if (!confirm('Urlaubsantrag wirklich stornieren?')) return;
     try {
       await api.delete(`/vacation/${id}`);
-      setRequests((prev) => prev.filter((r) => r.id !== id));
+      setRequests(prev => prev.filter(r => r.id !== id));
       toast.success("Antrag storniert.");
     } catch {
       toast.error("Konnte nicht storniert werden.");
     }
   }
 
-  const approved = requests.filter((r) => r.status === "APPROVED");
-  const totalDays = approved.reduce((s, r) => s + r.days, 0);
-  const pending = requests.filter((r) => r.status === "PENDING").length;
+  const pending = requests.filter(r => r.status === "PENDING").length;
+  const year = myStats?.year ?? new Date().getFullYear();
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 900, margin: "0 auto" }}>
@@ -107,9 +121,7 @@ export default function VacationPage() {
       <div className="vacation-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1e293b", margin: 0 }}>Meine Urlaubsanträge</h1>
-          <div style={{ fontSize: 14, color: "#64748b", marginTop: 4 }}>
-            Verwalte deine Urlaubsanträge und freie Tage.
-          </div>
+          <div style={{ fontSize: 14, color: "#64748b", marginTop: 4 }}>Verwalte deine Urlaubsanträge und freie Tage.</div>
         </div>
         <button
           onClick={() => setModalOpen(true)}
@@ -119,19 +131,37 @@ export default function VacationPage() {
         </button>
       </div>
 
-      {/* Stats */}
+      {/* Stats cards */}
       <div style={{ display: "flex", gap: 16, marginBottom: 28, flexWrap: "wrap" }}>
-        {[
-          { label: "Genehmigte Tage (dieses Jahr)", value: totalDays, color: "#16a34a", icon: "✅" },
-          { label: "Ausstehende Anträge", value: pending, color: "#d97706", icon: "⏳" },
-          { label: "Anträge gesamt", value: requests.length, color: "#2563eb", icon: "📋" },
-        ].map((s) => (
-          <div key={s.label} style={{ flex: 1, minWidth: 180, background: "#fff", border: `1.5px solid #e5e7eb`, borderLeft: `4px solid ${s.color}`, borderRadius: 12, padding: "16px 20px" }}>
-            <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
-            <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{s.label}</div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: "#1e293b" }}>{s.value}</div>
+        {myStats?.quota != null ? (
+          <>
+            <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1.5px solid #e5e7eb", borderLeft: "4px solid #2563eb", borderRadius: 12, padding: "16px 20px" }}>
+              <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Kontingent {year}</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: "#1e293b" }}>{myStats.quota} AT</div>
+            </div>
+            <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1.5px solid #e5e7eb", borderLeft: "4px solid #16a34a", borderRadius: 12, padding: "16px 20px" }}>
+              <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Verbraucht</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: "#1e293b" }}>{myStats.used} AT</div>
+            </div>
+            <div style={{ flex: 1, minWidth: 160, background: "#fff", border: `1.5px solid #e5e7eb`, borderLeft: `4px solid ${(myStats.remaining ?? 0) < 0 ? "#dc2626" : "#7c3aed"}`, borderRadius: 12, padding: "16px 20px" }}>
+              <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Verbleibend</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: (myStats.remaining ?? 0) < 0 ? "#dc2626" : "#1e293b" }}>{myStats.remaining} AT</div>
+            </div>
+          </>
+        ) : (
+          <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1.5px solid #e5e7eb", borderLeft: "4px solid #16a34a", borderRadius: 12, padding: "16px 20px" }}>
+            <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Genehmigte Tage ({year})</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: "#1e293b" }}>{myStats?.used ?? 0} AT</div>
           </div>
-        ))}
+        )}
+        <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1.5px solid #e5e7eb", borderLeft: "4px solid #d97706", borderRadius: 12, padding: "16px 20px" }}>
+          <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Ausstehende Anträge</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: "#1e293b" }}>{pending}</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1.5px solid #e5e7eb", borderLeft: "4px solid #2563eb", borderRadius: 12, padding: "16px 20px" }}>
+          <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Anträge gesamt</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: "#1e293b" }}>{requests.length}</div>
+        </div>
       </div>
 
       {/* Request list */}
@@ -139,7 +169,6 @@ export default function VacationPage() {
         <div style={{ padding: "14px 20px", borderBottom: "1px solid #f1f5f9" }}>
           <span style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>Alle Anträge</span>
         </div>
-
         {loading ? (
           <div style={{ padding: 32, textAlign: "center", color: "#94a3b8" }}>Laden…</div>
         ) : requests.length === 0 ? (
@@ -148,11 +177,10 @@ export default function VacationPage() {
             Noch keine Urlaubsanträge gestellt.
           </div>
         ) : (
-          requests.map((r) => {
+          requests.map(r => {
             const s = STATUS_STYLE[r.status];
             return (
               <div key={r.id} style={{ padding: "16px 20px", borderBottom: "1px solid #f8fafc", display: "flex", alignItems: "flex-start", gap: 16 }}>
-                {/* Date block */}
                 <div style={{ flexShrink: 0, textAlign: "center", background: "#f8fafc", borderRadius: 10, padding: "10px 14px", minWidth: 70 }}>
                   <div style={{ fontSize: 20, fontWeight: 800, color: "#2563eb" }}>
                     {new Date(r.startDate).getDate()}
@@ -161,8 +189,6 @@ export default function VacationPage() {
                     {new Date(r.startDate).toLocaleDateString("de-CH", { month: "short" })}
                   </div>
                 </div>
-
-                {/* Info */}
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
                     <span style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>
@@ -194,8 +220,6 @@ export default function VacationPage() {
                     </div>
                   )}
                 </div>
-
-                {/* Action */}
                 {r.status === "PENDING" && (
                   <button
                     onClick={() => handleCancel(r.id)}
@@ -219,7 +243,7 @@ export default function VacationPage() {
               <input
                 type="date" required
                 value={form.startDate}
-                onChange={(e) => setForm(f => ({ ...f, startDate: e.target.value }))}
+                onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
                 style={{ width: "100%", padding: "8px 12px", borderRadius: 7, border: "1.5px solid #d1d5db", fontSize: 14, boxSizing: "border-box" }}
               />
             </div>
@@ -228,7 +252,7 @@ export default function VacationPage() {
               <input
                 type="date" required
                 value={form.endDate}
-                onChange={(e) => setForm(f => ({ ...f, endDate: e.target.value }))}
+                onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
                 style={{ width: "100%", padding: "8px 12px", borderRadius: 7, border: "1.5px solid #d1d5db", fontSize: 14, boxSizing: "border-box" }}
               />
             </div>
@@ -244,7 +268,7 @@ export default function VacationPage() {
             <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>Typ</label>
             <select
               value={form.type}
-              onChange={(e) => setForm(f => ({ ...f, type: e.target.value }))}
+              onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
               style={{ width: "100%", padding: "8px 12px", borderRadius: 7, border: "1.5px solid #d1d5db", fontSize: 14, boxSizing: "border-box" }}
             >
               {Object.entries(TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -255,7 +279,7 @@ export default function VacationPage() {
             <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>Notiz (optional)</label>
             <textarea
               value={form.note}
-              onChange={(e) => setForm(f => ({ ...f, note: e.target.value }))}
+              onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
               rows={3}
               placeholder="z.B. Familienurlaub, Arzttermin…"
               style={{ width: "100%", padding: "8px 12px", borderRadius: 7, border: "1.5px solid #d1d5db", fontSize: 14, boxSizing: "border-box", resize: "vertical", fontFamily: "inherit" }}

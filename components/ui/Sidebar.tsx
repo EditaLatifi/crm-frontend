@@ -18,7 +18,6 @@ const NAV_GROUPS = [
       { href: "/contacts", label: "Kontakte", icon: FiUser },
       { href: "/deals", label: "Deals", icon: FiBriefcase },
       { href: "/projects", label: "Projekte", icon: FiLayers },
-      { href: "/vendors", label: "Lieferanten", icon: FiTruck },
       { href: "/tasks", label: "Aufgaben", icon: FiCheckSquare },
       { href: "/calendar", label: "Kalender", icon: FiCalendar },
       { href: "/vacation", label: "Urlaub", icon: FiSun },
@@ -29,7 +28,6 @@ const NAV_GROUPS = [
     label: "Verwaltung",
     admin: true,
     items: [
-      { href: "/admin/projects", label: "Projektverwaltung", icon: FiLayers, admin: true },
       { href: "/admin/permits", label: "Baubewilligungen", icon: FiFileText, admin: true },
       { href: "/time", label: "Zeiterfassung", icon: FiClock, admin: true },
       { href: "/admin/vacation", label: "Urlaubsverwaltung", icon: FiSun, admin: true },

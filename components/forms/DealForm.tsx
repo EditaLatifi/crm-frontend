@@ -17,9 +17,8 @@ const inputStyle = (hasErr: boolean): React.CSSProperties => ({
 export default function DealForm({ onSubmit, initialData }: DealFormProps) {
   const [name, setName] = useState(initialData?.name || '');
   const [amount, setAmount] = useState(initialData?.amount || '');
-  const [currency, setCurrency] = useState(initialData?.currency || 'EUR');
+  const currency = 'CHF';
   const [expectedCloseDate, setExpectedCloseDate] = useState(initialData?.expectedCloseDate ? initialData.expectedCloseDate.slice(0, 10) : '');
-  const [probability, setProbability] = useState(initialData?.probability || 0);
   const [customFields, setCustomFields] = useState<{ key: string; value: string }[]>(
     initialData?.customFields ? Object.entries(initialData.customFields).map(([key, value]) => ({ key, value: String(value) })) : []
   );
@@ -28,6 +27,7 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
 
   React.useEffect(() => {
     api.get('/accounts')
@@ -55,22 +55,26 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
     return e;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
-    const customFieldsObj = customFields.reduce((acc, { key, value }) => key ? { ...acc, [key]: value } : acc, {} as Record<string, string>);
-    onSubmit({
-      name: name.trim(),
-      accountId,
-      stageId,
-      amount: parseFloat(String(amount)),
-      currency,
-      expectedCloseDate: expectedCloseDate || undefined,
-      probability: parseInt(String(probability)),
-      customFields: customFieldsObj,
-    });
+    setSaving(true);
+    try {
+      const customFieldsObj = customFields.reduce((acc, { key, value }) => key ? { ...acc, [key]: value } : acc, {} as Record<string, string>);
+      await Promise.resolve(onSubmit({
+        name: name.trim(),
+        accountId,
+        stageId,
+        amount: parseFloat(String(amount)),
+        currency,
+        expectedCloseDate: expectedCloseDate || undefined,
+        customFields: customFieldsObj,
+      }));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -106,19 +110,8 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
         {errors.amount && <div style={errStyle}>{errors.amount}</div>}
       </div>
       <div style={{ marginBottom: 16 }}>
-        <label>Währung</label><br />
-        <select value={currency} onChange={e => setCurrency(e.target.value)} style={inputStyle(false)}>
-          <option value="EUR">EUR</option>
-          <option value="CHF">CHF</option>
-        </select>
-      </div>
-      <div style={{ marginBottom: 16 }}>
         <label>Erwartetes Enddatum</label><br />
         <input type="date" value={expectedCloseDate} onChange={e => setExpectedCloseDate(e.target.value)} style={inputStyle(false)} />
-      </div>
-      <div style={{ marginBottom: 16 }}>
-        <label>Wahrscheinlichkeit (%)</label><br />
-        <input type="number" min={0} max={100} value={probability} onChange={e => setProbability(e.target.value)} style={inputStyle(false)} />
       </div>
       <div style={{ marginBottom: 16 }}>
         <label>Benutzerdefinierte Felder</label>
@@ -131,8 +124,8 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
         ))}
         <button type="button" onClick={handleAddCustomField} style={{ background: '#f4f5f7', color: '#0052cc', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer', marginTop: 4 }}>+ Feld hinzufügen</button>
       </div>
-      <button type="submit" style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 20px', fontWeight: 600, cursor: 'pointer' }}>
-        Speichern
+      <button type="submit" disabled={saving} style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 20px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+        {saving ? 'Speichern…' : 'Speichern'}
       </button>
     </form>
   );

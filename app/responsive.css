@@ -185,7 +185,7 @@
 .task-detail-section-title {
   font-size: 18px;
   font-weight: 700;
-  color: #0052cc;
+  color: #2563eb;
   margin-bottom: 8px;
 }
 @media (max-width: 900px) {
@@ -352,7 +352,7 @@
   margin-top: 2px;
 }
 .accounts-new-btn {
-  background: #0052cc;
+  background: #2563eb;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -421,7 +421,7 @@
 .accounts-filter-clear {
   margin-left: 8px;
   background: #fff;
-  color: #0052cc;
+  color: #2563eb;
   border: 1.5px solid #b3bac5;
   border-radius: 6px;
   padding: 8px 16px;
@@ -437,8 +437,8 @@
 }
 .accounts-export-btn {
   background: #fff;
-  color: #0052cc;
-  border: 1.5px solid #0052cc;
+  color: #2563eb;
+  border: 1.5px solid #2563eb;
   border-radius: 6px;
   padding: 7px 18px;
   font-weight: 600;
@@ -447,8 +447,8 @@
 }
 .accounts-import-label {
   background: #fff;
-  color: #0052cc;
-  border: 1.5px solid #0052cc;
+  color: #2563eb;
+  border: 1.5px solid #2563eb;
   border-radius: 6px;
   padding: 7px 18px;
   font-weight: 600;
@@ -646,7 +646,7 @@
    font-size: 20px;
    letter-spacing: -0.5px;
 }
-.dashboard-card-tasks { color: #0052cc; }
+.dashboard-card-tasks { color: #2563eb; }
 .dashboard-card-deals { color: #36a2eb; }
 .dashboard-card-time { color: #e67e22; }
  .dashboard-card-value {
@@ -685,7 +685,7 @@
  .dashboard-activity-title {
    margin-bottom: 18px;
    font-weight: 800;
-   color: #0052cc;
+   color: #2563eb;
    font-size: 22px;
    letter-spacing: -0.5px;
 }

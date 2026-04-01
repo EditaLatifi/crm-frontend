@@ -40,12 +40,16 @@ export default function DealForecastWidget() {
         });
       }
 
+      const maxOrder = Math.max(...stages.map((s: any) => s.order || 0), 1);
+
       openDeals.forEach((d: any) => {
         const close = new Date(d.expectedCloseDate);
         const monthIdx = (close.getFullYear() - now.getFullYear()) * 12 + (close.getMonth() - now.getMonth());
         if (monthIdx >= 0 && monthIdx < 6) {
+          const stageOrder = stageMap[d.stageId]?.order || 1;
+          const stageWeight = stageOrder / (maxOrder + 1);
           months[monthIdx].expected += d.amount || 0;
-          months[monthIdx].weighted += ((d.amount || 0) * (d.probability || 0)) / 100;
+          months[monthIdx].weighted += (d.amount || 0) * stageWeight;
         }
       });
 

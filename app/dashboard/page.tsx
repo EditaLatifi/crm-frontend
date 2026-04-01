@@ -14,6 +14,7 @@ import {
 } from 'react-icons/fi';
 import './dashboard-desktop.css';
 import './dashboard-mobile.css';
+import { formatCHF } from '../../src/lib/formatCurrency';
 
 const STATUS_LABELS: Record<string, string> = {
   OPEN: 'Offen', IN_PROGRESS: 'In Bearbeitung', DONE: 'Erledigt',
@@ -272,11 +273,11 @@ export default function DashboardPage() {
         />
         <StatCard
           label="Deals in Pipeline" value={openDeals.length}
-          sub={`${pipelineValue.toLocaleString('de-CH')} CHF`}
+          sub={formatCHF(pipelineValue)}
           color="#7c3aed" icon={FiBriefcase}
         />
         <StatCard
-          label="Gewonnener Umsatz" value={`${revenueWon.toLocaleString('de-CH')} CHF`}
+          label="Gewonnener Umsatz" value={formatCHF(revenueWon)}
           sub={`${wonDeals.length} Deal${wonDeals.length !== 1 ? 's' : ''} gewonnen`}
           color="#16a34a" icon={FiTrendingUp}
         />
@@ -367,7 +368,7 @@ export default function DashboardPage() {
                             <div style={{ height: '100%', borderRadius: 99, background: isOver ? '#ef4444' : '#f59e0b', width: `${Math.min(p.pct, 100)}%` }} />
                           </div>
                           <div style={{ fontSize: 11, color: isOver ? '#dc2626' : '#d97706', marginTop: 2, fontWeight: 600 }}>
-                            {p.pct}% verbraucht · {p.totalActual.toLocaleString('de-CH')} CHF
+                            {p.pct}% verbraucht · {formatCHF(p.totalActual)}
                           </div>
                         </div>
                       </div>

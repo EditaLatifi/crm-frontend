@@ -118,7 +118,7 @@ export default function AccountDetailsPage({ params }: { params: Promise<{ id: s
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr>
-                    {["Name", "Phase", "Betrag", "Wahrschl."].map(h => (
+                    {["Name", "Phase", "Betrag"].map(h => (
                       <th key={h} style={{ padding: "10px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", background: "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>{h}</th>
                     ))}
                   </tr>
@@ -135,7 +135,6 @@ export default function AccountDetailsPage({ params }: { params: Promise<{ id: s
                           <span style={{ fontSize: 11, fontWeight: 700, color: stageColor, background: `${stageColor}14`, borderRadius: 20, padding: "2px 9px" }}>{d.stage?.name}</span>
                         </td>
                         <td style={{ padding: "11px 20px", fontSize: 13, color: "#1e293b" }}>{d.amount?.toLocaleString("de-CH")} {d.currency}</td>
-                        <td style={{ padding: "11px 20px", fontSize: 13, color: "#64748b" }}>{d.probability}%</td>
                       </tr>
                     );
                   })}

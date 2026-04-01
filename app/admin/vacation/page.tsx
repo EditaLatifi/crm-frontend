@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import './admin-vacation-mobile.css';
 import { api } from "../../../src/api/client";
 import { useToast } from "../../../components/ui/Toast";
-import Modal from "../../../components/ui/Modal";
+import { useAuth } from "../../../src/auth/AuthProvider";
 
 interface VacationRequest {
   id: string;
@@ -20,9 +20,18 @@ interface VacationRequest {
   reviewedBy?: { name: string };
 }
 
+interface StatEntry {
+  user: { id: string; name: string; email: string };
+  days: number;
+  requests: number;
+  quota: number | null;
+  remaining: number | null;
+}
+
 const TYPE_LABELS: Record<string, string> = {
   VACATION: "Urlaub",
   SICK: "Krankenstand",
+  MILITARY_SERVICE: "Militärdienst",
   UNPAID: "Unbezahlt",
   OTHER: "Sonstiges",
 };
@@ -36,21 +45,31 @@ const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }>
 const TYPE_ICONS: Record<string, string> = {
   VACATION: "🏖️",
   SICK: "🤒",
+  MILITARY_SERVICE: "🎖️",
   UNPAID: "💸",
   OTHER: "📝",
 };
 
+const btnStyle = (color: string, bg: string): React.CSSProperties => ({
+  background: bg, color, border: "none", borderRadius: 6,
+  padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer",
+  whiteSpace: "nowrap",
+});
+
 export default function AdminVacationPage() {
   const toast = useToast();
+  const { user: authUser } = useAuth();
   const [requests, setRequests] = useState<VacationRequest[]>([]);
-  const [stats, setStats] = useState<any[]>([]);
+  const [stats, setStats] = useState<StatEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("PENDING");
   const [yearFilter, setYearFilter] = useState(String(new Date().getFullYear()));
-  const [reviewModal, setReviewModal] = useState<VacationRequest | null>(null);
-  const [adminNote, setAdminNote] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [reviewing, setReviewing] = useState<string | null>(null); // id being reviewed
   const [tab, setTab] = useState<"requests" | "stats" | "calendar">("requests");
+
+  // Quota editing state: { [userId]: draftValue }
+  const [quotaDraft, setQuotaDraft] = useState<Record<string, string>>({});
+  const [quotaSaving, setQuotaSaving] = useState<string | null>(null);
 
   const fetchAll = () => {
     const params = new URLSearchParams();
@@ -68,24 +87,44 @@ export default function AdminVacationPage() {
 
   useEffect(() => { fetchAll(); }, [statusFilter, yearFilter]);
 
-  async function handleReview(action: "APPROVED" | "REJECTED") {
-    if (!reviewModal) return;
-    setSaving(true);
+  // Initialize quota drafts when stats load
+  useEffect(() => {
+    const drafts: Record<string, string> = {};
+    for (const s of stats) {
+      drafts[s.user.id] = s.quota != null ? String(s.quota) : "";
+    }
+    setQuotaDraft(drafts);
+  }, [stats]);
+
+  async function handleReview(id: string, action: "APPROVED" | "REJECTED") {
+    setReviewing(id);
     try {
-      const updated: any = await api.patch(`/vacation/${reviewModal.id}/review`, { action, adminNote });
-      setRequests((prev) => prev.map((r) => r.id === updated.id ? updated : r));
+      const updated: any = await api.patch(`/vacation/${id}/review`, { action });
+      setRequests(prev => prev.map(r => r.id === id ? { ...r, ...updated } : r));
       toast.success(action === "APPROVED" ? "Antrag genehmigt." : "Antrag abgelehnt.");
-      setReviewModal(null);
-      setAdminNote("");
       fetchAll();
     } catch {
       toast.error("Fehler beim Aktualisieren.");
     } finally {
-      setSaving(false);
+      setReviewing(null);
     }
   }
 
-  // Group requests by user for calendar view
+  async function handleSaveQuota(userId: string) {
+    const val = parseInt(quotaDraft[userId] ?? "");
+    if (isNaN(val) || val < 0) { toast.error("Bitte eine gültige Anzahl Tage eingeben."); return; }
+    setQuotaSaving(userId);
+    try {
+      await api.patch(`/vacation/quotas/${userId}`, { year: parseInt(yearFilter), days: val });
+      toast.success("Kontingent gespeichert.");
+      fetchAll();
+    } catch {
+      toast.error("Fehler beim Speichern.");
+    } finally {
+      setQuotaSaving(null);
+    }
+  }
+
   function getCalendarData() {
     const users: Record<string, { name: string; periods: VacationRequest[] }> = {};
     for (const r of requests.filter(r => r.status === "APPROVED")) {
@@ -99,7 +138,6 @@ export default function AdminVacationPage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
-      {/* Header */}
       <div className="admin-vacation-header" style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1e293b", margin: 0 }}>Urlaubsverwaltung</h1>
         <div style={{ fontSize: 14, color: "#64748b", marginTop: 4 }}>Übersicht und Genehmigung aller Urlaubsanträge.</div>
@@ -109,9 +147,9 @@ export default function AdminVacationPage() {
       <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "#f1f5f9", borderRadius: 10, padding: 4, width: "fit-content" }}>
         {[
           { key: "requests", label: `Anträge${pendingCount > 0 ? ` (${pendingCount})` : ""}` },
-          { key: "stats", label: "Statistik" },
+          { key: "stats", label: "Statistik & Kontingent" },
           { key: "calendar", label: "Kalenderübersicht" },
-        ].map((t) => (
+        ].map(t => (
           <button key={t.key} onClick={() => setTab(t.key as any)}
             style={{
               padding: "7px 18px", borderRadius: 7, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer",
@@ -126,16 +164,16 @@ export default function AdminVacationPage() {
 
       {/* Filters */}
       <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
           style={{ padding: "8px 12px", borderRadius: 7, border: "1.5px solid #d1d5db", fontSize: 13 }}>
           <option value="">Alle Status</option>
           <option value="PENDING">Ausstehend</option>
           <option value="APPROVED">Genehmigt</option>
           <option value="REJECTED">Abgelehnt</option>
         </select>
-        <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}
+        <select value={yearFilter} onChange={e => setYearFilter(e.target.value)}
           style={{ padding: "8px 12px", borderRadius: 7, border: "1.5px solid #d1d5db", fontSize: 13 }}>
-          {[2024, 2025, 2026, 2027].map((y) => (
+          {[2024, 2025, 2026, 2027].map(y => (
             <option key={y} value={String(y)}>{y}</option>
           ))}
         </select>
@@ -154,14 +192,15 @@ export default function AdminVacationPage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#f8fafc" }}>
-                  {["Mitarbeiter", "Typ", "Zeitraum", "Tage", "Status", "Notiz", "Aktion"].map((h) => (
+                  {["Mitarbeiter", "Typ", "Zeitraum", "Tage", "Status", "Notiz", "Aktion"].map(h => (
                     <th key={h} style={{ padding: "11px 16px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e5e7eb" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {requests.map((r) => {
+                {requests.map(r => {
                   const s = STATUS_STYLE[r.status];
+                  const busy = reviewing === r.id;
                   return (
                     <tr key={r.id} style={{ borderBottom: "1px solid #f8fafc" }}>
                       <td style={{ padding: "12px 16px" }}>
@@ -175,9 +214,7 @@ export default function AdminVacationPage() {
                         <div>{new Date(r.startDate).toLocaleDateString("de-CH")}</div>
                         <div style={{ color: "#94a3b8" }}>bis {new Date(r.endDate).toLocaleDateString("de-CH")}</div>
                       </td>
-                      <td style={{ padding: "12px 16px", fontSize: 14, fontWeight: 700, color: "#2563eb" }}>
-                        {r.days}
-                      </td>
+                      <td style={{ padding: "12px 16px", fontSize: 14, fontWeight: 700, color: "#2563eb" }}>{r.days}</td>
                       <td style={{ padding: "12px 16px" }}>
                         <span style={{ fontSize: 11, fontWeight: 700, color: s.color, background: s.bg, borderRadius: 20, padding: "3px 10px" }}>
                           {s.label}
@@ -189,12 +226,22 @@ export default function AdminVacationPage() {
                       </td>
                       <td style={{ padding: "12px 16px" }}>
                         {r.status === "PENDING" ? (
-                          <button
-                            onClick={() => { setReviewModal(r); setAdminNote(""); }}
-                            style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-                          >
-                            Bearbeiten
-                          </button>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button
+                              onClick={() => handleReview(r.id, "APPROVED")}
+                              disabled={busy}
+                              style={{ ...btnStyle("#fff", "#16a34a"), opacity: busy ? 0.6 : 1 }}
+                            >
+                              ✓ Genehmigen
+                            </button>
+                            <button
+                              onClick={() => handleReview(r.id, "REJECTED")}
+                              disabled={busy}
+                              style={{ ...btnStyle("#dc2626", "#fee2e2"), opacity: busy ? 0.6 : 1 }}
+                            >
+                              ✕ Ablehnen
+                            </button>
+                          </div>
                         ) : (
                           <span style={{ fontSize: 11, color: "#94a3b8" }}>
                             {r.reviewedBy?.name}<br />
@@ -211,44 +258,75 @@ export default function AdminVacationPage() {
         </div>
       )}
 
-      {/* STATS TAB */}
+      {/* STATS TAB — includes quota management */}
       {tab === "stats" && (
         <div>
           {stats.length === 0 ? (
             <div style={{ background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, padding: "32px 20px", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>
-              Keine genehmigten Urlaubstage für {yearFilter}.
+              Keine Daten für {yearFilter}.
             </div>
           ) : (
             <div style={{ background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, overflow: "hidden" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ background: "#f8fafc" }}>
-                    {["Mitarbeiter", "Genehmigte Tage", "Anträge", "Durchschnitt / Antrag"].map((h) => (
+                    {["Mitarbeiter", `Kontingent ${yearFilter} (AT)`, "Verbraucht", "Verbleibend", "Anträge"].map(h => (
                       <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e5e7eb" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {[...stats].sort((a, b) => b.days - a.days).map((s, i) => (
-                    <tr key={i} style={{ borderBottom: "1px solid #f8fafc" }}>
-                      <td style={{ padding: "14px 20px" }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>{s.user.name}</div>
-                        <div style={{ fontSize: 12, color: "#94a3b8" }}>{s.user.email}</div>
-                      </td>
-                      <td style={{ padding: "14px 20px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div style={{ flex: 1, background: "#f1f5f9", borderRadius: 20, height: 8, overflow: "hidden", maxWidth: 120 }}>
-                            <div style={{ height: "100%", background: "#2563eb", borderRadius: 20, width: `${Math.min(100, (s.days / 30) * 100)}%` }} />
+                  {[...stats].sort((a, b) => a.user.name.localeCompare(b.user.name)).map((s, i) => {
+                    const remaining = s.remaining;
+                    const overused = remaining != null && remaining < 0;
+                    return (
+                      <tr key={i} style={{ borderBottom: "1px solid #f8fafc" }}>
+                        <td style={{ padding: "14px 20px" }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>{s.user.name}</div>
+                          <div style={{ fontSize: 12, color: "#94a3b8" }}>{s.user.email}</div>
+                        </td>
+                        <td style={{ padding: "14px 20px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <input
+                              type="number"
+                              min={0}
+                              value={quotaDraft[s.user.id] ?? ""}
+                              onChange={e => setQuotaDraft(d => ({ ...d, [s.user.id]: e.target.value }))}
+                              placeholder="—"
+                              style={{ width: 70, padding: "5px 8px", borderRadius: 6, border: "1.5px solid #d1d5db", fontSize: 13, textAlign: "center" }}
+                            />
+                            <button
+                              onClick={() => handleSaveQuota(s.user.id)}
+                              disabled={quotaSaving === s.user.id}
+                              style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: "#2563eb", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: quotaSaving === s.user.id ? 0.6 : 1 }}
+                            >
+                              {quotaSaving === s.user.id ? "…" : "Speichern"}
+                            </button>
                           </div>
-                          <span style={{ fontSize: 16, fontWeight: 800, color: "#1e293b" }}>{s.days}</span>
-                        </div>
-                      </td>
-                      <td style={{ padding: "14px 20px", fontSize: 14, color: "#64748b" }}>{s.requests}</td>
-                      <td style={{ padding: "14px 20px", fontSize: 14, color: "#64748b" }}>
-                        {s.requests > 0 ? (s.days / s.requests).toFixed(1) : "—"} Tage
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td style={{ padding: "14px 20px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            {s.quota != null && (
+                              <div style={{ flex: 1, background: "#f1f5f9", borderRadius: 20, height: 6, overflow: "hidden", maxWidth: 100 }}>
+                                <div style={{ height: "100%", background: overused ? "#dc2626" : "#2563eb", borderRadius: 20, width: `${Math.min(100, (s.days / s.quota) * 100)}%` }} />
+                              </div>
+                            )}
+                            <span style={{ fontSize: 16, fontWeight: 800, color: "#1e293b" }}>{s.days}</span>
+                          </div>
+                        </td>
+                        <td style={{ padding: "14px 20px" }}>
+                          {remaining != null ? (
+                            <span style={{ fontSize: 15, fontWeight: 700, color: overused ? "#dc2626" : "#16a34a" }}>
+                              {remaining >= 0 ? remaining : remaining} AT
+                            </span>
+                          ) : (
+                            <span style={{ color: "#94a3b8", fontSize: 13 }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ padding: "14px 20px", fontSize: 14, color: "#64748b" }}>{s.requests}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -271,7 +349,7 @@ export default function AdminVacationPage() {
               <div key={i} style={{ padding: "16px 20px", borderBottom: "1px solid #f8fafc" }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 8 }}>{u.name}</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {u.periods.map((r) => (
+                  {u.periods.map(r => (
                     <div key={r.id} style={{
                       background: "#dbeafe", color: "#1d4ed8", borderRadius: 8, padding: "6px 14px",
                       fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
@@ -294,57 +372,6 @@ export default function AdminVacationPage() {
           )}
         </div>
       )}
-
-      {/* Review Modal */}
-      <Modal open={!!reviewModal} onClose={() => setReviewModal(null)} title="Antrag bearbeiten">
-        {reviewModal && (
-          <div>
-            <div style={{ background: "#f8fafc", borderRadius: 10, padding: "14px 16px", marginBottom: 20 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>
-                {TYPE_ICONS[reviewModal.type]} {TYPE_LABELS[reviewModal.type]} — {reviewModal.user.name}
-              </div>
-              <div style={{ fontSize: 13, color: "#64748b" }}>
-                {new Date(reviewModal.startDate).toLocaleDateString("de-CH")}
-                {" bis "}
-                {new Date(reviewModal.endDate).toLocaleDateString("de-CH")}
-                {" · "}
-                <b style={{ color: "#2563eb" }}>{reviewModal.days} Arbeitstage</b>
-              </div>
-              {reviewModal.note && (
-                <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 6, fontStyle: "italic" }}>"{reviewModal.note}"</div>
-              )}
-            </div>
-
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>
-                Admin-Notiz (optional)
-              </label>
-              <textarea
-                value={adminNote}
-                onChange={(e) => setAdminNote(e.target.value)}
-                rows={3}
-                placeholder="Kommentar für den Mitarbeiter…"
-                style={{ width: "100%", padding: "8px 12px", borderRadius: 7, border: "1.5px solid #d1d5db", fontSize: 14, boxSizing: "border-box", resize: "vertical", fontFamily: "inherit" }}
-              />
-            </div>
-
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button onClick={() => setReviewModal(null)}
-                style={{ background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 7, padding: "9px 18px", fontWeight: 600, cursor: "pointer" }}>
-                Abbrechen
-              </button>
-              <button onClick={() => handleReview("REJECTED")} disabled={saving}
-                style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: 7, padding: "9px 18px", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
-                Ablehnen
-              </button>
-              <button onClick={() => handleReview("APPROVED")} disabled={saving}
-                style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 7, padding: "9px 18px", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
-                ✓ Genehmigen
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }

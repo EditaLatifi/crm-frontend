@@ -155,11 +155,36 @@ export default function TasksTable() {
                                   <Text fontWeight="bold" fontSize="md">{t.title}</Text>
                                   <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: pc.bg, color: pc.color }}>{PRIORITY_LABELS[t.priority || 'LOW']}</span>
                                 </Flex>
+                                {(t as any).phase && (
+                                  <div style={{ marginBottom: 4 }}>
+                                    <span style={{ fontSize: 10, fontWeight: 700, color: '#7c3aed', background: '#f3e8ff', borderRadius: 4, padding: '1px 6px' }}>Phase {(t as any).phase}</span>
+                                  </div>
+                                )}
                                 <Flex align="center" gap={2} fontSize="sm" color="gray.600">
                                   <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{initials}</div>
                                   <Text>{assigneeName}</Text>
                                   {t.dueDate && <Text ml={2} color={new Date(t.dueDate) < new Date() ? 'red.500' : 'gray.400'}>Fällig: {new Date(t.dueDate).toLocaleDateString('de-CH')}</Text>}
                                 </Flex>
+                                {/* Checklist mini progress */}
+                                {Array.isArray((t as any).checklists) && (t as any).checklists.length > 0 && (() => {
+                                  const allItems = (t as any).checklists.flatMap((cl: any) => cl.items || []);
+                                  const total = allItems.length;
+                                  const done = allItems.filter((i: any) => i.done).length;
+                                  if (total === 0) return null;
+                                  const pct = Math.round((done / total) * 100);
+                                  return (
+                                    <div style={{ marginTop: 6 }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                                        <span style={{ fontSize: 10, color: done === total ? '#16a34a' : '#94a3b8', fontWeight: 600 }}>
+                                          {done}/{total} erledigt
+                                        </span>
+                                      </div>
+                                      <div style={{ background: '#e5e7eb', borderRadius: 20, height: 3, overflow: 'hidden' }}>
+                                        <div style={{ height: '100%', background: done === total ? '#16a34a' : '#2563eb', borderRadius: 20, width: `${pct}%` }} />
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
                               </Box>
                             </Link>
                           </div>

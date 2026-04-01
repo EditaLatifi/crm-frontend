@@ -24,6 +24,16 @@ const ACTION_COLORS: Record<string, string> = {
   DEFAULT: '#64748b',
 };
 
+const ACTION_LABELS: Record<string, string> = {
+  CREATE: 'Erstellt',
+  UPDATE: 'Aktualisiert',
+  DELETE: 'Gelöscht',
+  change_stage: 'Phase geändert',
+  PHASE_UPDATE: 'Phase aktualisiert',
+  timer_stop: 'Zeit gestoppt',
+  COMMENT: 'Kommentiert',
+};
+
 export default function ActivityLog({ accountId, onClose }: { accountId: string, onClose: () => void }) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +76,7 @@ export default function ActivityLog({ accountId, onClose }: { accountId: string,
                       <img src={act.actorAvatarUrl || '/avatar.svg'} alt="avatar" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', background: '#f3f4f6' }} />
                       <span style={{ fontWeight: 500 }}>{act.actorName || act.actorUserId}</span>
                     </td>
-                    <td style={{ padding: '10px 8px', fontWeight: 600, color: ACTION_COLORS[act.action] || ACTION_COLORS.DEFAULT }}>{act.action}</td>
+                    <td style={{ padding: '10px 8px', fontWeight: 600, color: ACTION_COLORS[act.action] || ACTION_COLORS.DEFAULT }}>{ACTION_LABELS[act.action] ?? act.action}</td>
                     <td style={{ padding: '10px 8px', color: '#64748b' }}>{act.type || '-'}</td>
                     <td style={{ padding: '10px 8px', color: '#64748b' }}>{act.environment || '-'}</td>
                     <td style={{ padding: '10px 8px', color: '#23272f', fontFamily: 'monospace', fontSize: 12, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{act.payloadJson ? JSON.stringify(act.payloadJson) : '-'}</td>

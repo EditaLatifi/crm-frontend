@@ -15,7 +15,8 @@ export default function ContactDetailsPage({ params }: { params: Promise<{ id: s
   const [contact, setContact] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", email: "", phone: "", title: "" });
+  const [editForm, setEditForm] = useState({ name: "", email: "", phone: "", title: "", accountId: "" });
+  const [accounts, setAccounts] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
@@ -27,12 +28,17 @@ export default function ContactDetailsPage({ params }: { params: Promise<{ id: s
 
   useEffect(() => { fetchContact(); }, [id]);
 
+  useEffect(() => {
+    api.get('/accounts').then((d: any) => setAccounts(Array.isArray(d) ? d : [])).catch(() => {});
+  }, []);
+
   const openEdit = () => {
     setEditForm({
       name: contact?.name || "",
       email: contact?.email || "",
       phone: contact?.phone || "",
       title: contact?.title || "",
+      accountId: contact?.accountId || "",
     });
     setEditOpen(true);
   };
@@ -106,7 +112,7 @@ export default function ContactDetailsPage({ params }: { params: Promise<{ id: s
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Konto</div>
+            <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Firma/Konto</div>
             <div style={{ fontSize: 14, color: "#1e293b" }}>
               {contact.account
                 ? <Link href={`/accounts/${contact.account.id}`} style={{ color: "#2563eb", textDecoration: "none", fontWeight: 600 }}>{contact.account.name}</Link>
@@ -159,6 +165,19 @@ export default function ContactDetailsPage({ params }: { params: Promise<{ id: s
               />
             </div>
           ))}
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>Firma/Konto</label>
+            <select
+              value={editForm.accountId}
+              onChange={e => setEditForm(f => ({ ...f, accountId: e.target.value }))}
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 7, border: "1.5px solid #d1d5db", fontSize: 14, boxSizing: "border-box", background: "#fff", color: "#1e293b" }}
+            >
+              <option value="">Keine Firma</option>
+              {accounts.map((a: any) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+          </div>
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 20 }}>
             <button type="button" onClick={() => setEditOpen(false)} style={{ background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 7, padding: "8px 18px", fontWeight: 600, cursor: "pointer" }}>
               Abbrechen

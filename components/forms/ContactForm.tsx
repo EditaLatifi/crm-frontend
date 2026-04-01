@@ -20,6 +20,7 @@ export default function ContactForm({ onSubmit, initialData }: {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setLoadingAccounts(true);
@@ -38,12 +39,17 @@ export default function ContactForm({ onSubmit, initialData }: {
     return e;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
-    onSubmit({ name: name.trim(), email: email.trim(), phone, accountId });
+    setSaving(true);
+    try {
+      await Promise.resolve(onSubmit({ name: name.trim(), email: email.trim(), phone, accountId }));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -76,7 +82,7 @@ export default function ContactForm({ onSubmit, initialData }: {
           </select>
         )}
       </div>
-      <button type="submit" style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 600, cursor: 'pointer', marginTop: 8 }}>Kontakt speichern</button>
+      <button type="submit" disabled={saving} style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', marginTop: 8, opacity: saving ? 0.7 : 1 }}>{saving ? 'Speichern…' : 'Kontakt speichern'}</button>
     </form>
   );
 }

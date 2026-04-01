@@ -5,6 +5,20 @@ const field: React.CSSProperties = { width: '100%', padding: '8px 10px', borderR
 const errStyle: React.CSSProperties = { color: '#dc2626', fontSize: 12, marginTop: 3 };
 const label: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 5 };
 
+const VENDOR_TYPE_OPTIONS = [
+  { value: 'ARCHITEKT', label: 'Architekt' },
+  { value: 'BAUINGENIEUR', label: 'Bauingenieur' },
+  { value: 'ELEKTRIKER', label: 'Elektriker' },
+  { value: 'SANITAER', label: 'Sanitär' },
+  { value: 'HEIZUNG_LUEFTUNG', label: 'Heizung/Lüftung' },
+  { value: 'MALER', label: 'Maler' },
+  { value: 'ZIMMERMANN', label: 'Zimmermann' },
+  { value: 'DACHDECKER', label: 'Dachdecker' },
+  { value: 'GARTENBAU', label: 'Gartenbau' },
+  { value: 'GENERALUNTERNEHMER', label: 'Generalunternehmer' },
+  { value: 'SONSTIGES', label: 'Sonstiges' },
+];
+
 export default function AccountForm({ onSubmit, initialData }: { onSubmit: (data: any) => void; initialData?: any; }) {
   const [name, setName] = useState(initialData?.name || '');
   const [type, setType] = useState(initialData?.type || 'CLIENT');
@@ -12,7 +26,11 @@ export default function AccountForm({ onSubmit, initialData }: { onSubmit: (data
   const [phone, setPhone] = useState(initialData?.phone || '');
   const [email, setEmail] = useState(initialData?.email || '');
   const [notes, setNotes] = useState(initialData?.notes || '');
+  const [vendorType, setVendorType] = useState(initialData?.vendorType || '');
+  const [rating, setRating] = useState(initialData?.rating || '');
+  const [contactPerson, setContactPerson] = useState(initialData?.contactPerson || '');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -23,11 +41,23 @@ export default function AccountForm({ onSubmit, initialData }: { onSubmit: (data
     return e;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs = validate();
     setErrors(errs);
-    if (Object.keys(errs).length === 0) onSubmit({ name: name.trim(), type, address, phone, email, notes });
+    if (Object.keys(errs).length > 0) return;
+    setSaving(true);
+    try {
+      const payload: any = { name: name.trim(), type, address, phone, email, notes };
+      if (type === 'SUPPLIER') {
+        if (vendorType) payload.vendorType = vendorType;
+        if (rating) payload.rating = parseInt(rating);
+        if (contactPerson) payload.contactPerson = contactPerson;
+      }
+      await Promise.resolve(onSubmit(payload));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -42,8 +72,8 @@ export default function AccountForm({ onSubmit, initialData }: { onSubmit: (data
         <label style={label}>Typ <span style={{ color: '#dc2626' }}>*</span></label>
         <select value={type} onChange={e => setType(e.target.value)} style={{ ...field }}>
           <option value="CLIENT">Kunde</option>
-          <option value="POTENTIAL_CLIENT">Potenzieller Kunde</option>
-          <option value="PARTNER">Partner</option>
+          <option value="POTENTIAL_CLIENT">Interessent</option>
+          <option value="SUPPLIER">Lieferant</option>
         </select>
       </div>
       <div>
@@ -67,8 +97,31 @@ export default function AccountForm({ onSubmit, initialData }: { onSubmit: (data
         <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
           style={{ ...field, resize: 'vertical', lineHeight: 1.5 }} placeholder="Interne Notizen..." />
       </div>
-      <button type="submit" style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 7, padding: '10px 20px', fontWeight: 600, cursor: 'pointer', fontSize: 14, marginTop: 4 }}>
-        Speichern
+      {type === 'SUPPLIER' && (
+        <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 8, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Lieferanten-Details</div>
+          <div>
+            <label style={label}>Gewerk / Typ</label>
+            <select value={vendorType} onChange={e => setVendorType(e.target.value)} style={{ ...field }}>
+              <option value="">Kein Gewerk</option>
+              {VENDOR_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={label}>Ansprechperson</label>
+            <input value={contactPerson} onChange={e => setContactPerson(e.target.value)} style={field} placeholder="Name der Ansprechperson" />
+          </div>
+          <div>
+            <label style={label}>Bewertung (1–5)</label>
+            <select value={rating} onChange={e => setRating(e.target.value)} style={{ ...field }}>
+              <option value="">Keine Bewertung</option>
+              {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} Stern{n > 1 ? 'e' : ''}</option>)}
+            </select>
+          </div>
+        </div>
+      )}
+      <button type="submit" disabled={saving} style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 7, padding: '10px 20px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontSize: 14, marginTop: 4, opacity: saving ? 0.7 : 1 }}>
+        {saving ? 'Speichern…' : 'Speichern'}
       </button>
     </form>
   );

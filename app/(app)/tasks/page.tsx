@@ -3,9 +3,11 @@ import TasksTable from '../../../components/tables/TasksTable';
 import React, { useState, useEffect } from 'react';
 import { api } from '../../../src/api/client';
 import { useAuth } from '../../../src/auth/AuthProvider';
+import { getAllPhaseCodes } from '../../../src/lib/siaPhases';
 
 export default function TasksPage() {
   const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     title: '',
@@ -17,11 +19,18 @@ export default function TasksPage() {
     accountId: '',
     contactId: '',
     dealId: '',
+    projectId: '',
+    phase: '',
+    specification: '',
+    assigneeIds: [] as string[],
+    budgetHours: '',
   });
+  const phaseOptions = getAllPhaseCodes();
   const [users, setUsers] = useState<{ id: string; name?: string; email?: string }[]>([]);
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
   const [contacts, setContacts] = useState<{ id: string; name: string }[]>([]);
   const [deals, setDeals] = useState<{ id: string; name: string }[]>([]);
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -31,6 +40,7 @@ export default function TasksPage() {
       api.get('/accounts').then(data => setAccounts(Array.isArray(data) ? data : [])).catch(() => {});
       api.get('/contacts').then(data => setContacts(Array.isArray(data) ? data : [])).catch(() => {});
       api.get('/deals').then(data => setDeals(Array.isArray(data) ? data : [])).catch(() => {});
+      api.get('/projects').then(data => setProjects(Array.isArray(data) ? data : [])).catch(() => {});
     }
   }, [showForm]);
 
@@ -39,7 +49,7 @@ export default function TasksPage() {
     setSaving(true);
     try {
       await api.post('/tasks', form);
-      setForm({ title: '', description: '', status: 'OPEN', priority: 'LOW', dueDate: '', assignedToUserId: '', accountId: '', contactId: '', dealId: '' });
+      setForm({ title: '', description: '', status: 'OPEN', priority: 'LOW', dueDate: '', assignedToUserId: '', accountId: '', contactId: '', dealId: '', projectId: '', phase: '', specification: '', assigneeIds: [], budgetHours: '' });
       setShowForm(false);
       setRefreshKey(k => k + 1);
     } finally {
@@ -65,7 +75,7 @@ export default function TasksPage() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1e293b', margin: 0, letterSpacing: '-0.5px' }}>Aufgaben</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#1e293b', margin: 0, letterSpacing: '-0.5px' }}>Aufgaben</h1>
           <div style={{ fontSize: 14, color: '#64748b', fontWeight: 400, marginTop: 5 }}>Verwalte und priorisiere deine Aufgaben im Kanban-Board.</div>
         </div>
         <button
@@ -141,12 +151,46 @@ export default function TasksPage() {
                     </select>
                   </div>
                 </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={labelStyle}>Deal</label>
+                    <select style={inputStyle} value={form.dealId} onChange={e => setForm(f => ({ ...f, dealId: e.target.value }))}>
+                      <option value="">Kein Deal</option>
+                      {deals.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Projekt</label>
+                    <select style={inputStyle} value={form.projectId} onChange={e => setForm(f => ({ ...f, projectId: e.target.value }))}>
+                      <option value="">Kein Projekt</option>
+                      {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                </div>
                 <div>
-                  <label style={labelStyle}>Deal</label>
-                  <select style={inputStyle} value={form.dealId} onChange={e => setForm(f => ({ ...f, dealId: e.target.value }))}>
-                    <option value="">Kein Deal</option>
-                    {deals.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  <label style={labelStyle}>Leistungsphase (SIA) *</label>
+                  <select style={inputStyle} value={form.phase} onChange={e => setForm(f => ({ ...f, phase: e.target.value }))}>
+                    <option value="">— Phase wählen —</option>
+                    {phaseOptions.map(p => <option key={p.code} value={p.code}>{p.label}</option>)}
                   </select>
+                </div>
+                {isAdmin && (
+                  <div>
+                    <label style={labelStyle}>Stundenkontingent (h)</label>
+                    <input type="number" min="0" step="0.5" style={inputStyle} value={form.budgetHours} onChange={e => setForm(f => ({ ...f, budgetHours: e.target.value }))} placeholder="z.B. 40" />
+                  </div>
+                )}
+                <div>
+                  <label style={labelStyle}>Weitere Mitarbeiter</label>
+                  <select multiple style={{ ...inputStyle, minHeight: 80 }} value={form.assigneeIds}
+                    onChange={e => setForm(f => ({ ...f, assigneeIds: Array.from(e.target.selectedOptions, o => o.value) }))}>
+                    {users.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
+                  </select>
+                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>Ctrl/Cmd + Klick für Mehrfachauswahl</div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Spezifikation</label>
+                  <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} value={form.specification} onChange={e => setForm(f => ({ ...f, specification: e.target.value }))} placeholder="Freitext-Spezifikation (optional)" />
                 </div>
               </div>
               <div style={{ padding: '16px 24px', borderTop: '1px solid #f1f5f9', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>

@@ -49,7 +49,7 @@ export default function TimeEntriesTable({ entries, showUserColumn }: TimeEntrie
             <th style={thStyle}>Task</th>
             <th style={thStyle}>Start</th>
             <th style={thStyle}>Ende</th>
-            <th style={thStyle}>Dauer (min)</th>
+            <th style={thStyle}>Dauer</th>
             <th style={thStyle}>Beschrieb</th>
           </tr>
         </thead>
@@ -68,7 +68,7 @@ export default function TimeEntriesTable({ entries, showUserColumn }: TimeEntrie
                 <td style={tdStyle} data-label="Task">{(e.task && e.task.title) || e.taskId || '—'}</td>
                 <td style={tdStyle} data-label="Start">{e.startedAt ? new Date(e.startedAt).toLocaleString() : '—'}</td>
                 <td style={tdStyle} data-label="Ende">{e.endedAt ? new Date(e.endedAt).toLocaleString() : '—'}</td>
-                <td style={tdStyle} data-label="Dauer (min)">{typeof e.durationMinutes === 'number' ? e.durationMinutes : '—'}</td>
+                <td style={tdStyle} data-label="Dauer">{typeof e.durationMinutes === 'number' ? (() => { const h = Math.floor(e.durationMinutes / 60); const m = e.durationMinutes % 60; return h === 0 ? `${m}min` : m === 0 ? `${h}h` : `${h}h ${m}min`; })() : '—'}</td>
                 <td style={tdStyle} data-label="Beschrieb">{e.description || '—'}</td>
               </tr>
             ))

@@ -39,7 +39,7 @@ function AdminContactsPageContent() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1e293b', margin: 0, letterSpacing: '-0.5px' }}>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: "#1e293b", margin: 0, letterSpacing: '-0.5px' }}>
             Kontakte
           </h1>
           <div style={{ fontSize: 14, color: '#64748b', fontWeight: 400, marginTop: 5 }}>
