@@ -602,136 +602,72 @@
   }
 }
 /* Dashboard Responsive Styles */
- .dashboard-responsive {
-   padding: 40px 60px;
-   background: #f8f9fb;
-   min-height: 100vh;
-   font-family: Inter, Arial, sans-serif;
-   display: flex;
-   flex-direction: column;
-   align-items: center;
-}
- .dashboard-title {
-   margin-top: 32px;
-   margin-bottom: 32px;
-   font-size: 40px;
-   font-weight: 900;
-   color: #222e3a;
-   letter-spacing: -1px;
-   text-align: left;
-   width: 100%;
-}
- .dashboard-cards-row {
-   display: flex;
-   gap: 40px;
-   margin-bottom: 48px;
-   width: 100%;
-   justify-content: flex-start;
-}
- .dashboard-card {
-   background: #fff;
-   padding: 36px 28px;
-   border-radius: 18px;
-   box-shadow: 0 4px 24px rgba(30,41,59,0.08);
-   min-width: 320px;
-   max-width: 420px;
-   display: flex;
-   flex-direction: column;
-   align-items: flex-start;
-   border: 1px solid #e5e7eb;
-}
- .dashboard-card-title {
-   font-weight: 700;
-   margin-bottom: 12px;
-   font-size: 20px;
-   letter-spacing: -0.5px;
-}
-.dashboard-card-tasks { color: #2563eb; }
-.dashboard-card-deals { color: #36a2eb; }
-.dashboard-card-time { color: #e67e22; }
- .dashboard-card-value {
-   font-size: 36px;
-   font-weight: 800;
-   color: #23272f;
-}
- .dashboard-charts-row {
-   display: flex;
-   gap: 40px;
-   margin-bottom: 48px;
-   width: 100%;
-   justify-content: flex-start;
-}
- .dashboard-chart {
-   background: #fff;
-   border-radius: 18px;
-   padding: 32px 24px;
-   box-shadow: 0 4px 24px rgba(30,41,59,0.08);
-   min-width: 320px;
-   max-width: 480px;
-   flex: 1 1 320px;
-   border: 1px solid #e5e7eb;
-   display: flex;
-   flex-direction: column;
-   align-items: center;
-}
- .dashboard-activity {
-   background: #fff;
-   border-radius: 18px;
-   padding: 36px 28px;
-   box-shadow: 0 4px 24px rgba(30,41,59,0.08);
-   width: 100%;
-   border: 1px solid #e5e7eb;
-}
- .dashboard-activity-title {
-   margin-bottom: 18px;
-   font-weight: 800;
-   color: #2563eb;
-   font-size: 22px;
-   letter-spacing: -0.5px;
-}
- .dashboard-activity-list {
-   font-size: 17px;
-   color: #444;
-   line-height: 1.7;
-   padding-left: 22px;
-   margin-bottom: 0;
-}
 @media (max-width: 900px) {
-  .dashboard-responsive {
-    padding: 12px;
+  .dash-kpi-row {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
   }
-  .dashboard-title {
-    font-size: 26px;
-    margin-top: 56px;
-    margin-bottom: 18px;
+  .dash-bottom-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
   }
-  .dashboard-cards-row,
-  .dashboard-charts-row {
-    flex-direction: column;
-    gap: 18px;
+  .dash-charts-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
   }
-  .dashboard-card,
-  .dashboard-chart {
-    padding: 16px;
-    font-size: 15px;
-  }
-  .dashboard-card-value {
-    font-size: 22px;
-  }
-  .dashboard-activity {
-    padding: 16px;
-  }
-  .dashboard-activity-title {
-    font-size: 18px;
-  }
-  .dashboard-activity-list {
-    font-size: 14px;
+  /* Mobile margin-top for content below fixed topbar */
+  .main-content {
+    padding-top: 56px !important;
   }
 }
-/* Desktop sidebar and main content layout */
+@media (max-width: 500px) {
+  .dash-kpi-row {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Kanban mobile: horizontal scroll */
+@media (max-width: 900px) {
+  .kanban-grid {
+    grid-template-columns: repeat(4, 240px) !important;
+    overflow-x: auto !important;
+    padding-bottom: 8px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Mobile padding for all pages */
+@media (max-width: 900px) {
+  .main-content > div {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  .dash-header-row {
+    margin-top: 15px !important;
+  }
+  .accounts-header-row {
+    margin-top: 10px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  .accounts-header-row > div:last-child {
+    width: 100% !important;
+    flex-direction: column !important;
+  }
+  .accounts-header-row > div:last-child > div,
+  .accounts-header-row > div:last-child > button {
+    width: 100% !important;
+  }
+  .accounts-header-row > div:last-child > div {
+    display: flex !important;
+  }
+  .accounts-header-row > div:last-child > div > button {
+    flex: 1 !important;
+  }
+}
 /* Desktop sidebar and main content layout */
 .topbar {
-  left: 240px;
+  left: 220px;
 }
 .sidebar-desktop {
   display: block;
@@ -740,9 +676,9 @@
   display: none;
 }
 .main-content {
-  margin-left: 250px;
+  margin-left: 200px;
   min-width: 0;
-  width: calc(100vw - 250px);
+  width: calc(100vw - 220px);
   transition: margin-left 0.3s;
 }
 /* Responsive styles for mobile and tablet */

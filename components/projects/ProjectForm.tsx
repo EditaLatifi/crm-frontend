@@ -36,6 +36,7 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
     status:          initialData?.status || 'ACTIVE',
     address:         initialData?.address || '',
     budget:          initialData?.budget || '',
+    budgetHours:     initialData?.budgetHours || '',
     currency:        initialData?.currency || 'CHF',
     startDate:       initialData?.startDate       ? initialData.startDate.slice(0, 10)       : '',
     expectedEndDate: initialData?.expectedEndDate ? initialData.expectedEndDate.slice(0, 10) : '',
@@ -64,6 +65,7 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
       await onSubmit({
         ...form,
         budget:          form.budget ? Number(form.budget) : undefined,
+        budgetHours:     form.budgetHours ? Number(form.budgetHours) : undefined,
         accountId:       form.accountId || undefined,
         ownerUserId:     form.ownerUserId || undefined,
         startDate:       form.startDate || undefined,
@@ -199,10 +201,10 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
         )}
       </div>
 
-      {/* Budget + Currency */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 22 }}>
+      {/* Budget + Currency + Budget Hours */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 12, marginBottom: 22 }}>
         <div>
-          <label style={label}>Budget</label>
+          <label style={label}>Budget (CHF)</label>
           {wrap(
             <FiDollarSign size={13} />,
             <input
@@ -217,9 +219,16 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
           <label style={label}>Währung</label>
           <select style={input} value={form.currency} onChange={e => set('currency', e.target.value)} onFocus={onFocus} onBlur={onBlur}>
             <option>CHF</option>
-            <option>EUR</option>
-            <option>USD</option>
           </select>
+        </div>
+        <div>
+          <label style={label}>Stundenkontingent</label>
+          <input
+            style={input} type="number" min="0" step="0.5" value={form.budgetHours}
+            onChange={e => set('budgetHours', e.target.value)}
+            onFocus={onFocus} onBlur={onBlur}
+            placeholder="500"
+          />
         </div>
       </div>
 
@@ -309,10 +318,9 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
           disabled={loading}
           style={{
             flex: 1, padding: '12px 20px', borderRadius: 10, border: 'none',
-            background: loading ? '#93c5fd' : 'linear-gradient(135deg,#2563eb,#6366f1)',
-            color: '#fff', fontWeight: 700, fontSize: 14,
+            background: loading ? '#999' : '#1a1a1a',
+            color: '#fff', fontWeight: 600, fontSize: 14,
             cursor: loading ? 'not-allowed' : 'pointer',
-            boxShadow: loading ? 'none' : '0 4px 14px rgba(37,99,235,0.30)',
             transition: 'all 0.15s',
           }}
         >
@@ -326,7 +334,7 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
             onClick={onCancel}
             style={{
               padding: '12px 20px', borderRadius: 10,
-              border: '1.5px solid #e2e8f0', background: '#fff',
+              border: '1px solid #E8E4DE', background: '#fff',
               color: '#64748b', fontWeight: 600, fontSize: 14, cursor: 'pointer',
               transition: 'all 0.15s',
             }}

@@ -4,8 +4,7 @@ import Sidebar from "../components/ui/Sidebar";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "../src/routes/ProtectedRoute";
 import { useState, useEffect } from "react";
-import { FiMenu, FiSearch } from "react-icons/fi";
-import RunningTimer from "../components/ui/RunningTimer";
+import { FiMenu, FiSearch, FiPlus } from "react-icons/fi";
 import GlobalSearch from "../components/ui/GlobalSearch";
 import NotificationBell from "../components/ui/NotificationBell";
 import { ping } from "../src/api/client";
@@ -18,14 +17,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  // Keep server alive — ping every 4 minutes so it never sleeps
   useEffect(() => {
-    ping(); // immediate ping on mount
+    ping();
     const interval = setInterval(ping, 4 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Cmd+K / Ctrl+K to open search
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -42,45 +39,43 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
   return (
     <ProtectedRoute>
-      {/* Global search modal */}
       {searchOpen && <GlobalSearch onClose={() => setSearchOpen(false)} />}
 
-      {/* Top bar (mobile + desktop) */}
+      {/* Top bar — clean minimal */}
       <div className="topbar" style={{
-        position: "fixed", top: 0, right: 0, height: 52,
-        background: "#fff", borderBottom: "1px solid #e5e7eb",
+        position: "fixed", top: 0, right: 0, height: 48,
+        background: "#FAF9F6", borderBottom: "1px solid #E8E4DE",
         display: "flex", alignItems: "center",
-        padding: "0 16px", zIndex: 20, gap: 12,
+        padding: "0 20px", zIndex: 20, gap: 12,
       }}>
-        {/* Search trigger */}
-        <button
-          onClick={() => setSearchOpen(true)}
-          style={{
-            display: "flex", alignItems: "center", gap: 8, background: "#f8fafc",
-            border: "1.5px solid #e5e7eb", borderRadius: 9, padding: "6px 14px",
-            fontSize: 13, color: "#94a3b8", cursor: "pointer", flex: 1, maxWidth: 360,
-            transition: "border-color 0.15s",
-          }}
-          onMouseOver={(e) => (e.currentTarget.style.borderColor = "#2563eb")}
-          onMouseOut={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
-        >
-          <FiSearch size={14} />
-          <span>Suchen…</span>
-          <kbd className="search-kbd-hint" style={{ marginLeft: "auto", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: 5, padding: "1px 6px", fontSize: 11, color: "#64748b" }}>
-            ⌘K
-          </kbd>
-        </button>
+        {/* Breadcrumb area */}
+        <span style={{ fontSize: 13, color: "#999", fontWeight: 400 }}>
+          {pathname?.split("/").filter(Boolean).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(" / ") || "Dashboard"}
+        </span>
 
-        {/* Burger menu — mobile/tablet only, after search */}
+        {/* Burger menu — mobile only */}
         <button className="burger-menu" aria-label="Open sidebar" onClick={() => setSidebarOpen(true)}
-          style={{ background: "none", border: "none", cursor: "pointer", alignItems: "center", padding: 4 }}>
-          <FiMenu size={22} color="#1e293b" />
+          style={{ background: "none", border: "none", cursor: "pointer", alignItems: "center", padding: 4, marginLeft: "auto" }}>
+          <FiMenu size={20} color="#333" />
         </button>
 
-        {/* Right side: notifications + timer */}
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+        {/* Right side */}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+          <button
+            onClick={() => setSearchOpen(true)}
+            style={{
+              display: "flex", alignItems: "center", gap: 6, background: "#fff",
+              border: "1px solid #E8E4DE", borderRadius: 8, padding: "6px 12px",
+              fontSize: 13, color: "#999", cursor: "pointer",
+            }}
+          >
+            <FiSearch size={13} />
+            <span>Suchen...</span>
+            <kbd className="search-kbd-hint" style={{ marginLeft: 8, background: "#f5f5f0", border: "1px solid #e0ddd6", borderRadius: 4, padding: "1px 5px", fontSize: 10, color: "#999" }}>
+              ⌘K
+            </kbd>
+          </button>
           <NotificationBell />
-          <RunningTimer />
         </div>
       </div>
 
@@ -94,8 +89,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
 
-      {/* Main content — pushed below topbar */}
-      <main className="main-content" style={{ paddingTop: 52 }}>{children}</main>
+      {/* Main content — cream background */}
+      <main className="main-content" style={{
+        paddingTop: 66,
+        background: "#FAF9F6",
+        minHeight: "100vh",
+      }}>{children}</main>
     </ProtectedRoute>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../src/api/client';
+import { formatCHF } from '../../src/lib/formatCurrency';
 
 /* ================================
    Types
@@ -163,74 +164,46 @@ export default function DealInsightsWidget() {
   }, []);
 
   return (
-    <div
-      style={{
-        margin: '24px 0',
-        padding: '24px',
-        background: '#f5f7fa',
-        borderRadius: 16,
-        border: '1px solid #e0e0e0',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
-      }}
-    >
-      <h3
-        style={{
-          marginBottom: 20,
-          fontSize: 26,
-          color: '#222',
-          fontWeight: 700
-        }}
-      >
+    <div>
+      <h3 style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a', margin: '0 0 16px' }}>
         Deal-Einschätzungen
       </h3>
 
-      {loading && <div style={{ color: '#94a3b8', fontSize: 14 }}>Lade Einschätzungen...</div>}
+      {loading && <div style={{ color: '#999', fontSize: 13 }}>Lade Einschätzungen...</div>}
 
       {!loading && insights.length === 0 && (
-        <div style={{ color: '#94a3b8', fontSize: 14 }}>Keine Einschätzungen verfügbar.</div>
+        <div style={{ color: '#999', fontSize: 13 }}>Keine Einschätzungen verfügbar.</div>
       )}
 
       {!loading && insights.length > 0 && (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {insights.map(insight => (
-            <li
+            <div
               key={insight.id}
               style={{
-                marginBottom: 22,
-                padding: 20,
-                background: '#fff',
-                borderRadius: 12,
-                border: '1px solid #e0e0e0',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                padding: '16px 18px',
+                background: '#FAF9F6',
+                borderRadius: 10,
+                border: '1px solid #E8E4DE',
               }}
             >
-              <div style={{ fontWeight: 700, fontSize: 20 }}>
-                {insight.name}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <span style={{ fontWeight: 700, fontSize: 14, color: '#1a1a1a' }}>{insight.name}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: insight.attention ? '#dc2626' : '#16a34a', background: insight.attention ? '#fef2f2' : '#f0fdf4', borderRadius: 12, padding: '2px 10px' }}>
+                  {insight.attention ? 'Handlungsbedarf' : 'OK'}
+                </span>
               </div>
-
-              <div style={{ marginTop: 6 }}>
-                Betrag: <b>{insight.amount?.toLocaleString('de-CH')} CHF</b>
+              <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#666', flexWrap: 'wrap' }}>
+                <span>{formatCHF(insight.amount ?? 0)}</span>
+                <span>{insight.daysSinceUpdate}d seit Update</span>
+                <span style={{ color: '#e8a838', fontWeight: 600 }}>{(insight.closeProbability * 100).toFixed(0)}% Abschluss</span>
               </div>
-
-              <div>
-                Tage seit letztem Update: <b>{insight.daysSinceUpdate}</b>
-              </div>
-
-              <div style={{ color: insight.attention ? '#d32f2f' : '#388e3c' }}>
-                Handlungsbedarf: {insight.attention ? 'Ja' : 'Nein'}
-              </div>
-
-              <div style={{ color: '#1976d2' }}>
-                Abschlusswahrscheinlichkeit:{' '}
-                <b>{(insight.closeProbability * 100).toFixed(0)}%</b>
-              </div>
-
-              <div style={{ marginTop: 10, fontWeight: 600 }}>
+              <div style={{ marginTop: 8, fontSize: 12, color: '#555', lineHeight: 1.5 }}>
                 {getEnhancedRecommendation(insight)}
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

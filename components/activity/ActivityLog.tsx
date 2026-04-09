@@ -21,6 +21,10 @@ const ACTION_COLORS: Record<string, string> = {
   UPDATE: '#2563eb',
   DELETE: '#ef4444',
   COMMENT: '#a855f7',
+  PHASE_UPDATE: '#7c3aed',
+  TIME_LOGGED: '#0891b2',
+  ASSIGNED: '#d97706',
+  STATUS_CHANGED: '#2563eb',
   DEFAULT: '#64748b',
 };
 
@@ -28,11 +32,44 @@ const ACTION_LABELS: Record<string, string> = {
   CREATE: 'Erstellt',
   UPDATE: 'Aktualisiert',
   DELETE: 'Gelöscht',
-  change_stage: 'Phase geändert',
-  PHASE_UPDATE: 'Phase aktualisiert',
-  timer_stop: 'Zeit gestoppt',
   COMMENT: 'Kommentiert',
+  PHASE_UPDATE: 'Phasenänderung',
+  change_stage: 'Phase geändert',
+  DEAL_CREATED: 'Deal erstellt',
+  DEAL_UPDATED: 'Deal aktualisiert',
+  DEAL_DELETED: 'Deal gelöscht',
+  STAGE_CHANGE: 'Phase geändert',
+  TIME_LOGGED: 'Zeit erfasst',
+  timer_stop: 'Zeit gestoppt',
+  ASSIGNED: 'Zugewiesen',
+  STATUS_CHANGED: 'Status geändert',
+  TITLE_CHANGED: 'Titel geändert',
+  DESCRIPTION_CHANGED: 'Beschreibung geändert',
+  CHECKLIST_UPDATED: 'Checkliste aktualisiert',
+  PRIORITY_CHANGED: 'Priorität geändert',
+  MEMBER_ADDED: 'Mitglied hinzugefügt',
+  MEMBER_REMOVED: 'Mitglied entfernt',
 };
+
+function formatPayload(payload: any): string {
+  if (!payload) return '';
+  if (typeof payload === 'string') return payload;
+  const parts: string[] = [];
+  if (payload.name) parts.push(payload.name);
+  if (payload.changes) {
+    const c = payload.changes;
+    Object.keys(c).forEach(key => {
+      parts.push(`${key}: ${c[key]?.from ?? '—'} → ${c[key]?.to ?? '—'}`);
+    });
+  }
+  if (payload.phaseName) parts.push(`Phase: ${payload.phaseName}`);
+  if (payload.newStatus) {
+    const STATUS_DE: Record<string, string> = { PENDING: 'Ausstehend', IN_PROGRESS: 'In Bearbeitung', COMPLETED: 'Abgeschlossen', SKIPPED: 'Übersprungen' };
+    parts.push(STATUS_DE[payload.newStatus] || payload.newStatus);
+  }
+  if (payload.from && payload.to && !payload.changes) parts.push(`${payload.from} → ${payload.to}`);
+  return parts.join(' | ') || JSON.stringify(payload);
+}
 
 export default function ActivityLog({ accountId, onClose }: { accountId: string, onClose: () => void }) {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -73,14 +110,20 @@ export default function ActivityLog({ accountId, onClose }: { accountId: string,
                 activities.map(act => (
                   <tr key={act.id} style={{ borderBottom: '1px solid #f0f0f0', transition: 'background 0.2s' }}>
                     <td style={{ padding: '10px 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <img src={act.actorAvatarUrl || '/avatar.svg'} alt="avatar" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', background: '#f3f4f6' }} />
-                      <span style={{ fontWeight: 500 }}>{act.actorName || act.actorUserId}</span>
+                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#e8a838', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+                        {((act as any).actor?.name || act.actorName || 'U').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+                      </div>
+                      <span style={{ fontWeight: 500 }}>{(act as any).actor?.name || act.actorName || 'Benutzer'}</span>
                     </td>
-                    <td style={{ padding: '10px 8px', fontWeight: 600, color: ACTION_COLORS[act.action] || ACTION_COLORS.DEFAULT }}>{ACTION_LABELS[act.action] ?? act.action}</td>
-                    <td style={{ padding: '10px 8px', color: '#64748b' }}>{act.type || '-'}</td>
+                    <td style={{ padding: '10px 8px' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: ACTION_COLORS[act.action] || ACTION_COLORS.DEFAULT, background: `${ACTION_COLORS[act.action] || ACTION_COLORS.DEFAULT}14`, borderRadius: 20, padding: '2px 9px' }}>
+                        {ACTION_LABELS[act.action] ?? act.action}
+                      </span>
+                    </td>
+                    <td style={{ padding: '10px 8px', color: '#64748b' }}>{act.entityType || '-'}</td>
                     <td style={{ padding: '10px 8px', color: '#64748b' }}>{act.environment || '-'}</td>
-                    <td style={{ padding: '10px 8px', color: '#23272f', fontFamily: 'monospace', fontSize: 12, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{act.payloadJson ? JSON.stringify(act.payloadJson) : '-'}</td>
-                    <td style={{ padding: '10px 8px', color: '#64748b' }}>{new Date(act.createdAt).toLocaleDateString()}</td>
+                    <td style={{ padding: '10px 8px', color: '#23272f', fontSize: 12, maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{act.payloadJson ? formatPayload(act.payloadJson) : '—'}</td>
+                    <td style={{ padding: '10px 8px', color: '#64748b' }}>{new Date(act.createdAt).toLocaleString('de-CH', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
                   </tr>
                 ))
               )}

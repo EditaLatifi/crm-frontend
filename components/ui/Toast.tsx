@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState, useCallback, useRef } from "react";
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import { FiCheckCircle, FiAlertCircle, FiInfo, FiX } from "react-icons/fi";
 
 type ToastType = "success" | "error" | "info" | "warning";
@@ -28,7 +28,10 @@ const STYLES: Record<ToastType, { bg: string; border: string; color: string; ico
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [mounted, setMounted] = useState(false);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  useEffect(() => { setMounted(true); }, []);
 
   const remove = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -52,7 +55,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={ctx}>
       {children}
-      <div style={{
+      {mounted && <div style={{
         position: "fixed", bottom: 24, right: 24, zIndex: 9999,
         display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end",
         pointerEvents: "none",
@@ -84,7 +87,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             </div>
           );
         })}
-      </div>
+      </div>}
       <style>{`@keyframes toastIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }`}</style>
     </ToastContext.Provider>
   );

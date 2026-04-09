@@ -46,16 +46,14 @@ export default function ContactsPage() {
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px 40px', fontFamily: 'Inter, system-ui, sans-serif' }}>
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg, #f8f9fb 60%, #e9effd 100%)',
-        borderRadius: 18, boxShadow: '0 4px 16px rgba(30,41,59,0.10)',
-        padding: '28px 28px 22px', marginBottom: 18,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 24, flexWrap: 'wrap', gap: 12,
       }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: "#1e293b", margin: 0, letterSpacing: '-0.5px' }}>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>
             Kontakte
           </h1>
-          <div style={{ fontSize: 14, color: '#64748b', fontWeight: 400, marginTop: 5 }}>
+          <div style={{ fontSize: 13, color: '#999', fontWeight: 400, marginTop: 4 }}>
             Verwalte deine Geschäftskontakte effizient und sicher.
           </div>
         </div>
@@ -63,9 +61,9 @@ export default function ContactsPage() {
           <button
             onClick={() => setCsvOpen(true)}
             style={{
-              fontSize: 13, fontWeight: 600, borderRadius: 8,
-              border: '1.5px solid #d1d5db', background: '#f1f5f9',
-              color: '#64748b', padding: '9px 18px', cursor: 'pointer',
+              fontSize: 13, fontWeight: 500, borderRadius: 8,
+              border: '1px solid #E8E4DE', background: '#fff',
+              color: '#666', padding: '9px 18px', cursor: 'pointer',
             }}
           >
             CSV importieren
@@ -73,13 +71,10 @@ export default function ContactsPage() {
           <button
             onClick={() => setModalOpen(true)}
             style={{
-              fontSize: 14, fontWeight: 600, borderRadius: 8,
-              border: '1.5px solid #2563eb', background: '#2563eb',
+              fontSize: 13, fontWeight: 600, borderRadius: 8,
+              border: 'none', background: '#1a1a1a',
               color: '#fff', padding: '9px 20px', cursor: 'pointer',
-              transition: 'background 0.15s',
             }}
-            onMouseOver={e => (e.currentTarget.style.background = '#1d4ed8')}
-            onMouseOut={e => (e.currentTarget.style.background = '#2563eb')}
           >
             + Neuer Kontakt
           </button>
@@ -89,7 +84,7 @@ export default function ContactsPage() {
       {/* Filter bar */}
       <div style={{
         background: '#fff', borderRadius: 12, padding: '14px 20px',
-        boxShadow: '0 1px 4px rgba(30,41,59,0.07)', marginBottom: 16,
+        border: '1px solid #E8E4DE', marginBottom: 16,
         display: 'flex', alignItems: 'center', gap: 12,
       }}>
         <input
@@ -98,9 +93,9 @@ export default function ContactsPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{
-            fontSize: 13, padding: '7px 12px', borderRadius: 7,
-            border: '1.5px solid #e2e8f0', outline: 'none',
-            width: 300, background: '#f8fafc', color: '#1e293b',
+            fontSize: 13, padding: '8px 12px', borderRadius: 8,
+            border: '1px solid #E8E4DE', outline: 'none',
+            width: 300, background: '#FAF9F6', color: '#1a1a1a',
           }}
         />
         {search && (

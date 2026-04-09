@@ -58,7 +58,7 @@ function VendorForm({ initial, onSubmit, onCancel }: { initial?: any; onSubmit: 
       </div>
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 8 }}>
         <button onClick={onCancel} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}>Abbrechen</button>
-        <button onClick={handle} disabled={saving || !form.name} style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#2563eb,#6366f1)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: saving || !form.name ? 0.7 : 1 }}>
+        <button onClick={handle} disabled={saving || !form.name} style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: saving || !form.name ? 0.7 : 1 }}>
           {saving ? 'Speichern...' : 'Speichern'}
         </button>
       </div>
@@ -114,7 +114,7 @@ function VendorsContent() {
           <h1 className="proj-page-title">Lieferanten & Subunternehmer</h1>
           <p className="proj-page-subtitle">{vendors.length} Einträge im Verzeichnis</p>
         </div>
-        <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 9, border: 'none', background: 'linear-gradient(135deg,#2563eb,#6366f1)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+        <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 9, border: 'none', background: '#1a1a1a', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
           <FiPlus size={15} /> Neuer Eintrag
         </button>
       </div>

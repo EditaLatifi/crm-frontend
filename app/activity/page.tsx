@@ -22,12 +22,22 @@ const ACTION_ICONS: Record<string, string> = {
 
 const ACTION_LABELS: Record<string, string> = {
   CREATE: 'erstellt', UPDATE: 'aktualisiert', DELETE: 'gelöscht',
-  change_stage: 'Phase geändert', timer_stop: 'Zeit gestoppt', COMMENT: 'kommentiert',
+  change_stage: 'Phasenänderung', PHASE_UPDATE: 'Phasenänderung',
+  DEAL_CREATED: 'Deal erstellt', DEAL_UPDATED: 'Deal aktualisiert',
+  DEAL_DELETED: 'Deal gelöscht', STAGE_CHANGE: 'Phase geändert',
+  timer_stop: 'Zeit gestoppt', COMMENT: 'kommentiert',
+  TIME_LOGGED: 'Zeit erfasst', ASSIGNED: 'zugewiesen',
+  STATUS_CHANGED: 'Status geändert', TITLE_CHANGED: 'Titel geändert',
+  DESCRIPTION_CHANGED: 'Beschreibung geändert',
+  CHECKLIST_UPDATED: 'Checkliste aktualisiert',
+  PRIORITY_CHANGED: 'Priorität geändert',
+  MEMBER_ADDED: 'Mitglied hinzugefügt', MEMBER_REMOVED: 'Mitglied entfernt',
 };
 
 const ENTITY_LABELS: Record<string, string> = {
   Contact: 'Kontakt', Account: 'Konto', Deal: 'Deal',
   Task: 'Aufgabe', TimeEntry: 'Zeiteintrag', Project: 'Projekt',
+  Appointment: 'Termin', Note: 'Notiz',
 };
 
 const SYSTEM_ACTIONS = ['timer_stop'];
@@ -35,7 +45,16 @@ const SYSTEM_ACTIONS = ['timer_stop'];
 function getEntityName(act: Activity): string {
   const p = act.payloadJson;
   if (!p) return act.entityId.slice(0, 8) + '…';
-  return p.name || p.title || p.subject || act.entityId.slice(0, 8) + '…';
+  return p.name || p.title || p.subject || '—';
+}
+
+function getStageChangeDetail(act: Activity): string | null {
+  const p = act.payloadJson;
+  if (act.action !== 'change_stage' || !p) return null;
+  const from = p.fromStageName || null;
+  const to = p.toStageName || null;
+  if (from && to) return `${from} → ${to}`;
+  return null;
 }
 
 function formatRelative(dateStr: string): string {
@@ -130,7 +149,7 @@ export default function ActivityFeedPage() {
       </div>
 
       {/* Filter bar */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20, padding: '12px 16px', background: '#f8fafc', borderRadius: 10, border: '1.5px solid #e5e7eb' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20, padding: '12px 16px', background: '#FAF9F6', borderRadius: 10, border: '1.5px solid #e5e7eb' }}>
         {/* User filter */}
         <select value={userFilter} onChange={e => setUserFilter(e.target.value)} style={selStyle}>
           <option value="">Alle Benutzer</option>
@@ -172,7 +191,7 @@ export default function ActivityFeedPage() {
       <div style={{ background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 14, overflow: 'hidden' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-            <div style={{ width: 24, height: 24, border: '3px solid #e5e7eb', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+            <div style={{ width: 24, height: 24, border: '3px solid #e5e7eb', borderTopColor: '#1a1a1a', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
             <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
           </div>
         ) : activities.length === 0 ? (
@@ -191,17 +210,18 @@ export default function ActivityFeedPage() {
               const entityName = getEntityName(act);
               const isSystem = SYSTEM_ACTIONS.includes(act.action);
               const changes = act.payloadJson?.changes as Record<string, { from: any; to: any }> | undefined;
+              const stageDetail = getStageChangeDetail(act);
 
               return (
                 <div key={act.id} style={{
                   display: 'flex', gap: 14, padding: '14px 20px',
-                  borderBottom: i < activities.length - 1 ? '1px solid #f1f5f9' : 'none',
+                  borderBottom: i < activities.length - 1 ? '1px solid #E8E4DE' : 'none',
                   alignItems: 'flex-start',
                 }}>
                   {/* Icon */}
                   <div style={{
                     width: 36, height: 36, borderRadius: '50%',
-                    background: isSystem ? '#f0f9ff' : '#f1f5f9',
+                    background: isSystem ? '#f0f9ff' : '#E8E4DE',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 16, flexShrink: 0, marginTop: 1,
                   }}>
@@ -220,12 +240,19 @@ export default function ActivityFeedPage() {
                       <span style={{ color: '#64748b' }}>{actionLabel}</span>
                     </div>
 
+                    {/* Stage change detail */}
+                    {stageDetail && (
+                      <div style={{ fontSize: 12, color: '#7c3aed', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ fontWeight: 600 }}>{stageDetail}</span>
+                      </div>
+                    )}
+
                     {/* Change history */}
                     {changes && Object.keys(changes).length > 0 && <ChangeHistory changes={changes} />}
 
                     <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <span>{formatRelative(act.createdAt)}</span>
-                      <span style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 4, padding: '0 6px', fontSize: 10, fontWeight: 600, color: '#64748b' }}>
+                      <span style={{ background: '#FAF9F6', border: '1px solid #e5e7eb', borderRadius: 4, padding: '0 6px', fontSize: 10, fontWeight: 600, color: '#64748b' }}>
                         {entityLabel}
                       </span>
                       {isSystem && (
@@ -253,7 +280,7 @@ export default function ActivityFeedPage() {
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
-            style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px solid #d1d5db', background: page === 1 ? '#f8fafc' : '#fff', color: page === 1 ? '#cbd5e1' : '#374151', fontSize: 13, fontWeight: 600, cursor: page === 1 ? 'default' : 'pointer' }}
+            style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px solid #d1d5db', background: page === 1 ? '#FAF9F6' : '#fff', color: page === 1 ? '#cbd5e1' : '#374151', fontSize: 13, fontWeight: 600, cursor: page === 1 ? 'default' : 'pointer' }}
           >
             ← Zurück
           </button>
@@ -263,7 +290,7 @@ export default function ActivityFeedPage() {
           <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px solid #d1d5db', background: page === totalPages ? '#f8fafc' : '#fff', color: page === totalPages ? '#cbd5e1' : '#374151', fontSize: 13, fontWeight: 600, cursor: page === totalPages ? 'default' : 'pointer' }}
+            style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px solid #d1d5db', background: page === totalPages ? '#FAF9F6' : '#fff', color: page === totalPages ? '#cbd5e1' : '#374151', fontSize: 13, fontWeight: 600, cursor: page === totalPages ? 'default' : 'pointer' }}
           >
             Weiter →
           </button>

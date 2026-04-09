@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '../../../../src/api/client';
 import { ROLE_LABELS } from '../../../../src/lib/labels';
+import { formatCurrency } from '../../../../src/lib/formatCurrency';
 import { useAuth } from '../../../../src/auth/AuthProvider';
 import PhaseTimeline from '../../../../components/projects/PhaseTimeline';
 import ProjectForm from '../../../../components/projects/ProjectForm';
@@ -24,16 +25,15 @@ import {
 import Link from 'next/link';
 import '../projects.css';
 
-type Tab = 'overview' | 'tasks' | 'permits' | 'budget' | 'documents' | 'vendors' | 'share';
+type Tab = 'overview' | 'tasks' | 'time' | 'documents' | 'budget' | 'permits';
 
 const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: 'overview',   label: 'Übersicht',       icon: FiLayers },
   { id: 'tasks',      label: 'Aufgaben',        icon: FiCheckSquare },
-  { id: 'permits',    label: 'Baubewilligung',   icon: FiFileText },
-  { id: 'budget',     label: 'Budget',           icon: FiDollarSign },
+  { id: 'time',       label: 'Zeiterfassung',   icon: FiCalendar },
   { id: 'documents',  label: 'Dokumente',        icon: FiFolder },
-  { id: 'vendors',    label: 'Lieferanten',      icon: FiTruck },
-  { id: 'share',      label: 'Share',            icon: FiLink },
+  { id: 'budget',     label: 'Budget',           icon: FiDollarSign },
+  { id: 'permits',    label: 'Baubewilligung',   icon: FiFileText },
 ];
 
 export default function ProjectDetailPage() {
@@ -120,7 +120,7 @@ export default function ProjectDetailPage() {
     <div className="proj-detail-page" style={{ textAlign: 'center', paddingTop: 80 }}>
       <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
       <div style={{ fontSize: 18, fontWeight: 700, color: '#0f172a' }}>{error || 'Projekt nicht gefunden'}</div>
-      <button onClick={() => router.back()} style={{ marginTop: 16, padding: '10px 20px', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff', cursor: 'pointer' }}>
+      <button onClick={() => router.back()} style={{ marginTop: 16, padding: '10px 20px', borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', cursor: 'pointer' }}>
         Zurück
       </button>
     </div>
@@ -167,7 +167,7 @@ export default function ProjectDetailPage() {
 
         {/* Project header card */}
         <div className="proj-detail-header-card">
-          <div style={{ height: 5, background: `linear-gradient(90deg,${STATUS_COLORS[project.status] || '#3b82f6'},#6366f1)` }} />
+          <div style={{ height: 5, background: `${STATUS_COLORS[project.status] || '#1a1a1a'}` }} />
           <div className="proj-detail-header-inner">
             <div className="proj-detail-header-top">
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -194,7 +194,7 @@ export default function ProjectDetailPage() {
                 <div style={{ flexShrink: 0 }}>
                   <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Budget</div>
                   <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a' }}>
-                    {project.budget.toLocaleString('de-CH', { style: 'currency', currency: project.currency || 'CHF', minimumFractionDigits: 0 })}
+                    {formatCurrency(project.budget, project.currency || 'CHF')}
                   </div>
                 </div>
               )}
@@ -232,6 +232,11 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
+        {/* SIA Phase Bar (always visible) */}
+        <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '16px 24px', marginBottom: 16 }}>
+          <PhaseTimeline projectId={id} phases={phases} canEdit={canEdit} onUpdate={load} />
+        </div>
+
         {/* Tabs */}
         <div style={{ marginBottom: 24 }}>
           <div className="proj-tabs-bar">
@@ -243,7 +248,7 @@ export default function ProjectDetailPage() {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6,
                     padding: '10px 16px', borderRadius: 8, border: 'none',
-                    background: active ? '#2563eb' : 'transparent',
+                    background: active ? '#1a1a1a' : 'transparent',
                     color: active ? '#fff' : '#64748b',
                     fontSize: 13, fontWeight: active ? 700 : 500,
                     cursor: 'pointer', whiteSpace: 'nowrap',
@@ -262,10 +267,24 @@ export default function ProjectDetailPage() {
           {/* OVERVIEW TAB */}
           {activeTab === 'overview' && (
             <div className="proj-detail-grid">
-              {/* Phase timeline */}
+              {/* Project info */}
               <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '24px 28px' }}>
-                <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#0f172a' }}>SIA-Phasen</h2>
-                <PhaseTimeline projectId={id} phases={phases} canEdit={canEdit} onUpdate={load} />
+                <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Phasenübersicht</h2>
+                {['PENDING','IN_PROGRESS','COMPLETED','SKIPPED'].map(s => {
+                  const count = phases.filter((p: any) => p.status === s).length;
+                  if (count === 0) return null;
+                  const colors: Record<string,string> = { PENDING:'#94a3b8', IN_PROGRESS:'#3b82f6', COMPLETED:'#22c55e', SKIPPED:'#e2e8f0' };
+                  const labels: Record<string,string> = { PENDING:'Ausstehend', IN_PROGRESS:'In Bearbeitung', COMPLETED:'Abgeschlossen', SKIPPED:'Übersprungen' };
+                  return (
+                    <div key={s} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: colors[s] }} />
+                        <span style={{ fontSize: 13, color: '#475569' }}>{labels[s]}</span>
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{count}</span>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Sidebar */}
@@ -280,7 +299,7 @@ export default function ProjectDetailPage() {
                     {(project.members || []).map((m: any) => (
                       <div key={m.userId} style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+                          <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#e8a838', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
                             {m.user?.name?.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
                           </div>
                           <div>
@@ -308,7 +327,7 @@ export default function ProjectDetailPage() {
                       <input value={addMemberRole} onChange={e => setAddMemberRole(e.target.value)} placeholder="Rolle (optional)"
                         style={{ width: '100%', padding: '7px 10px', borderRadius: 7, border: '1px solid #e2e8f0', fontSize: 12, marginBottom: 8, background: '#f8fafc', boxSizing: 'border-box' }} />
                       <button disabled={!addMemberUserId || memberLoading} onClick={handleAddMember}
-                        style={{ width: '100%', padding: '7px 0', borderRadius: 7, border: 'none', background: addMemberUserId ? '#2563eb' : '#e2e8f0', color: addMemberUserId ? '#fff' : '#94a3b8', fontSize: 12, fontWeight: 600, cursor: addMemberUserId ? 'pointer' : 'default' }}>
+                        style={{ width: '100%', padding: '7px 0', borderRadius: 7, border: 'none', background: addMemberUserId ? '#1a1a1a' : '#e2e8f0', color: addMemberUserId ? '#fff' : '#94a3b8', fontSize: 12, fontWeight: 600, cursor: addMemberUserId ? 'pointer' : 'default' }}>
                         {memberLoading ? 'Hinzufügen...' : '+ Hinzufügen'}
                       </button>
                     </div>
@@ -322,24 +341,6 @@ export default function ProjectDetailPage() {
                   </div>
                 )}
 
-                <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '18px 20px' }}>
-                  <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Phasenübersicht</h3>
-                  {['PENDING','IN_PROGRESS','COMPLETED','SKIPPED'].map(s => {
-                    const count = phases.filter((p: any) => p.status === s).length;
-                    if (count === 0) return null;
-                    const colors: Record<string,string> = { PENDING:'#94a3b8', IN_PROGRESS:'#3b82f6', COMPLETED:'#22c55e', SKIPPED:'#e2e8f0' };
-                    const labels: Record<string,string> = { PENDING:'Ausstehend', IN_PROGRESS:'In Bearbeitung', COMPLETED:'Abgeschlossen', SKIPPED:'Übersprungen' };
-                    return (
-                      <div key={s} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: colors[s] }} />
-                          <span style={{ fontSize: 12, color: '#475569' }}>{labels[s]}</span>
-                        </div>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{count}</span>
-                      </div>
-                    );
-                  })}
-                </div>
               </div>
             </div>
           )}
@@ -349,7 +350,7 @@ export default function ProjectDetailPage() {
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px 28px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Aufgaben ({projectTasks.length})</h2>
-                <Link href="/tasks" style={{ fontSize: 13, color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>Alle Aufgaben →</Link>
+                <Link href="/tasks" style={{ fontSize: 13, color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>Alle Aufgaben →</Link>
               </div>
 
               {projectTasks.length === 0 ? (
@@ -482,24 +483,83 @@ export default function ProjectDetailPage() {
             </div>
           )}
 
-          {/* VENDORS TAB */}
-          {activeTab === 'vendors' && (
+          {/* ZEITERFASSUNG TAB */}
+          {activeTab === 'time' && (
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px 28px' }}>
-              <VendorPanel projectId={id} canEdit={canEdit} />
-            </div>
-          )}
+              <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Zeiterfassung pro SIA-Phase</h2>
+              {(() => {
+                // Build data per phase using project phases as the source
+                const phaseTimeMap: Record<string, number> = {};
+                projectTasks.forEach((t: any) => {
+                  const ph = t.phase || 'Ohne Phase';
+                  const used = (t.timeEntries || []).reduce((s: number, e: any) => s + (e.durationMinutes || 0), 0) / 60;
+                  phaseTimeMap[ph] = (phaseTimeMap[ph] || 0) + used;
+                });
 
-          {/* SHARE TAB */}
-          {activeTab === 'share' && (
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px 28px' }}>
-              <SharePanel projectId={id} canEdit={canEdit} />
+                const totalBudget = phases.reduce((s: number, p: any) => s + (p.budgetHours || 0), 0);
+                const totalUsed = Object.values(phaseTimeMap).reduce((s, v) => s + v, 0);
+
+                const handlePhaseBudgetSave = async (phaseId: string, value: number) => {
+                  try {
+                    await api.patch(`/projects/${id}/phases/${phaseId}`, { budgetHours: value });
+                    load();
+                  } catch {}
+                };
+
+                return (
+                  <>
+                    {phases.map((p: any) => {
+                      const used = phaseTimeMap[p.name] || 0;
+                      const budget = p.budgetHours || 0;
+                      const ratio = budget > 0 ? used / budget : 0;
+                      const pct = Math.min(ratio * 100, 100);
+                      const barColor = ratio >= 1 ? '#dc2626' : ratio >= 0.8 ? '#d97706' : '#1a1a1a';
+                      return (
+                        <div key={p.id} style={{ marginBottom: 16, padding: '12px 16px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e5e7eb' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, gap: 8 }}>
+                            <span style={{ fontWeight: 600, fontSize: 13, color: '#1e293b', flex: 1 }}>{p.name}</span>
+                            {isAdmin ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <span style={{ fontSize: 12, color: ratio >= 1 ? '#dc2626' : ratio >= 0.8 ? '#d97706' : '#475569', fontWeight: 600 }}>{used.toFixed(1)}h /</span>
+                                <input
+                                  type="number" min={0} step={0.5}
+                                  defaultValue={budget || ''}
+                                  placeholder="Budget h"
+                                  onBlur={e => { const v = parseFloat(e.target.value); if (!isNaN(v)) handlePhaseBudgetSave(p.id, v); }}
+                                  style={{ width: 64, fontSize: 12, padding: '3px 6px', borderRadius: 6, border: '1px solid #d1d5db', textAlign: 'right', fontWeight: 600, color: '#1e293b' }}
+                                />
+                                <span style={{ fontSize: 12, color: '#94a3b8' }}>h</span>
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: 12, fontWeight: 600, color: ratio >= 1 ? '#dc2626' : ratio >= 0.8 ? '#d97706' : '#475569' }}>
+                                {used.toFixed(1)}h {budget > 0 ? `/ ${budget.toFixed(1)}h` : ''}
+                              </span>
+                            )}
+                          </div>
+                          {budget > 0 && (
+                            <div style={{ background: '#e2e8f0', borderRadius: 20, height: 6, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', background: barColor, borderRadius: 20, width: `${pct}%`, transition: 'width 0.3s' }} />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderTop: '2px solid #e5e7eb', fontWeight: 700, fontSize: 14 }}>
+                      <span>Gesamt</span>
+                      <span style={{ color: totalBudget > 0 && totalUsed > totalBudget ? '#dc2626' : '#1e293b' }}>
+                        {totalUsed.toFixed(1)}h {totalBudget > 0 ? `/ ${totalBudget.toFixed(1)}h` : ''}
+                      </span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           )}
 
         </div>
       </div>
 
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="✏️  Projekt bearbeiten" width={640}>
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Projekt bearbeiten" width={640}>
         <ProjectForm initialData={project} onSubmit={handleEditSubmit} onCancel={() => setEditOpen(false)} />
       </Modal>
     </div>

@@ -438,6 +438,7 @@ type Props = {
   dateTo?: string;
   sortBy?: string; // e.g. "createdAt-desc"
   tagFilter?: string;
+  onSortChange?: (sortBy: string) => void;
 };
 
 function AccountsTable({
@@ -448,6 +449,7 @@ function AccountsTable({
   dateTo = "",
   sortBy = "createdAt-desc",
   tagFilter = "",
+  onSortChange,
 }: Props) {
   const toast = useToast();
   const { user } = useAuth();
@@ -657,6 +659,7 @@ function AccountsTable({
         Client: "CLIENT",
         Partner: "PARTNER",
         "Potential Client": "POTENTIAL_CLIENT",
+        Supplier: "SUPPLIER",
       };
 
       const payload: any = { ...data };
@@ -748,116 +751,87 @@ function AccountsTable({
 
       {loading ? (
         <div style={{ padding: "40px 24px", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>Lade Firmen...</div>
-      ) : (
-        <div
-          className="accounts-table-section"
-          style={{
-            display: "flex",
-            gap: 16,
-            flexWrap: "wrap",
-            alignItems: "flex-start",
-          }}
-        >
-          {grouped.map((col) => {
-            const allIds = col.accounts.map((acc) => acc.id);
-            const allSelected = allIds.length > 0 && allIds.every((id) => selected.includes(id));
-
-            return (
-              <div
-                key={col.type}
-                className="accounts-table-col"
-                style={{ flex: "1 1 280px", minWidth: 280, maxWidth: 380 }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: 12,
-                  }}
-                >
-                  <div
-                    style={{
-                      textAlign: "center",
-                      fontWeight: 700,
-                      fontSize: 13,
-                      letterSpacing: 0.2,
-                      color: "#2563eb",
-                      background: "#eff6ff",
-                      borderRadius: 6,
-                      padding: "5px 0",
-                      flex: 1,
-                      border: "1px solid #bfdbfe",
-                    }}
-                  >
-                    {TYPE_LABELS[col.type] || col.type}
-                  </div>
-
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={(e) => handleSelectAll(allIds, e.target.checked)}
-                    style={{ marginLeft: 6, width: 16, height: 16 }}
-                    title="Select all in column"
-                  />
-                </div>
-
-                {col.accounts.length === 0 && (
-                  <div
-                    style={{
-                      color: "#bbb",
-                      textAlign: "center",
-                      fontStyle: "italic",
-                      margin: "24px 0",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 8,
-                      opacity: 0.8,
-                    }}
-                  >
-                    <span style={{ fontSize: 32, opacity: 0.5 }}>🗂️</span>
-                    <span>Keine Accounts</span>
-                  </div>
-                )}
-
-                {col.accounts.map((acc) => {
+      ) : filteredAccounts.length === 0 ? (
+        <div style={{ padding: "40px 24px", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>Keine Firmen gefunden.</div>
+      ) : (() => {
+        const [sortField, sortDir] = sortBy.split("-");
+        const handleSort = (field: string) => {
+          if (!onSortChange) return;
+          const newDir = sortField === field && sortDir === "asc" ? "desc" : "asc";
+          onSortChange(`${field}-${newDir}`);
+        };
+        const SortIcon = ({ field }: { field: string }) => {
+          if (sortField !== field) return <span style={{ color: "#cbd5e1", marginLeft: 4 }}>↕</span>;
+          return <span style={{ color: "#2563eb", marginLeft: 4 }}>{sortDir === "asc" ? "↑" : "↓"}</span>;
+        };
+        const thStyle: React.CSSProperties = { padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", background: "#f8fafc", borderBottom: "2px solid #e5e7eb", cursor: onSortChange ? "pointer" : "default", userSelect: "none", whiteSpace: "nowrap" };
+        const allIds = filteredAccounts.map(a => a.id);
+        const allSelected = allIds.length > 0 && allIds.every(id => selected.includes(id));
+        return (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr>
+                  <th style={{ ...thStyle, width: 36, cursor: "default" }}>
+                    <input type="checkbox" checked={allSelected} onChange={e => handleSelectAll(allIds, e.target.checked)} style={{ width: 15, height: 15 }} />
+                  </th>
+                  <th style={thStyle} onClick={() => handleSort("name")}>Name <SortIcon field="name" /></th>
+                  <th style={thStyle} onClick={() => handleSort("type")}>Typ <SortIcon field="type" /></th>
+                  <th style={thStyle} onClick={() => handleSort("email")}>E-Mail <SortIcon field="email" /></th>
+                  <th style={thStyle}>Telefon</th>
+                  <th style={thStyle} onClick={() => handleSort("ownerUserId")}>Verantwortlich <SortIcon field="ownerUserId" /></th>
+                  <th style={thStyle} onClick={() => handleSort("createdAt")}>Erstellt <SortIcon field="createdAt" /></th>
+                  <th style={{ ...thStyle, width: 80, cursor: "default" }}>Aktionen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAccounts.map(acc => {
                   const owner = users.find(u => u.id === acc.ownerUserId);
-                  const ownerName = owner?.name || owner?.email || (acc.ownerUserId ? acc.ownerUserId.slice(0, 8) + "…" : "-");
+                  const ownerName = owner?.name || owner?.email || (acc.ownerUserId ? acc.ownerUserId.slice(0, 8) + "…" : "—");
+                  const typeColor: Record<string, string> = { CLIENT: "#2563eb", POTENTIAL_CLIENT: "#7c3aed", PARTNER: "#d97706", SUPPLIER: "#059669" };
+                  const tc = typeColor[acc.type] || "#64748b";
                   return (
-                    <div
-                      key={acc.id}
-                      className="account-card"
-                      style={{
-                        marginBottom: 10,
-                        borderBottom: "1px solid #e5e7eb",
-                        paddingBottom: 8,
-                      }}
+                    <tr key={acc.id}
+                      style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.1s" }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "#f8fafc")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                     >
-                      <InlineEditableAccountCard
-                        acc={acc}
-                        selected={selected.includes(acc.id)}
-                        onSelect={(checked) => handleSelect(acc.id, checked)}
-                        onInlinePatch={(patch) =>
-                          setAccounts((accs) =>
-                            accs.map((a) => (a.id === acc.id ? { ...a, ...patch } : a))
-                          )
-                        }
-                        getTags={getTags}
-                        onOpenEditModal={handleOpenEditModal}
-                        onDelete={handleDelete}
-                        onShowActivity={(id) => setActivityAccountId(id)}
-                        ownerName={ownerName}
-                        isAdmin={isAdmin}
-                      />
-                    </div>
+                      <td style={{ padding: "10px 16px" }}>
+                        <input type="checkbox" checked={selected.includes(acc.id)} onChange={e => handleSelect(acc.id, e.target.checked)} style={{ width: 15, height: 15 }} />
+                      </td>
+                      <td style={{ padding: "10px 16px" }}>
+                        <a href={`/accounts/${acc.id}`} style={{ color: "#1e293b", fontWeight: 600, textDecoration: "none" }}
+                          onMouseEnter={e => (e.currentTarget.style.color = "#2563eb")}
+                          onMouseLeave={e => (e.currentTarget.style.color = "#1e293b")}
+                        >{acc.name}</a>
+                      </td>
+                      <td style={{ padding: "10px 16px" }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: tc, background: `${tc}14`, borderRadius: 20, padding: "2px 9px" }}>{TYPE_LABELS[acc.type] || acc.type}</span>
+                      </td>
+                      <td style={{ padding: "10px 16px", color: "#475569" }}>{acc.email || "—"}</td>
+                      <td style={{ padding: "10px 16px", color: "#475569" }}>{acc.phone || "—"}</td>
+                      <td style={{ padding: "10px 16px", color: "#475569" }}>{ownerName}</td>
+                      <td style={{ padding: "10px 16px", color: "#94a3b8", fontSize: 12 }}>{acc.createdAt ? new Date(acc.createdAt).toLocaleDateString("de-CH") : "—"}</td>
+                      <td style={{ padding: "10px 16px" }}>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button onClick={() => handleOpenEditModal(acc)} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", padding: 4 }} title="Bearbeiten">
+                            <FiEdit2 size={14} />
+                          </button>
+                          {isAdmin && (
+                            <button onClick={() => handleDelete(acc.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#dc2626", padding: 4 }} title="Löschen">
+                              <FiTrash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
                   );
                 })}
-              </div>
-            );
-          })}
-        </div>
-      )}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
 
       <Modal
         open={editModalOpen}

@@ -71,7 +71,7 @@ export default function EmailLog({ entityType, entityId }: EmailLogProps) {
         <span style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>E-Mail-Log</span>
         <button
           onClick={() => setShowForm((s) => !s)}
-          style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 6, padding: "5px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+          style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, padding: "5px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
         >
           {showForm ? "Abbrechen" : "+ E-Mail loggen"}
         </button>
@@ -100,7 +100,7 @@ export default function EmailLog({ entityType, entityId }: EmailLogProps) {
               <option value="INBOUND">Eingehend</option>
             </select>
             <button type="submit" disabled={saving}
-              style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 6, padding: "7px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
+              style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, padding: "7px 16px", fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
               {saving ? "…" : "Speichern"}
             </button>
           </div>

@@ -5,6 +5,7 @@ import {
   TYPE_LABELS, TYPE_ICONS, PHASE_COLORS,
 } from './phaseConfig';
 import { FiUser, FiCalendar, FiMapPin, FiChevronRight } from 'react-icons/fi';
+import { formatCurrency } from '../../src/lib/formatCurrency';
 
 type Phase = { id: string; order: number; name: string; status: string };
 type Project = {
@@ -158,7 +159,7 @@ export default function ProjectCard({ project }: { project: Project }) {
           </div>
           {project.budget && (
             <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
-              {project.budget.toLocaleString('de-CH', { style: 'currency', currency: project.currency || 'CHF', minimumFractionDigits: 0 })}
+              {formatCurrency(project.budget, project.currency || 'CHF')}
             </div>
           )}
         </div>

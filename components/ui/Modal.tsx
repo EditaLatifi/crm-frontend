@@ -25,8 +25,8 @@ export default function Modal({ open, onClose, title, children, width = 560 }: {
     <div
       style={{
         position: 'fixed', inset: 0,
-        background: 'rgba(15,23,42,0.55)',
-        backdropFilter: 'blur(4px)',
+        background: 'rgba(0,0,0,0.3)',
+        backdropFilter: 'blur(3px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         zIndex: 1000, padding: '16px',
       }}
@@ -34,26 +34,27 @@ export default function Modal({ open, onClose, title, children, width = 560 }: {
     >
       <div style={{
         background: '#fff',
-        borderRadius: 16,
+        borderRadius: 14,
         width: '100%',
         maxWidth: width,
         maxHeight: 'calc(100vh - 40px)',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 24px 64px rgba(15,23,42,0.22)',
+        boxShadow: '0 16px 48px rgba(0,0,0,0.12)',
         overflow: 'hidden',
         animation: 'modal-in 0.18s ease',
+        border: '1px solid #E8E4DE',
       }}>
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '20px 24px',
-          borderBottom: '1px solid #f1f5f9',
-          background: 'linear-gradient(135deg,#f8fafc,#fff)',
+          padding: '18px 24px',
+          borderBottom: '1px solid #E8E4DE',
+          background: '#FAF9F6',
           flexShrink: 0,
         }}>
           <h2 style={{
-            margin: 0, fontSize: 17, fontWeight: 700, color: '#0f172a',
+            margin: 0, fontSize: 16, fontWeight: 700, color: '#1a1a1a',
             display: 'flex', alignItems: 'center', gap: 10,
           }}>
             {title}
@@ -61,21 +62,21 @@ export default function Modal({ open, onClose, title, children, width = 560 }: {
           <button
             onClick={onClose}
             style={{
-              width: 32, height: 32, borderRadius: 8, border: '1px solid #e2e8f0',
-              background: '#f8fafc', cursor: 'pointer', display: 'flex',
+              width: 30, height: 30, borderRadius: 8, border: '1px solid #E8E4DE',
+              background: '#fff', cursor: 'pointer', display: 'flex',
               alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               transition: 'all 0.15s',
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.background = '#fee2e2';
+              (e.currentTarget as HTMLElement).style.background = '#fef2f2';
               (e.currentTarget as HTMLElement).style.borderColor = '#fecaca';
             }}
             onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.background = '#f8fafc';
-              (e.currentTarget as HTMLElement).style.borderColor = '#e2e8f0';
+              (e.currentTarget as HTMLElement).style.background = '#fff';
+              (e.currentTarget as HTMLElement).style.borderColor = '#E8E4DE';
             }}
           >
-            <FiX size={15} color="#64748b" />
+            <FiX size={14} color="#999" />
           </button>
         </div>
 
@@ -87,7 +88,7 @@ export default function Modal({ open, onClose, title, children, width = 560 }: {
 
       <style>{`
         @keyframes modal-in {
-          from { opacity: 0; transform: scale(0.96) translateY(8px); }
+          from { opacity: 0; transform: scale(0.97) translateY(6px); }
           to   { opacity: 1; transform: scale(1) translateY(0); }
         }
       `}</style>

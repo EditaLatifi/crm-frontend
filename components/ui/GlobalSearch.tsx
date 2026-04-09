@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../src/auth/AuthProvider";
 import { api } from "../../src/api/client";
 import { FiSearch, FiBriefcase, FiUsers, FiUser, FiCheckSquare } from "react-icons/fi";
+import { formatCurrency } from "../../src/lib/formatCurrency";
 
 interface SearchResults {
   accounts: { id: string; name: string; type: string }[];
@@ -126,7 +127,7 @@ export default function GlobalSearch({ onClose }: { onClose: () => void }) {
                 <ResultRow key={d.id} onClick={() => navigate(`/deals/${d.id}`)}>
                   <span style={{ fontWeight: 600, color: "#1e293b" }}>{d.name}</span>
                   <span style={{ color: "#94a3b8", fontSize: 12 }}>
-                    {d.stage?.name} · {d.amount.toLocaleString()} {d.currency}
+                    {d.stage?.name} · {formatCurrency(d.amount ?? 0, d.currency || 'CHF')}
                   </span>
                 </ResultRow>
               ))}

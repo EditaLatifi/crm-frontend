@@ -10,11 +10,11 @@
   max-width: 100vw;
 }
 .deals-analytics-title {
-  font-size: 22px;
-  font-weight: 800;
-  color: #2563eb;
-  margin-bottom: 18px;
-  letter-spacing: -0.5px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 14px;
+  letter-spacing: -0.3px;
 }
 .deals-analytics-grid {
   display: grid;

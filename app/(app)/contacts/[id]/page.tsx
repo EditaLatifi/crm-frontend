@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, use } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import './contact-id-mobile.css';
 import Link from "next/link";
 import { api } from "../../../../src/api/client";
@@ -10,8 +11,9 @@ import QuickNotes from "../../../../components/ui/QuickNotes";
 import FollowUpBadge from "../../../../components/ui/FollowUpBadge";
 import EmailLog from "../../../../components/ui/EmailLog";
 
-export default function ContactDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function ContactDetailsPage() {
+  const params = useParams();
+  const id = params?.id as string;
   const [contact, setContact] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
@@ -60,7 +62,7 @@ export default function ContactDetailsPage({ params }: { params: Promise<{ id: s
 
   if (loading) return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-      <div style={{ width: 28, height: 28, border: "3px solid #e5e7eb", borderTopColor: "#2563eb", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+      <div style={{ width: 28, height: 28, border: "3px solid #e5e7eb", borderTopColor: "#1a1a1a", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
@@ -72,7 +74,7 @@ export default function ContactDetailsPage({ params }: { params: Promise<{ id: s
     <div style={{ padding: "28px 32px", maxWidth: 900, margin: "0 auto" }}>
       {/* Breadcrumb */}
       <div className="contact-breadcrumb" style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}>
-        <Link href="/contacts" style={{ color: "#2563eb", textDecoration: "none", fontWeight: 600 }}>Kontakte</Link>
+        <Link href="/contacts" style={{ color: "#1a1a1a", textDecoration: "none", fontWeight: 600 }}>Kontakte</Link>
         <span style={{ margin: "0 6px" }}>›</span>
         <span style={{ color: "#1e293b" }}>{contact.name}</span>
       </div>
@@ -80,7 +82,7 @@ export default function ContactDetailsPage({ params }: { params: Promise<{ id: s
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg,#2563eb,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 20 }}>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#e8a838", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 20 }}>
             {initials}
           </div>
           <div>
@@ -90,7 +92,7 @@ export default function ContactDetailsPage({ params }: { params: Promise<{ id: s
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <FollowUpBadge entityType="contact" entityId={id} followUpDate={contact.followUpDate} onUpdated={fetchContact} />
-          <button onClick={openEdit} style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, padding: "9px 20px", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+          <button onClick={openEdit} style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, padding: "9px 20px", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
             Bearbeiten
           </button>
         </div>
@@ -102,20 +104,20 @@ export default function ContactDetailsPage({ params }: { params: Promise<{ id: s
           <div>
             <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>E-Mail</div>
             <div style={{ fontSize: 14, color: "#1e293b" }}>
-              {contact.email ? <a href={`mailto:${contact.email}`} style={{ color: "#2563eb", textDecoration: "none" }}>{contact.email}</a> : <span style={{ color: "#cbd5e1" }}>—</span>}
+              {contact.email ? <a href={`mailto:${contact.email}`} style={{ color: "#1a1a1a", textDecoration: "none" }}>{contact.email}</a> : <span style={{ color: "#cbd5e1" }}>—</span>}
             </div>
           </div>
           <div>
             <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Telefon</div>
             <div style={{ fontSize: 14, color: "#1e293b" }}>
-              {contact.phone ? <a href={`tel:${contact.phone}`} style={{ color: "#2563eb", textDecoration: "none" }}>{contact.phone}</a> : <span style={{ color: "#cbd5e1" }}>—</span>}
+              {contact.phone ? <a href={`tel:${contact.phone}`} style={{ color: "#1a1a1a", textDecoration: "none" }}>{contact.phone}</a> : <span style={{ color: "#cbd5e1" }}>—</span>}
             </div>
           </div>
           <div>
             <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Firma/Konto</div>
             <div style={{ fontSize: 14, color: "#1e293b" }}>
               {contact.account
-                ? <Link href={`/accounts/${contact.account.id}`} style={{ color: "#2563eb", textDecoration: "none", fontWeight: 600 }}>{contact.account.name}</Link>
+                ? <Link href={`/accounts/${contact.account.id}`} style={{ color: "#1a1a1a", textDecoration: "none", fontWeight: 600 }}>{contact.account.name}</Link>
                 : <span style={{ color: "#cbd5e1" }}>—</span>}
             </div>
           </div>
@@ -179,10 +181,10 @@ export default function ContactDetailsPage({ params }: { params: Promise<{ id: s
             </select>
           </div>
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 20 }}>
-            <button type="button" onClick={() => setEditOpen(false)} style={{ background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 7, padding: "8px 18px", fontWeight: 600, cursor: "pointer" }}>
+            <button type="button" onClick={() => setEditOpen(false)} style={{ background: "#E8E4DE", color: "#64748b", border: "none", borderRadius: 7, padding: "8px 18px", fontWeight: 600, cursor: "pointer" }}>
               Abbrechen
             </button>
-            <button type="submit" disabled={saving} style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 7, padding: "8px 18px", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
+            <button type="submit" disabled={saving} style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 600, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
               {saving ? "Speichern..." : "Speichern"}
             </button>
           </div>

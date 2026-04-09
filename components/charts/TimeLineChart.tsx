@@ -25,6 +25,15 @@ export default function TimeLineChart({ data }: { data: { labels: string[], valu
             legend: { display: false },
             title: { display: true, text: 'Zeiterfassung' },
           },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grace: '10%',
+              ticks: {
+                callback: (value: any) => `${value}h`,
+              },
+            },
+          },
         }}
       />
     </div>

@@ -51,7 +51,7 @@ function AdminPermitsContent() {
         <div className="proj-admin-stats-card" style={{ marginBottom: 24 }}>
           <div className="proj-stats-kpi" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))' }}>
             <div style={{ background: '#eff6ff', borderRadius: 12, padding: '14px 16px', border: '1px solid #bfdbfe22' }}>
-              <div style={{ fontSize: 24, fontWeight: 800, color: '#2563eb' }}>{stats.total}</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a' }}>{stats.total}</div>
               <div style={{ fontSize: 12, color: '#64748b' }}>Total</div>
             </div>
             <div style={{ background: '#fef2f2', borderRadius: 12, padding: '14px 16px', border: '1px solid #fecaca22' }}>
@@ -76,7 +76,7 @@ function AdminPermitsContent() {
         <div className="proj-filter-search" style={{ flex: 1, minWidth: 0 }}>
           <FiSearch size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Suche nach Titel, Projekt, Behörde..."
-            style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, boxSizing: 'border-box' }} />
+            style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: 8, border: '1px solid #E8E4DE', fontSize: 13, boxSizing: 'border-box' }} />
         </div>
         <select className="proj-filter-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
           <option value="">Alle Status</option>
@@ -85,9 +85,9 @@ function AdminPermitsContent() {
       </div>
 
       {loading ? (
-        <div style={{ height: 200, background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0' }} />
+        <div style={{ height: 200, background: '#fff', borderRadius: 14, border: '1px solid #E8E4DE' }} />
       ) : filtered.length === 0 ? (
-        <div style={{ background: '#fff', borderRadius: 14, border: '1px dashed #e2e8f0', padding: '60px 24px', textAlign: 'center' }}>
+        <div style={{ background: '#fff', borderRadius: 14, border: '1px dashed #E8E4DE', padding: '60px 24px', textAlign: 'center' }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
           <div style={{ fontSize: 17, fontWeight: 700, color: '#0f172a' }}>Keine Baubewilligungen gefunden</div>
         </div>
@@ -95,7 +95,7 @@ function AdminPermitsContent() {
         <div className="proj-admin-table-wrap">
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #f1f5f9' }}>
+              <tr style={{ background: '#FAF9F6', borderBottom: '2px solid #E8E4DE' }}>
                 {['Titel','Projekt','Behörde','Status','Eingereicht','Entscheid erwartet','Ref. Nr.'].map(h => (
                   <th key={h} style={{ padding: '10px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
@@ -107,8 +107,8 @@ function AdminPermitsContent() {
                 const isOverdue = p.expectedDecisionAt && new Date(p.expectedDecisionAt) < new Date() && !['BEWILLIGT','ABGELEHNT','ZURUECKGEZOGEN'].includes(p.status);
                 return (
                   <tr key={p.id} onClick={() => window.location.href = `/projects/${p.projectId}`}
-                    style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f8fafc'}
+                    style={{ borderBottom: '1px solid #E8E4DE', cursor: 'pointer' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#FAF9F6'}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
                     <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap' }}>{p.title}</td>
                     <td style={{ padding: '12px 16px', fontSize: 13, color: '#3b82f6', whiteSpace: 'nowrap' }}>{p.project?.name || '—'}</td>

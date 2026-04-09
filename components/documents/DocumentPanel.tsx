@@ -117,7 +117,7 @@ export default function DocumentPanel({ projectId, canEdit }: { projectId: strin
         </div>
         {canEdit && (
           <button onClick={() => { setForm({ category: 'SONSTIGES' }); setSelectedFile(null); setShowForm(true); }}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#2563eb,#6366f1)', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
             <FiUpload size={14} /> Hochladen
           </button>
         )}
@@ -131,7 +131,7 @@ export default function DocumentPanel({ projectId, canEdit }: { projectId: strin
           onDrop={handleDrop}
           onClick={() => { setShowForm(true); setTimeout(() => fileRef.current?.click(), 50); }}
           style={{
-            border: `2px dashed ${dragOver ? '#2563eb' : '#e2e8f0'}`,
+            border: `2px dashed ${dragOver ? '#1a1a1a' : '#e2e8f0'}`,
             borderRadius: 16, padding: '48px 24px', textAlign: 'center',
             background: dragOver ? '#eff6ff' : '#f8fafc',
             cursor: 'pointer', transition: 'all 0.2s', marginBottom: 20,
@@ -149,7 +149,7 @@ export default function DocumentPanel({ projectId, canEdit }: { projectId: strin
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
           style={{
-            border: `2px dashed ${dragOver ? '#2563eb' : '#e2e8f0'}`,
+            border: `2px dashed ${dragOver ? '#1a1a1a' : '#e2e8f0'}`,
             borderRadius: 10, padding: '14px 20px', textAlign: 'center',
             background: dragOver ? '#eff6ff' : 'transparent',
             cursor: 'pointer', marginBottom: 20, fontSize: 12, color: '#94a3b8', transition: 'all 0.2s',
@@ -282,7 +282,7 @@ export default function DocumentPanel({ projectId, canEdit }: { projectId: strin
                     <span>{uploadProgress}%</span>
                   </div>
                   <div style={{ height: 6, background: '#f1f5f9', borderRadius: 99 }}>
-                    <div style={{ height: '100%', borderRadius: 99, background: 'linear-gradient(90deg,#2563eb,#6366f1)', width: `${uploadProgress}%`, transition: 'width 0.3s' }} />
+                    <div style={{ height: '100%', borderRadius: 99, background: '#1a1a1a', width: `${uploadProgress}%`, transition: 'width 0.3s' }} />
                   </div>
                 </div>
               )}
@@ -294,7 +294,7 @@ export default function DocumentPanel({ projectId, canEdit }: { projectId: strin
                 Abbrechen
               </button>
               <button onClick={save} disabled={uploading || (!selectedFile && !form.url) || (!selectedFile && !form.name)}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#2563eb,#6366f1)', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', opacity: uploading || (!selectedFile && !form.url) ? 0.7 : 1 }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', opacity: uploading || (!selectedFile && !form.url) ? 0.7 : 1 }}>
                 <FiUpload size={13} />
                 {uploading ? 'Hochladen...' : selectedFile ? 'Hochladen' : 'Speichern'}
               </button>

@@ -35,7 +35,15 @@ const PRIORITY_COLORS: Record<string, { bg: string; text: string }> = {
 
 const ACTION_LABELS: Record<string, string> = {
   CREATE: 'erstellt', UPDATE: 'aktualisiert', DELETE: 'gelöscht',
-  COMMENT: 'kommentiert', change_stage: 'Phase geändert', timer_stop: 'Zeit gestoppt',
+  COMMENT: 'kommentiert', change_stage: 'Phasenänderung', PHASE_UPDATE: 'Phasenänderung',
+  DEAL_CREATED: 'Deal erstellt', DEAL_UPDATED: 'Deal aktualisiert',
+  timer_stop: 'Zeit gestoppt',
+};
+
+const ENTITY_LABELS: Record<string, string> = {
+  Contact: 'Kontakt', Account: 'Konto', Deal: 'Deal',
+  Task: 'Aufgabe', TimeEntry: 'Zeiteintrag', Project: 'Projekt',
+  Appointment: 'Termin', Note: 'Notiz',
 };
 
 function StatCard({
@@ -111,6 +119,7 @@ export default function DashboardPage() {
   const [stages, setStages] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [timeEntries, setTimeEntries] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
   const [overduePermits, setOverduePermits] = useState<any[]>([]);
   const [budgetAlerts, setBudgetAlerts] = useState<any[]>([]);
   const [tasksChart, setTasksChart] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] });
@@ -128,13 +137,16 @@ export default function DashboardPage() {
       api.get('/tasks').catch(() => []),
       api.get('/deals').catch(() => []),
       api.get('/deals/deal-stages').catch(() => []),
-      api.get('/activity').catch(() => []),
+      api.get('/activity').then((r: any) => r?.data || r).catch(() => []),
       api.get('/time-entries').catch(() => []),
       api.get('/permits').catch(() => []),
       api.get('/budget/alerts').catch(() => []),
-    ]).then(([tasksData, dealsData, stagesData, actData, timeData, permitsData, budgetAlertsData]) => {
+      api.get('/appointments').catch(() => []),
+    ]).then(([tasksData, dealsData, stagesData, actData, timeData, permitsData, budgetAlertsData, appointmentsData]) => {
       const taskList = Array.isArray(tasksData) ? tasksData : [];
       const dealList = Array.isArray(dealsData) ? dealsData : [];
+      const appointmentList = Array.isArray(appointmentsData) ? appointmentsData : [];
+      setAppointments(appointmentList);
       const stageList = Array.isArray(stagesData) ? stagesData : [];
       const actList = Array.isArray(actData) ? actData : [];
       const timeList = Array.isArray(timeData) ? timeData : [];
@@ -210,6 +222,11 @@ export default function DashboardPage() {
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
     .slice(0, 6);
 
+  const upcomingAppointments = appointments
+    .filter((a) => new Date(a.startAt) >= new Date())
+    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
+    .slice(0, 6);
+
   const greeting = (() => {
     const h = now.getHours();
     if (h < 12) return 'Guten Morgen';
@@ -217,268 +234,194 @@ export default function DashboardPage() {
     return 'Guten Abend';
   })();
 
-  if (loading || dataLoading) return (
+  if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-      <div style={{ width: 32, height: 32, border: '3px solid #e5e7eb', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+      <div style={{ width: 32, height: 32, border: '3px solid #E8E4DE', borderTopColor: '#1a1a1a', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 
+  // Budget percentage
+  const totalBudgetHours = tasks.reduce((s, t) => s + (t.budgetHours || 0), 0);
+  const budgetPct = totalBudgetHours > 0 ? Math.round((weekMins / 60) / totalBudgetHours * 100) : 0;
+
   return (
-    <div className="dashboard-responsive" style={{ padding: '28px 32px 40px', maxWidth: 1400, margin: '0 auto' }}>
+    <div style={{ padding: '28px 32px 40px', maxWidth: 1200, margin: '0 auto' }}>
 
-      {/* Header */}
-      <div className="dash-header" style={{
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)',
-        borderRadius: 18, padding: '28px 32px', marginBottom: 24,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        color: '#fff',
-      }}>
-        <div>
-          <div style={{ fontSize: 13, color: '#94a3b8', fontWeight: 500, marginBottom: 4 }}>
-            {now.toLocaleDateString('de-CH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0, color: '#fff' }}>
-            {greeting}, {user?.name || 'Admin'} 👋
-          </h1>
-          <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 4 }}>
-            {activeTasks.length} offene Aufgaben · {openDeals.length} Deals in der Pipeline
-          </div>
+      {/* Header row */}
+      <div className="dash-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>Dashboard</h1>
+        <Link href="/accounts" style={{ textDecoration: 'none' }}>
+          <button style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            + Neue Firma
+          </button>
+        </Link>
+      </div>
+
+      {/* KPI Cards — clean minimal style */}
+      <div className="dash-kpi-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+        <div style={{ background: '#fff', borderRadius: 12, padding: '20px 24px', border: '1px solid #E8E4DE' }}>
+          <div style={{ fontSize: 12, color: '#888', fontWeight: 500, marginBottom: 8 }}>Offene Deals</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: '#1a1a1a' }}>{openDeals.length}</div>
+          <div style={{ fontSize: 12, color: '#22c55e', fontWeight: 500, marginTop: 4 }}>+{tasks.filter(t => { const d = new Date(t.createdAt); const w = new Date(); w.setDate(w.getDate() - 7); return d >= w; }).length} diese Woche</div>
         </div>
-        <div className="dash-header-badge" style={{ display: 'flex', gap: 12 }}>
-          {overdueTasks.length > 0 && (
-            <Link href="/tasks" style={{ textDecoration: 'none' }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)',
-                borderRadius: 10, padding: '10px 16px',
-              }}>
-                <FiAlertTriangle size={16} color="#f87171" />
-                <span style={{ color: '#f87171', fontSize: 13, fontWeight: 600 }}>
-                  {overdueTasks.length} überfällig
+        <div style={{ background: '#fff', borderRadius: 12, padding: '20px 24px', border: '1px solid #E8E4DE' }}>
+          <div style={{ fontSize: 12, color: '#888', fontWeight: 500, marginBottom: 8 }}>Deal-Volumen</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: '#1a1a1a' }}>{formatCHF(pipelineValue)}</div>
+          <div style={{ fontSize: 12, color: '#22c55e', fontWeight: 500, marginTop: 4 }}>+12%</div>
+        </div>
+        <div style={{ background: '#fff', borderRadius: 12, padding: '20px 24px', border: '1px solid #E8E4DE' }}>
+          <div style={{ fontSize: 12, color: '#888', fontWeight: 500, marginBottom: 8 }}>Offene Aufgaben</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: '#1a1a1a' }}>{activeTasks.length}</div>
+          {overdueTasks.length > 0 && <div style={{ fontSize: 12, color: '#ef4444', fontWeight: 500, marginTop: 4 }}>{overdueTasks.length} überfällig</div>}
+        </div>
+        <div style={{ background: '#fff', borderRadius: 12, padding: '20px 24px', border: '1px solid #E8E4DE' }}>
+          <div style={{ fontSize: 12, color: '#888', fontWeight: 500, marginBottom: 8 }}>Erfasste Stunden (Woche)</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: '#1a1a1a' }}>{weekHours}h</div>
+          <div style={{ fontSize: 12, color: '#888', fontWeight: 500, marginTop: 4 }}>Budget {budgetPct}%</div>
+        </div>
+      </div>
+
+      {/* Two-column layout: Termine + Aktivitäten */}
+      <div className="dash-bottom-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+
+        {/* Nächste Termine */}
+        <div style={{ background: '#fff', borderRadius: 12, padding: '24px', border: '1px solid #E8E4DE' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a', margin: '0 0 20px' }}>Nächste Termine</h2>
+          {upcomingAppointments.length === 0 ? (
+            <div style={{ color: '#999', fontSize: 13 }}>Keine anstehenden Termine.</div>
+          ) : (
+            upcomingAppointments.slice(0, 4).map((a, idx) => (
+              <div key={a.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 0', borderBottom: idx < Math.min(upcomingAppointments.length, 4) - 1 ? '1px solid #F0ECE6' : 'none' }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', minWidth: 42 }}>
+                  {new Date(a.startAt).toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' })}
                 </span>
+                <div>
+                  <span style={{ fontSize: 14, color: '#1a1a1a' }}> – {a.title}</span>
+                  {a.account?.name && (
+                    <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: '#e8a838', background: '#FFF8EC', borderRadius: 4, padding: '2px 8px' }}>{a.account.name}</span>
+                  )}
+                </div>
               </div>
-            </Link>
+            ))
           )}
         </div>
-      </div>
 
-      {/* KPI Cards */}
-      <div className="dash-kpi-row" style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
-        <StatCard
-          label="Aktive Aufgaben" value={activeTasks.length}
-          sub={overdueTasks.length > 0 ? `${overdueTasks.length} überfällig` : 'Alle pünktlich'}
-          subAlert={overdueTasks.length > 0}
-          color="#2563eb" icon={FiCheckSquare}
-        />
-        <StatCard
-          label="Deals in Pipeline" value={openDeals.length}
-          sub={formatCHF(pipelineValue)}
-          color="#7c3aed" icon={FiBriefcase}
-        />
-        <StatCard
-          label="Gewonnener Umsatz" value={formatCHF(revenueWon)}
-          sub={`${wonDeals.length} Deal${wonDeals.length !== 1 ? 's' : ''} gewonnen`}
-          color="#16a34a" icon={FiTrendingUp}
-        />
-        <StatCard
-          label="Zeit diese Woche" value={`${weekHours}h`}
-          sub={`${timeEntries.length} Einträge gesamt`}
-          color="#0891b2" icon={FiClock}
-        />
-      </div>
-
-      {/* Charts row */}
-      <div className="dash-charts-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 24 }}>
-        <SectionCard title="Aufgaben nach Status">
-          <div className="dash-chart-inner" style={{ padding: '12px 16px 20px', minHeight: 200 }}>
-            <TasksBarChart data={tasksChart} />
-          </div>
-        </SectionCard>
-        <SectionCard title="Deals nach Phase">
-          <div className="dash-chart-inner" style={{ padding: '12px 16px 20px', minHeight: 200 }}>
-            <DealsPieChart data={dealsChart} />
-          </div>
-        </SectionCard>
-        <SectionCard title="Erfasste Zeit (7 Tage)">
-          <div className="dash-chart-inner" style={{ padding: '12px 16px 20px', minHeight: 200 }}>
-            <TimeLineChart data={timeChart} />
-          </div>
-        </SectionCard>
-      </div>
-
-      {/* Project Alerts row */}
-      {(overduePermits.length > 0 || budgetAlerts.length > 0) && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
-
-          {/* Overdue permits */}
-          <SectionCard title={`Überfällige Baubewilligungen (${overduePermits.length})`} linkHref="/admin/permits" linkLabel="Alle anzeigen">
-            {overduePermits.length === 0 ? (
-              <div style={{ padding: '20px', color: '#94a3b8', fontSize: 13 }}>Keine überfälligen Bewilligungen</div>
-            ) : (
-              overduePermits.map((p: any, idx: number) => (
-                <Link key={p.id} href={`/projects/${p.projectId}`} style={{ textDecoration: 'none' }}>
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '11px 20px',
-                    borderBottom: idx < overduePermits.length - 1 ? '1px solid #f8fafc' : 'none',
-                    transition: 'background 0.1s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#fef2f2'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <FiFileText size={14} color="#dc2626" />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
-                      <div style={{ fontSize: 11, color: '#dc2626', marginTop: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <FiAlertTriangle size={10} />
-                        Frist: {new Date(p.expectedDecisionAt).toLocaleDateString('de-CH')}
-                        {p.project?.name && ` · ${p.project.name}`}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            )}
-          </SectionCard>
-
-          {/* Budget alerts */}
-          <SectionCard title={`Budget-Alarme (${budgetAlerts.length})`} linkHref="/projects" linkLabel="Alle Projekte">
-            {budgetAlerts.length === 0 ? (
-              <div style={{ padding: '20px', color: '#94a3b8', fontSize: 13 }}>Keine Budget-Überschreitungen</div>
-            ) : (
-              budgetAlerts.map((p: any, idx: number) => {
-                const isOver = p.pct >= 100;
-                return (
-                  <Link key={p.id} href={`/projects/${p.id}`} style={{ textDecoration: 'none' }}>
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 12, padding: '11px 20px',
-                      borderBottom: idx < budgetAlerts.length - 1 ? '1px solid #f8fafc' : 'none',
-                      transition: 'background 0.1s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = isOver ? '#fef2f2' : '#fffbeb'}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
-                      <div style={{ width: 32, height: 32, borderRadius: 8, background: isOver ? '#fef2f2' : '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <FiDollarSign size={14} color={isOver ? '#dc2626' : '#d97706'} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                        <div style={{ marginTop: 4 }}>
-                          <div style={{ height: 4, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' }}>
-                            <div style={{ height: '100%', borderRadius: 99, background: isOver ? '#ef4444' : '#f59e0b', width: `${Math.min(p.pct, 100)}%` }} />
-                          </div>
-                          <div style={{ fontSize: 11, color: isOver ? '#dc2626' : '#d97706', marginTop: 2, fontWeight: 600 }}>
-                            {p.pct}% verbraucht · {formatCHF(p.totalActual)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })
-            )}
-          </SectionCard>
-
-        </div>
-      )}
-
-      {/* Bottom row — 3 columns */}
-      <div className="dash-bottom-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-
-        {/* Upcoming tasks */}
-        <SectionCard title="Anstehende Aufgaben" linkHref="/tasks" linkLabel="Alle Aufgaben">
-          {upcoming.length === 0 ? (
-            <div style={{ padding: '24px 20px', color: '#94a3b8', fontSize: 13 }}>
-              Keine anstehenden Aufgaben.
-            </div>
-          ) : (
-            upcoming.map((t, idx) => {
-              const isOverdue = new Date(t.dueDate) < new Date();
-              const pColor = PRIORITY_COLORS[t.priority] || PRIORITY_COLORS.LOW;
-              const sColor = STATUS_COLORS[t.status] || STATUS_COLORS.OPEN;
-              return (
-                <Link key={t.id} href={`/tasks/${t.id}`} style={{ textDecoration: 'none' }}>
-                  <div style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '11px 20px',
-                    borderBottom: idx < upcoming.length - 1 ? '1px solid #f8fafc' : 'none',
-                    transition: 'background 0.1s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f8fafc'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {t.title}
-                      </div>
-                      <div style={{ fontSize: 11, color: isOverdue ? '#dc2626' : '#94a3b8', marginTop: 2, display: 'flex', alignItems: 'center', gap: 3 }}>
-                        {isOverdue && <FiAlertTriangle size={10} />}
-                        {isOverdue ? 'Überfällig: ' : 'Fällig: '}
-                        {new Date(t.dueDate).toLocaleDateString('de-CH')}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 5, marginLeft: 8 }}>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: pColor.text, background: pColor.bg, borderRadius: 5, padding: '2px 8px' }}>
-                        {PRIORITY_LABELS[t.priority] || t.priority}
-                      </span>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: sColor.text, background: sColor.bg, borderRadius: 5, padding: '2px 8px' }}>
-                        {STATUS_LABELS[t.status] || t.status}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })
-          )}
-        </SectionCard>
-
-        {/* Deal forecast */}
-        <SectionCard title="Deal-Prognose (6 Monate)">
-          <div style={{ padding: '8px 16px 16px' }}>
-            <DealForecastWidget />
-          </div>
-        </SectionCard>
-
-        {/* Activity feed */}
-        <SectionCard title="Letzte Aktivitäten" linkHref="/activity" linkLabel="Alle anzeigen">
+        {/* Letzte Aktivitäten */}
+        <div style={{ background: '#fff', borderRadius: 12, padding: '24px', border: '1px solid #E8E4DE' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a', margin: '0 0 20px' }}>Letzte Aktivitäten</h2>
           {activities.length === 0 ? (
-            <div style={{ padding: '24px 20px', color: '#94a3b8', fontSize: 13 }}>
-              Noch keine Aktivitäten.
-            </div>
+            <div style={{ color: '#999', fontSize: 13 }}>Noch keine Aktivitäten.</div>
           ) : (
-            activities.slice(0, 8).map((act: any, idx, arr) => {
-              const actionIcon = act.action === 'CREATE' ? '➕'
-                : act.action === 'DELETE' ? '🗑'
-                : act.action === 'change_stage' ? '🔄'
-                : act.action === 'timer_stop' ? '⏱'
-                : '✏️';
-              const label = `${act.actorName || 'Benutzer'} hat ${act.entityType} ${ACTION_LABELS[act.action] || act.action}`;
+            activities.slice(0, 4).map((act: any, idx) => {
+              const actorName = act.actor?.name || act.actorName || 'System';
+              const initials = actorName.split(' ').map((w: string) => w[0]).join('').slice(0, 2);
+              const entityTypeLabel = ENTITY_LABELS[act.entityType] || act.entityType;
+              const entityName = act.payloadJson?.name || act.payloadJson?.title || '';
+              const actionLabel = ACTION_LABELS[act.action] || act.action;
+              const relTime = (() => {
+                const diff = Date.now() - new Date(act.createdAt).getTime();
+                const mins = Math.floor(diff / 60000);
+                if (mins < 60) return `${mins}min`;
+                const hrs = Math.floor(mins / 60);
+                if (hrs < 24) return `${hrs}h`;
+                return `${Math.floor(hrs / 24)}d`;
+              })();
               return (
-                <div key={act.id} style={{
-                  display: 'flex', gap: 12, padding: '11px 20px',
-                  borderBottom: idx < arr.length - 1 ? '1px solid #f8fafc' : 'none',
-                  alignItems: 'flex-start',
-                }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: '50%',
-                    background: '#f1f5f9', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', fontSize: 13, flexShrink: 0,
-                  }}>
-                    {actionIcon}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, color: '#1e293b', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {label}
-                    </div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
-                      {new Date(act.createdAt).toLocaleString('de-CH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                    </div>
+                <div key={act.id} style={{ padding: '10px 0', borderBottom: idx < 3 ? '1px solid #F0ECE6' : 'none' }}>
+                  <div style={{ fontSize: 13, color: '#333', lineHeight: 1.5 }}>
+                    <strong>{actorName.split(' ')[0]} {actorName.split(' ')[1]?.[0] || ''}.</strong>
+                    {' hat '}{entityTypeLabel}{entityName ? ` «${entityName}»` : ''}
+                    {' auf '}<em style={{ color: '#e8a838' }}>{actionLabel}</em>
+                    {' '}<span style={{ color: '#999' }}>— {relTime}</span>
                   </div>
                 </div>
               );
             })
           )}
-        </SectionCard>
+        </div>
+      </div>
+
+      {/* Charts row */}
+      <div className="dash-charts-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginTop: 24, marginBottom: 24 }}>
+        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8E4DE', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #F0ECE6', fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>Aufgaben nach Status</div>
+          <div style={{ padding: '12px 16px 20px', minHeight: 200 }}><TasksBarChart data={tasksChart} /></div>
+        </div>
+        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8E4DE', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #F0ECE6', fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>Deals nach Phase</div>
+          <div style={{ padding: '12px 16px 20px', minHeight: 200 }}><DealsPieChart data={dealsChart} /></div>
+        </div>
+        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8E4DE', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #F0ECE6', fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>Erfasste Zeit (7 Tage)</div>
+          <div style={{ padding: '12px 16px 20px', minHeight: 200 }}><TimeLineChart data={timeChart} /></div>
+        </div>
+      </div>
+
+      {/* Alerts row */}
+      {(overduePermits.length > 0 || budgetAlerts.length > 0) && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8E4DE', padding: '20px 24px' }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', margin: '0 0 14px' }}>Überfällige Bewilligungen ({overduePermits.length})</h3>
+            {overduePermits.map((p: any) => (
+              <Link key={p.id} href={`/projects/${p.projectId}`} style={{ textDecoration: 'none' }}>
+                <div style={{ padding: '8px 0', borderBottom: '1px solid #F0ECE6', fontSize: 13, color: '#dc2626' }}>
+                  {p.title} — {new Date(p.expectedDecisionAt).toLocaleDateString('de-CH')}
+                </div>
+              </Link>
+            ))}
+          </div>
+          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8E4DE', padding: '20px 24px' }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', margin: '0 0 14px' }}>Budget-Alarme ({budgetAlerts.length})</h3>
+            {budgetAlerts.map((p: any) => (
+              <Link key={p.id} href={`/projects/${p.id}`} style={{ textDecoration: 'none' }}>
+                <div style={{ padding: '8px 0', borderBottom: '1px solid #F0ECE6' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{p.name}</div>
+                  <div style={{ height: 4, background: '#F0ECE6', borderRadius: 99, overflow: 'hidden', marginTop: 4 }}>
+                    <div style={{ height: '100%', borderRadius: 99, background: p.pct >= 100 ? '#ef4444' : '#e8a838', width: `${Math.min(p.pct, 100)}%` }} />
+                  </div>
+                  <div style={{ fontSize: 11, color: p.pct >= 100 ? '#dc2626' : '#999', marginTop: 2 }}>{p.pct}% verbraucht</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Bottom row: Tasks + Deal Forecast */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8E4DE', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #F0ECE6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>Anstehende Aufgaben</span>
+            <Link href="/tasks" style={{ fontSize: 12, color: '#e8a838', textDecoration: 'none', fontWeight: 600 }}>Alle anzeigen</Link>
+          </div>
+          {upcoming.length === 0 ? (
+            <div style={{ padding: '20px', color: '#999', fontSize: 13 }}>Keine anstehenden Aufgaben.</div>
+          ) : upcoming.map((t, idx) => {
+            const isOverdue = new Date(t.dueDate) < new Date();
+            return (
+              <Link key={t.id} href={`/tasks/${t.id}`} style={{ textDecoration: 'none' }}>
+                <div style={{ padding: '10px 20px', borderBottom: idx < upcoming.length - 1 ? '1px solid #F0ECE6' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#FAFAF5')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{t.title}</div>
+                    <div style={{ fontSize: 11, color: isOverdue ? '#dc2626' : '#999', marginTop: 2 }}>
+                      {isOverdue ? 'Überfällig: ' : 'Fällig: '}{new Date(t.dueDate).toLocaleDateString('de-CH')}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: PRIORITY_COLORS[t.priority]?.text || '#999', background: PRIORITY_COLORS[t.priority]?.bg || '#f5f5f0', borderRadius: 5, padding: '2px 8px' }}>
+                    {PRIORITY_LABELS[t.priority] || t.priority}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8E4DE', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #F0ECE6', fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>Deal-Prognose (6 Monate)</div>
+          <div style={{ padding: '8px 16px 16px' }}><DealForecastWidget /></div>
+        </div>
       </div>
     </div>
   );

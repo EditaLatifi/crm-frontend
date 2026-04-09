@@ -36,7 +36,7 @@ interface ProjectItem {
 }
 
 /* ─── Helpers ─── */
-const COLORS = ['#2563eb','#16a34a','#7c3aed','#ea580c','#0891b2','#db2777','#eab308','#64748b','#06b6d4','#f43f5e'];
+const COLORS = ['#1a1a1a','#16a34a','#7c3aed','#ea580c','#0891b2','#db2777','#eab308','#64748b','#06b6d4','#f43f5e'];
 function fmt(min: number) { const h = Math.floor(min / 60); const m = min % 60; return `${h}h ${m}m`; }
 
 function filterByRange(dateStr: string, range: string) {
@@ -48,22 +48,22 @@ function filterByRange(dateStr: string, range: string) {
   return true;
 }
 
-const Y_AXIS_BASE = { beginAtZero: true, min: 0 } as const;
+const Y_AXIS_BASE = { beginAtZero: true, grace: '10%' } as const;
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: '#fff', borderRadius: 12, border: '1.5px solid #e5e7eb', padding: '20px 24px' }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 16 }}>{title}</div>
+    <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8E4DE', padding: '20px 24px' }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginBottom: 16 }}>{title}</div>
       {children}
     </div>
   );
 }
 
-function StatCard({ title, value, color }: { title: string; value: string; color: string }) {
+function StatCard({ title, value }: { title: string; value: string; color?: string }) {
   return (
-    <div style={{ background: '#fff', borderRadius: 12, border: '1.5px solid #e5e7eb', padding: '20px 24px', flex: 1, minWidth: 160, borderLeft: `4px solid ${color}` }}>
-      <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>{title}</div>
-      <div style={{ fontSize: 26, fontWeight: 800, color: '#1e293b' }}>{value}</div>
+    <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8E4DE', padding: '20px 24px', flex: 1, minWidth: 160 }}>
+      <div style={{ fontSize: 11, color: '#999', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>{title}</div>
+      <div style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a' }}>{value}</div>
     </div>
   );
 }
@@ -132,7 +132,7 @@ export default function ReportsPage() {
       datasets: [{
         label: 'Stunden',
         data: sorted.map(u => Math.round(u.hours * 10) / 10),
-        backgroundColor: '#2563eb',
+        backgroundColor: '#1a1a1a',
         borderRadius: 4,
       }],
     };
@@ -218,7 +218,7 @@ export default function ReportsPage() {
     return {
       labels: withBudget.map(p => p.name.length > 20 ? p.name.slice(0, 17) + '…' : p.name),
       datasets: [
-        { label: 'Budget (CHF)', data: withBudget.map(p => Math.round(p.budget || 0)), backgroundColor: '#2563eb', borderRadius: 4 },
+        { label: 'Budget (CHF)', data: withBudget.map(p => Math.round(p.budget || 0)), backgroundColor: '#1a1a1a', borderRadius: 4 },
         { label: 'Ist-Stunden (h)', data: withBudget.map(p => Math.round((projHours[p.id] || 0) * 10) / 10), backgroundColor: '#ea580c', borderRadius: 4 },
       ],
     };
@@ -281,19 +281,19 @@ export default function ReportsPage() {
     responsive: true, maintainAspectRatio: false,
     indexAxis: horizontal ? 'y' as const : 'x' as const,
     plugins: { legend: { display: false } },
-    scales: { x: { ...Y_AXIS_BASE }, y: { ...Y_AXIS_BASE } },
+    scales: { y: { ...Y_AXIS_BASE } },
   });
 
   const groupedBarOpts: any = {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { position: 'bottom' as const, labels: { boxWidth: 12, font: { size: 11 } } } },
-    scales: { x: { ...Y_AXIS_BASE }, y: { ...Y_AXIS_BASE } },
+    scales: { y: { ...Y_AXIS_BASE } },
   };
 
   const lineOpts: any = {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { position: 'bottom' as const, labels: { boxWidth: 12, font: { size: 11 } } } },
-    scales: { x: {}, y: { ...Y_AXIS_BASE } },
+    scales: { y: { ...Y_AXIS_BASE } },
   };
 
   const pieOpts: any = {
@@ -302,23 +302,23 @@ export default function ReportsPage() {
   };
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 1400, margin: '0 auto' }}>
+    <div style={{ padding: '28px 32px', maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
-      <div className="reports-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1e293b', margin: 0 }}>Berichte</h1>
+      <div className="reports-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>Berichte</h1>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 8, padding: 3, gap: 2 }}>
+          <div style={{ display: 'flex', background: '#E8E4DE', borderRadius: 8, padding: 3, gap: 2 }}>
             {([['week', '7 Tage'], ['month', '30 Tage'], ['quarter', 'Quartal'], ['all', 'Alle']] as const).map(([k, label]) => (
               <button key={k} onClick={() => setDateRange(k as any)} style={{
                 padding: '6px 12px', borderRadius: 6, border: 'none',
                 background: dateRange === k ? '#fff' : 'transparent',
-                color: dateRange === k ? '#2563eb' : '#64748b',
+                color: dateRange === k ? '#1a1a1a' : '#64748b',
                 fontWeight: dateRange === k ? 700 : 500, fontSize: 12, cursor: 'pointer',
                 boxShadow: dateRange === k ? '0 1px 3px rgba(0,0,0,0.10)' : 'none',
               }}>{label}</button>
             ))}
           </div>
-          <button onClick={exportCSV} style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+          <button onClick={exportCSV} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
             CSV exportieren
           </button>
         </div>
@@ -326,7 +326,7 @@ export default function ReportsPage() {
 
       {/* KPI cards */}
       <div className="reports-kpi-row" style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
-        <StatCard title="Gesamtzeit (gefiltert)" value={fmt(totalMinutes)} color="#2563eb" />
+        <StatCard title="Gesamtzeit (gefiltert)" value={fmt(totalMinutes)} color="#1a1a1a" />
         <StatCard title="Einträge" value={String(fe.length)} color="#64748b" />
         <StatCard title="Pipeline-Wert" value={formatCHF(pipelineValue)} color="#7c3aed" />
         <StatCard title="Gewonnener Umsatz" value={formatCHF(revenueWon)} color="#16a34a" />
@@ -344,14 +344,14 @@ export default function ReportsPage() {
                 {dealsByStage.filter(s => s.count > 0).map((s, i) => {
                   const maxCount = Math.max(...dealsByStage.map(x => x.count), 1);
                   const pct = Math.round((s.count / maxCount) * 100);
-                  const color = s.isWon ? '#16a34a' : s.isLost ? '#dc2626' : '#2563eb';
+                  const color = s.isWon ? '#16a34a' : s.isLost ? '#dc2626' : '#1a1a1a';
                   return (
                     <div key={i}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#64748b', marginBottom: 3 }}>
                         <span style={{ fontWeight: 600, color: '#1e293b' }}>{s.name}</span>
                         <span>{s.count} Deals · {formatCHF(Math.round(s.value))}</span>
                       </div>
-                      <div style={{ background: '#f1f5f9', borderRadius: 6, height: 10, overflow: 'hidden' }}>
+                      <div style={{ background: '#E8E4DE', borderRadius: 6, height: 10, overflow: 'hidden' }}>
                         <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 6 }} />
                       </div>
                     </div>

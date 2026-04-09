@@ -51,8 +51,8 @@ function Badge({ label, color, bg }: { label: string; color: string; bg: string 
 
 function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #f1f5f9", overflow: "hidden" }}>
-      <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: 8 }}>
+    <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #E8E4DE", overflow: "hidden" }}>
+      <div style={{ padding: "16px 20px", borderBottom: "1px solid #E8E4DE", display: "flex", alignItems: "center", gap: 8 }}>
         <span style={{ color: "#64748b" }}>{icon}</span>
         <span style={{ fontWeight: 600, fontSize: 14, color: "#0f172a" }}>{title}</span>
       </div>
@@ -75,7 +75,7 @@ export default function TaskDetailsPage() {
   const [newComment, setNewComment] = useState("");
   const [loadingComment, setLoadingComment] = useState(false);
 
-  const [newTime, setNewTime] = useState({ startedAt: "", endedAt: "", description: "" });
+  const [newTime, setNewTime] = useState({ startedAt: "", endedAt: "", description: "", date: new Date().toISOString().slice(0, 10), hours: "", minutes: "" });
   const [loadingTime, setLoadingTime] = useState(false);
 
   const [editMode, setEditMode] = useState(false);
@@ -151,15 +151,24 @@ export default function TaskDetailsPage() {
   };
 
   const handleAddTime = async () => {
-    if (!newTime.startedAt || !newTime.endedAt) return;
-    const durationMinutes = calcDurationMinutes(newTime.startedAt, newTime.endedAt);
-    if (durationMinutes <= 0) { showToast("Ende-Zeitpunkt muss nach Start-Zeitpunkt liegen", "error"); return; }
+    const h = parseInt(newTime.hours || "0");
+    const m = parseInt(newTime.minutes || "0");
+    const durationMinutes = h * 60 + m;
+    if (durationMinutes <= 0) { showToast("Bitte Dauer angeben (Stunden/Minuten)", "error"); return; }
+    const date = newTime.date || new Date().toISOString().slice(0, 10);
+    const startedAt = new Date(`${date}T08:00:00`).toISOString();
+    const endedAt = new Date(new Date(`${date}T08:00:00`).getTime() + durationMinutes * 60000).toISOString();
     setLoadingTime(true);
     try {
       const accountId = task?.accountId;
       if (!accountId) { showToast("Kein Konto verknüpft", "error"); setLoadingTime(false); return; }
-      await api.post(`/tasks/${taskId}/time-entries`, { ...newTime, durationMinutes, userId: user?.id, accountId });
-      setNewTime({ startedAt: "", endedAt: "", description: "" });
+      await api.post(`/tasks/${taskId}/time-entries`, {
+        startedAt, endedAt, durationMinutes, description: newTime.description,
+        userId: user?.id, accountId,
+        projectId: task?.projectId || undefined,
+        phase: task?.phase || undefined,
+      });
+      setNewTime({ startedAt: "", endedAt: "", description: "", date: new Date().toISOString().slice(0, 10), hours: "", minutes: "" });
       fetchTask();
       showToast("Zeit erfasst");
     } catch (e: any) {
@@ -220,6 +229,8 @@ export default function TaskDetailsPage() {
       case 'PRIORITY_CHANGED': return `Priorität: ${PRIORITY_MAP[payload?.from] ?? payload?.from ?? '?'} → ${PRIORITY_MAP[payload?.to] ?? payload?.to ?? '?'}`;
       case 'ASSIGNED': return `Zugewiesen: ${payload?.from ?? 'Niemand'} → ${payload?.to ?? 'Niemand'}`;
       case 'TITLE_CHANGED': return `Titel: "${payload?.from}" → "${payload?.to}"`;
+      case 'DESCRIPTION_CHANGED': return 'Beschreibung aktualisiert';
+      case 'CHECKLIST_UPDATED': return 'Checkliste aktualisiert';
       case 'TIME_LOGGED': {
         const min = payload?.durationMinutes ?? 0;
         const h = Math.floor(min / 60); const m = min % 60;
@@ -246,7 +257,7 @@ export default function TaskDetailsPage() {
   const assignedUser = users.find(u => u.id === task.assignedToUserId);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "Inter, system-ui, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#FAF9F6", fontFamily: "Inter, system-ui, sans-serif" }}>
       {/* Toast */}
       {toast && (
         <div style={{
@@ -264,7 +275,13 @@ export default function TaskDetailsPage() {
         {/* Header breadcrumb */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, marginTop: 30, color: "#64748b", fontSize: 13 }}>
           <a href="/tasks" style={{ color: "#64748b", textDecoration: "none" }}>Aufgaben</a>
-          <span>/</span>
+          {task.project?.name && (
+            <>
+              <span>›</span>
+              <a href={`/projects/${task.project.id}`} style={{ color: "#64748b", textDecoration: "none" }}>{task.project.name}</a>
+            </>
+          )}
+          <span>›</span>
           <span style={{ color: "#0f172a", fontWeight: 500 }}>
             {task.title}
           </span>
@@ -276,13 +293,13 @@ export default function TaskDetailsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
             {/* Task card */}
-            <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #f1f5f9" }}>
+            <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #E8E4DE" }}>
               {/* Status bar */}
-              <div style={{ padding: "16px 24px", borderBottom: "1px solid #f8fafc", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.08em", fontFamily: "monospace" }}>
-                  TASK-{task.id?.slice(0, 8).toUpperCase()}
+              <div style={{ padding: "16px 24px", borderBottom: "1px solid #FAF9F6", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.02em" }}>
+                  {task.title}
                 </span>
-                <div style={{ width: 1, height: 16, background: "#e2e8f0" }} />
+                <div style={{ width: 1, height: 16, background: "#E8E4DE" }} />
                 {/* Status dropdown */}
                 <div style={{ position: "relative" }}>
                   <select
@@ -306,7 +323,7 @@ export default function TaskDetailsPage() {
                     value={task.priority || "MEDIUM"}
                     onChange={e => handlePriorityChange(e.target.value)}
                     style={{
-                      appearance: "none", border: "1px solid #e2e8f0", background: "#fff",
+                      appearance: "none", border: "1px solid #E8E4DE", background: "#fff",
                       color: priorityCfg.color, fontWeight: 500, fontSize: 12,
                       padding: "4px 24px 4px 10px", borderRadius: 8, cursor: "pointer"
                     }}
@@ -323,7 +340,7 @@ export default function TaskDetailsPage() {
                       onClick={startEdit}
                       style={{
                         display: "flex", alignItems: "center", gap: 6, padding: "6px 14px",
-                        background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8,
+                        background: "#FAF9F6", border: "1px solid #E8E4DE", borderRadius: 8,
                         fontSize: 13, fontWeight: 500, color: "#475569", cursor: "pointer"
                       }}
                     >
@@ -336,7 +353,7 @@ export default function TaskDetailsPage() {
                         onClick={saveEdit}
                         disabled={saving}
                         style={{
-                          padding: "6px 14px", background: "#2563eb", color: "#fff",
+                          padding: "6px 14px", background: "#1a1a1a", color: "#fff",
                           border: "none", borderRadius: 8, fontSize: 13, fontWeight: 500,
                           cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1
                         }}
@@ -346,7 +363,7 @@ export default function TaskDetailsPage() {
                       <button
                         onClick={() => setEditMode(false)}
                         style={{
-                          padding: "6px 14px", background: "#f8fafc", border: "1px solid #e2e8f0",
+                          padding: "6px 14px", background: "#FAF9F6", border: "1px solid #E8E4DE",
                           borderRadius: 8, fontSize: 13, fontWeight: 500, color: "#64748b", cursor: "pointer"
                         }}
                       >
@@ -400,7 +417,7 @@ export default function TaskDetailsPage() {
                     <div>
                       <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", marginBottom: 4, textTransform: "uppercase" }}>Leistungsphase</div>
                       <select value={editPhase} onChange={e => setEditPhase(e.target.value)}
-                        style={{ width: "100%", padding: "7px 10px", border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 13, color: "#374151", boxSizing: "border-box" }}>
+                        style={{ width: "100%", padding: "7px 10px", border: "1px solid #E8E4DE", borderRadius: 8, fontSize: 13, color: "#374151", boxSizing: "border-box" }}>
                         <option value="">— Keine Phase —</option>
                         {phaseOptions.map(p => <option key={p.code} value={p.code}>{p.label}</option>)}
                       </select>
@@ -409,13 +426,13 @@ export default function TaskDetailsPage() {
                       <div>
                         <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", marginBottom: 4, textTransform: "uppercase" }}>Stundenkontingent (h)</div>
                         <input type="number" min="0" step="0.5" value={editBudgetHours} onChange={e => setEditBudgetHours(e.target.value)} placeholder="z.B. 40"
-                          style={{ width: "100%", padding: "7px 10px", border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 13, color: "#374151", boxSizing: "border-box" }} />
+                          style={{ width: "100%", padding: "7px 10px", border: "1px solid #E8E4DE", borderRadius: 8, fontSize: 13, color: "#374151", boxSizing: "border-box" }} />
                       </div>
                     )}
                     <div style={{ gridColumn: "1 / -1" }}>
                       <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", marginBottom: 4, textTransform: "uppercase" }}>Spezifikation</div>
                       <textarea value={editSpecification} onChange={e => setEditSpecification(e.target.value)} rows={3} placeholder="Freitext-Spezifikation"
-                        style={{ width: "100%", padding: "7px 10px", border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 13, color: "#374151", boxSizing: "border-box", resize: "vertical", fontFamily: "inherit" }} />
+                        style={{ width: "100%", padding: "7px 10px", border: "1px solid #E8E4DE", borderRadius: 8, fontSize: 13, color: "#374151", boxSizing: "border-box", resize: "vertical", fontFamily: "inherit" }} />
                     </div>
                   </div>
                 )}
@@ -423,7 +440,7 @@ export default function TaskDetailsPage() {
             </div>
 
             {/* Meta row */}
-            <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #f1f5f9", padding: "16px 24px" }}>
+            <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #E8E4DE", padding: "16px 24px" }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 20 }}>
 
                 {/* Assignee */}
@@ -436,7 +453,7 @@ export default function TaskDetailsPage() {
                       value={task.assignedToUserId || ""}
                       onChange={e => handleAssignUser(e.target.value)}
                       style={{
-                        width: "100%", padding: "7px 10px", border: "1px solid #e2e8f0",
+                        width: "100%", padding: "7px 10px", border: "1px solid #E8E4DE",
                         borderRadius: 8, fontSize: 13, color: "#374151", background: "#fff", cursor: "pointer"
                       }}
                     >
@@ -453,6 +470,49 @@ export default function TaskDetailsPage() {
                   )}
                 </div>
 
+                {/* Additional assignees */}
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", letterSpacing: "0.06em", marginBottom: 8, textTransform: "uppercase" }}>
+                    Weitere Mitarbeiter
+                  </div>
+                  {(() => {
+                    const ids: string[] = Array.isArray(task.assigneeIds) ? task.assigneeIds : [];
+                    const assigned = users.filter(u => ids.includes(u.id));
+                    const available = users.filter(u => !ids.includes(u.id) && u.id !== task.assignedToUserId);
+                    const handleAdd = async (uid: string) => {
+                      if (!uid) return;
+                      const next = [...ids, uid];
+                      await api.patch(`/tasks/${taskId}`, { assigneeIds: next });
+                      fetchTask();
+                    };
+                    const handleRemove = async (uid: string) => {
+                      const next = ids.filter(id => id !== uid);
+                      await api.patch(`/tasks/${taskId}`, { assigneeIds: next });
+                      fetchTask();
+                    };
+                    return (
+                      <div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 6 }}>
+                          {assigned.length === 0 && <span style={{ fontSize: 12, color: "#94a3b8" }}>Keine</span>}
+                          {assigned.map(u => (
+                            <span key={u.id} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, background: "#dbeafe", color: "#1a1a1a", borderRadius: 12, padding: "2px 8px" }}>
+                              {u.name || u.email}
+                              {editMode && <button onClick={() => handleRemove(u.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#1a1a1a", fontWeight: 700, fontSize: 13, padding: 0, lineHeight: 1 }}>&times;</button>}
+                            </span>
+                          ))}
+                        </div>
+                        {editMode && available.length > 0 && (
+                          <select onChange={e => { handleAdd(e.target.value); e.target.value = ""; }} defaultValue=""
+                            style={{ width: "100%", padding: "5px 8px", border: "1px solid #E8E4DE", borderRadius: 6, fontSize: 12, color: "#374151" }}>
+                            <option value="">+ Hinzufügen...</option>
+                            {available.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
+                          </select>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+
                 {/* Due date */}
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", letterSpacing: "0.06em", marginBottom: 8, textTransform: "uppercase" }}>
@@ -464,7 +524,7 @@ export default function TaskDetailsPage() {
                       value={editDueDate}
                       onChange={e => setEditDueDate(e.target.value)}
                       style={{
-                        width: "100%", padding: "7px 10px", border: "1px solid #e2e8f0",
+                        width: "100%", padding: "7px 10px", border: "1px solid #E8E4DE",
                         borderRadius: 8, fontSize: 13, color: "#374151", boxSizing: "border-box"
                       }}
                     />
@@ -492,7 +552,7 @@ export default function TaskDetailsPage() {
                       placeholder="Stunden"
                       min={0}
                       style={{
-                        width: "100%", padding: "7px 10px", border: "1px solid #e2e8f0",
+                        width: "100%", padding: "7px 10px", border: "1px solid #E8E4DE",
                         borderRadius: 8, fontSize: 13, color: "#374151", boxSizing: "border-box"
                       }}
                     />
@@ -509,7 +569,7 @@ export default function TaskDetailsPage() {
                   <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", letterSpacing: "0.06em", marginBottom: 8, textTransform: "uppercase" }}>
                     Erfasste Zeit
                   </div>
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: totalMin > 0 ? "#2563eb" : "#94a3b8", fontWeight: 600 }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: totalMin > 0 ? "#1a1a1a" : "#94a3b8", fontWeight: 600 }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     {totalMin > 0 ? `${Math.floor(totalMin / 60)}h ${totalMin % 60}min` : "—"}
                   </span>
@@ -528,16 +588,18 @@ export default function TaskDetailsPage() {
                   const usedH = totalMin / 60;
                   const budgetH = task.budgetHours;
                   const pct = Math.min((usedH / budgetH) * 100, 100);
-                  const over = usedH > budgetH;
+                  const ratio = usedH / budgetH;
+                  const barColor = ratio >= 1 ? "#dc2626" : ratio >= 0.8 ? "#d97706" : "#1a1a1a";
                   return (
                     <div>
                       <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", letterSpacing: "0.06em", marginBottom: 8, textTransform: "uppercase" }}>Budget</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: over ? "#dc2626" : "#1e293b", marginBottom: 4 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: ratio >= 1 ? "#dc2626" : ratio >= 0.8 ? "#d97706" : "#1e293b", marginBottom: 4 }}>
                         {usedH.toFixed(1)}h / {budgetH}h
-                        {over && <span style={{ fontSize: 11, color: "#dc2626", marginLeft: 6, background: "#fee2e2", borderRadius: 4, padding: "1px 6px" }}>Überschritten!</span>}
+                        {ratio >= 1 && <span style={{ fontSize: 11, color: "#dc2626", marginLeft: 6, background: "#fee2e2", borderRadius: 4, padding: "1px 6px" }}>Überschritten!</span>}
+                        {ratio >= 0.8 && ratio < 1 && <span style={{ fontSize: 11, color: "#d97706", marginLeft: 6, background: "#fef3c7", borderRadius: 4, padding: "1px 6px" }}>Fast erreicht</span>}
                       </div>
-                      <div style={{ background: "#f1f5f9", borderRadius: 20, height: 6, overflow: "hidden" }}>
-                        <div style={{ height: "100%", background: over ? "#dc2626" : "#2563eb", borderRadius: 20, width: `${pct}%`, transition: "width 0.3s" }} />
+                      <div style={{ background: "#E8E4DE", borderRadius: 20, height: 6, overflow: "hidden" }}>
+                        <div style={{ height: "100%", background: barColor, borderRadius: 20, width: `${pct}%`, transition: "width 0.3s" }} />
                       </div>
                     </div>
                   );
@@ -547,7 +609,7 @@ export default function TaskDetailsPage() {
 
             {/* Specification */}
             {task.specification && (
-              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #f1f5f9", padding: "16px 24px" }}>
+              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #E8E4DE", padding: "16px 24px" }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", letterSpacing: "0.06em", marginBottom: 8, textTransform: "uppercase" }}>Spezifikation</div>
                 <div style={{ fontSize: 14, color: "#374151", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{task.specification}</div>
               </div>
@@ -555,10 +617,10 @@ export default function TaskDetailsPage() {
           </div>
 
           {/* ── RIGHT: Sidebar ── */}
-          <div className="task-detail-sidebar" style={{ display: "flex", flexDirection: "column", gap: 0, background: "#fff", borderRadius: 12, border: "1px solid #f1f5f9", overflow: "hidden" }}>
+          <div className="task-detail-sidebar" style={{ display: "flex", flexDirection: "column", gap: 0, background: "#fff", borderRadius: 12, border: "1px solid #E8E4DE", overflow: "hidden" }}>
 
             {/* Tabs */}
-            <div style={{ display: "flex", borderBottom: "1px solid #f1f5f9" }}>
+            <div style={{ display: "flex", borderBottom: "1px solid #E8E4DE" }}>
               {([
                 { key: "comments", label: "Kommentare", count: comments.length },
                 { key: "checklists", label: "Checklisten", count: (Array.isArray(task.checklists) ? task.checklists : []).length },
@@ -571,17 +633,17 @@ export default function TaskDetailsPage() {
                   onClick={() => setActiveTab(tab.key)}
                   style={{
                     flex: 1, padding: "13px 8px", background: "none", border: "none",
-                    borderBottom: activeTab === tab.key ? "2px solid #2563eb" : "2px solid transparent",
+                    borderBottom: activeTab === tab.key ? "2px solid #1a1a1a" : "2px solid transparent",
                     fontSize: 13, fontWeight: activeTab === tab.key ? 600 : 400,
-                    color: activeTab === tab.key ? "#2563eb" : "#64748b",
+                    color: activeTab === tab.key ? "#1a1a1a" : "#64748b",
                     cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5
                   }}
                 >
                   {tab.label}
                   {tab.count > 0 && (
                     <span style={{
-                      background: activeTab === tab.key ? "#dbeafe" : "#f1f5f9",
-                      color: activeTab === tab.key ? "#2563eb" : "#64748b",
+                      background: activeTab === tab.key ? "#dbeafe" : "#E8E4DE",
+                      color: activeTab === tab.key ? "#1a1a1a" : "#64748b",
                       borderRadius: 10, fontSize: 11, fontWeight: 600, padding: "1px 6px"
                     }}>
                       {tab.count}
@@ -611,14 +673,14 @@ export default function TaskDetailsPage() {
                             <span style={{ fontWeight: 600, fontSize: 13, color: "#0f172a" }}>{c.author?.name || "Benutzer"}</span>
                             <span style={{ fontSize: 11, color: "#94a3b8" }}>{c.createdAt ? new Date(c.createdAt).toLocaleString("de-CH", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}</span>
                           </div>
-                          <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.5, background: "#f8fafc", borderRadius: 8, padding: "8px 12px" }}>
+                          <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.5, background: "#FAF9F6", borderRadius: 8, padding: "8px 12px" }}>
                             {c.text}
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ borderTop: "1px solid #E8E4DE", paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
                     <textarea
                       value={newComment}
                       onChange={e => setNewComment(e.target.value)}
@@ -626,7 +688,7 @@ export default function TaskDetailsPage() {
                       rows={3}
                       onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleAddComment(); }}
                       style={{
-                        width: "100%", padding: "10px 12px", border: "1px solid #e2e8f0",
+                        width: "100%", padding: "10px 12px", border: "1px solid #E8E4DE",
                         borderRadius: 8, fontSize: 13, color: "#374151", resize: "none",
                         fontFamily: "inherit", lineHeight: 1.5, outline: "none", boxSizing: "border-box"
                       }}
@@ -635,7 +697,7 @@ export default function TaskDetailsPage() {
                       onClick={handleAddComment}
                       disabled={loadingComment || !newComment.trim()}
                       style={{
-                        padding: "9px 16px", background: "#2563eb", color: "#fff", border: "none",
+                        padding: "9px 16px", background: "#1a1a1a", color: "#fff", border: "none",
                         borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer",
                         opacity: loadingComment || !newComment.trim() ? 0.6 : 1, alignSelf: "flex-end"
                       }}
@@ -656,12 +718,12 @@ export default function TaskDetailsPage() {
                       </div>
                     )}
                     {timeEntries.map((t, i) => (
-                      <div key={i} style={{ display: "flex", gap: 10, padding: "10px 12px", background: "#f8fafc", borderRadius: 8 }}>
+                      <div key={i} style={{ display: "flex", gap: 10, padding: "10px 12px", background: "#FAF9F6", borderRadius: 8 }}>
                         <Avatar name={t.user?.name || "U"} size={28} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 2 }}>
                             <span style={{ fontWeight: 600, fontSize: 12, color: "#0f172a" }}>{t.user?.name || "Benutzer"}</span>
-                            <span style={{ fontWeight: 700, fontSize: 12, color: "#2563eb" }}>{fmtDuration(t.durationMinutes)}</span>
+                            <span style={{ fontWeight: 700, fontSize: 12, color: "#1a1a1a" }}>{fmtDuration(t.durationMinutes)}</span>
                           </div>
                           <div style={{ fontSize: 11, color: "#94a3b8" }}>
                             {t.startedAt ? new Date(t.startedAt).toLocaleString("de-CH", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""} → {t.endedAt ? new Date(t.endedAt).toLocaleString("de-CH", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
@@ -672,7 +734,7 @@ export default function TaskDetailsPage() {
                     ))}
                     {totalMin > 0 && (
                       <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: 4 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: "#2563eb" }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a" }}>
                           Gesamt: {Math.floor(totalMin / 60)}h {totalMin % 60}min
                         </span>
                       </div>
@@ -680,56 +742,56 @@ export default function TaskDetailsPage() {
                   </div>
 
                   {/* Add time form */}
-                  <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: "#64748b" }}>Zeit hinzufügen</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <div style={{ borderTop: "1px solid #E8E4DE", paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "#64748b" }}>+ Zeit erfassen</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 80px", gap: 8 }}>
                       <div>
-                        <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 4 }}>Start</label>
+                        <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 4 }}>Datum</label>
                         <input
-                          type="datetime-local"
-                          value={newTime.startedAt}
-                          onChange={e => setNewTime(nt => ({ ...nt, startedAt: e.target.value }))}
-                          style={{ width: "100%", padding: "7px 9px", border: "1px solid #e2e8f0", borderRadius: 7, fontSize: 12, boxSizing: "border-box" }}
+                          type="date"
+                          value={newTime.date}
+                          onChange={e => setNewTime(nt => ({ ...nt, date: e.target.value }))}
+                          style={{ width: "100%", padding: "7px 9px", border: "1px solid #E8E4DE", borderRadius: 7, fontSize: 12, boxSizing: "border-box" }}
                         />
                       </div>
                       <div>
-                        <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 4 }}>Ende</label>
+                        <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 4 }}>Stunden</label>
                         <input
-                          type="datetime-local"
-                          value={newTime.endedAt}
-                          onChange={e => setNewTime(nt => ({ ...nt, endedAt: e.target.value }))}
-                          style={{ width: "100%", padding: "7px 9px", border: "1px solid #e2e8f0", borderRadius: 7, fontSize: 12, boxSizing: "border-box" }}
+                          type="number" min={0} max={23}
+                          value={newTime.hours}
+                          onChange={e => setNewTime(nt => ({ ...nt, hours: e.target.value }))}
+                          placeholder="0"
+                          style={{ width: "100%", padding: "7px 9px", border: "1px solid #E8E4DE", borderRadius: 7, fontSize: 12, boxSizing: "border-box" }}
                         />
                       </div>
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 8 }}>
                       <div>
-                        <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 4 }}>Dauer</label>
-                        <div style={{ padding: "7px 9px", border: "1px solid #e2e8f0", borderRadius: 7, fontSize: 12, background: "#f8fafc", color: "#2563eb", fontWeight: 700, minHeight: 32 }}>
-                          {newTime.startedAt && newTime.endedAt
-                            ? calcDurationMinutes(newTime.startedAt, newTime.endedAt) > 0
-                              ? fmtDuration(calcDurationMinutes(newTime.startedAt, newTime.endedAt))
-                              : <span style={{ color: "#dc2626" }}>Ende vor Start</span>
-                            : <span style={{ color: "#94a3b8" }}>—</span>}
-                        </div>
-                      </div>
-                      <div>
-                        <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 4 }}>Beschreibung</label>
+                        <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 4 }}>Minuten</label>
                         <input
-                          value={newTime.description}
-                          onChange={e => setNewTime(nt => ({ ...nt, description: e.target.value }))}
-                          placeholder="Optional..."
-                          style={{ width: "100%", padding: "7px 9px", border: "1px solid #e2e8f0", borderRadius: 7, fontSize: 12, boxSizing: "border-box" }}
+                          type="number" min={0} max={59} step={5}
+                          value={newTime.minutes}
+                          onChange={e => setNewTime(nt => ({ ...nt, minutes: e.target.value }))}
+                          placeholder="0"
+                          style={{ width: "100%", padding: "7px 9px", border: "1px solid #E8E4DE", borderRadius: 7, fontSize: 12, boxSizing: "border-box" }}
                         />
                       </div>
                     </div>
+                    <div>
+                      <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 4 }}>Beschreibung (optional)</label>
+                      <input
+                        value={newTime.description}
+                        onChange={e => setNewTime(nt => ({ ...nt, description: e.target.value }))}
+                        placeholder="Was wurde gemacht..."
+                        style={{ width: "100%", padding: "7px 9px", border: "1px solid #E8E4DE", borderRadius: 7, fontSize: 12, boxSizing: "border-box" }}
+                      />
+                    </div>
+                    {task?.phase && <div style={{ fontSize: 11, color: "#7c3aed", fontWeight: 600 }}>Phase: {task.phase} {task?.projectId ? '| Projekt verknüpft' : ''}</div>}
                     <button
                       onClick={handleAddTime}
-                      disabled={loadingTime || !newTime.startedAt || !newTime.endedAt || calcDurationMinutes(newTime.startedAt, newTime.endedAt) <= 0}
+                      disabled={loadingTime || (parseInt(newTime.hours || "0") * 60 + parseInt(newTime.minutes || "0")) <= 0}
                       style={{
-                        padding: "9px 16px", background: "#2563eb", color: "#fff", border: "none",
+                        padding: "9px 16px", background: "#1a1a1a", color: "#fff", border: "none",
                         borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                        opacity: loadingTime || !newTime.startedAt || !newTime.endedAt || calcDurationMinutes(newTime.startedAt, newTime.endedAt) <= 0 ? 0.5 : 1
+                        opacity: loadingTime || (parseInt(newTime.hours || "0") * 60 + parseInt(newTime.minutes || "0")) <= 0 ? 0.5 : 1
                       }}
                     >
                       {loadingTime ? "Speichern..." : "Zeit erfassen"}
@@ -773,7 +835,7 @@ export default function TaskDetailsPage() {
                   {history.map((h, i) => (
                     <div key={i} style={{ display: "flex", gap: 10, paddingBottom: 16, position: "relative" }}>
                       {i < history.length - 1 && (
-                        <div style={{ position: "absolute", left: 14, top: 28, bottom: 0, width: 1, background: "#f1f5f9" }} />
+                        <div style={{ position: "absolute", left: 14, top: 28, bottom: 0, width: 1, background: "#E8E4DE" }} />
                       )}
                       <Avatar name={h.user?.name || "U"} size={28} />
                       <div style={{ flex: 1 }}>
@@ -856,10 +918,10 @@ function ChecklistsPanel({ checklists, onSave }: { checklists: CList[]; onSave: 
           value={newTitle} onChange={e => setNewTitle(e.target.value)}
           onKeyDown={e => e.key === "Enter" && addChecklist()}
           placeholder="Neue Checkliste…"
-          style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: "1.5px solid #e2e8f0", fontSize: 13 }}
+          style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: "1.5px solid #E8E4DE", fontSize: 13 }}
         />
         <button onClick={addChecklist} disabled={!newTitle.trim() || saving}
-          style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#2563eb", color: "#fff", fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: newTitle.trim() ? 1 : 0.5, whiteSpace: "nowrap" }}>
+          style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#1a1a1a", color: "#fff", fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: newTitle.trim() ? 1 : 0.5, whiteSpace: "nowrap" }}>
           + Checkliste
         </button>
       </div>
@@ -873,12 +935,12 @@ function ChecklistsPanel({ checklists, onSave }: { checklists: CList[]; onSave: 
         const total = cl.items.length;
         const pct = total > 0 ? Math.round((done / total) * 100) : 0;
         return (
-          <div key={cl.id} style={{ background: "#f8fafc", border: "1px solid #e5e7eb", borderRadius: 10, padding: "14px 16px", marginBottom: 12 }}>
+          <div key={cl.id} style={{ background: "#FAF9F6", border: "1px solid #e5e7eb", borderRadius: 10, padding: "14px 16px", marginBottom: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontWeight: 700, fontSize: 14, color: "#1e293b" }}>{cl.title}</span>
                 {total > 0 && (
-                  <span style={{ fontSize: 11, fontWeight: 600, color: done === total ? "#16a34a" : "#64748b", background: done === total ? "#dcfce7" : "#f1f5f9", borderRadius: 10, padding: "1px 8px" }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: done === total ? "#16a34a" : "#64748b", background: done === total ? "#dcfce7" : "#E8E4DE", borderRadius: 10, padding: "1px 8px" }}>
                     {done}/{total} erledigt
                   </span>
                 )}
@@ -888,20 +950,20 @@ function ChecklistsPanel({ checklists, onSave }: { checklists: CList[]; onSave: 
             </div>
             {total > 0 && (
               <div style={{ background: "#e5e7eb", borderRadius: 20, height: 4, overflow: "hidden", marginBottom: 10 }}>
-                <div style={{ height: "100%", background: done === total ? "#16a34a" : "#2563eb", borderRadius: 20, width: `${pct}%`, transition: "width 0.3s" }} />
+                <div style={{ height: "100%", background: done === total ? "#16a34a" : "#1a1a1a", borderRadius: 20, width: `${pct}%`, transition: "width 0.3s" }} />
               </div>
             )}
             {cl.items.map(item => (
-              <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid #f1f5f9" }}>
+              <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid #E8E4DE" }}>
                 <input type="checkbox" checked={item.done} onChange={() => toggleItem(cl.id, item.id)}
-                  style={{ accentColor: "#2563eb", width: 16, height: 16, cursor: "pointer", flexShrink: 0 }} />
+                  style={{ accentColor: "#1a1a1a", width: 16, height: 16, cursor: "pointer", flexShrink: 0 }} />
                 {editingItem === item.id ? (
                   <div style={{ flex: 1, display: "flex", gap: 6 }}>
                     <input value={editText} onChange={e => setEditText(e.target.value)} autoFocus
                       onKeyDown={e => e.key === "Enter" && saveItemEdit(cl.id, item.id)}
-                      style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: "1px solid #2563eb", fontSize: 13 }} />
-                    <button onClick={() => saveItemEdit(cl.id, item.id)} style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 5, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>✓</button>
-                    <button onClick={() => setEditingItem(null)} style={{ background: "#f1f5f9", border: "none", borderRadius: 5, padding: "2px 8px", fontSize: 11, cursor: "pointer", color: "#64748b" }}>✕</button>
+                      style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: "1px solid #1a1a1a", fontSize: 13 }} />
+                    <button onClick={() => saveItemEdit(cl.id, item.id)} style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 5, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>✓</button>
+                    <button onClick={() => setEditingItem(null)} style={{ background: "#E8E4DE", border: "none", borderRadius: 5, padding: "2px 8px", fontSize: 11, cursor: "pointer", color: "#64748b" }}>✕</button>
                   </div>
                 ) : (
                   <span onClick={() => { setEditingItem(item.id); setEditText(item.text); }}
@@ -928,9 +990,9 @@ function AddItemInput({ onAdd }: { onAdd: (text: string) => void }) {
       <input value={text} onChange={e => setText(e.target.value)}
         onKeyDown={e => { if (e.key === "Enter" && text.trim()) { onAdd(text); setText(""); } }}
         placeholder="Neues Item…"
-        style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: "1px solid #e2e8f0", fontSize: 12, background: "#fff" }} />
+        style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: "1px solid #E8E4DE", fontSize: 12, background: "#fff" }} />
       <button onClick={() => { if (text.trim()) { onAdd(text); setText(""); } }} disabled={!text.trim()}
-        style={{ padding: "6px 12px", borderRadius: 6, border: "none", background: text.trim() ? "#2563eb" : "#f1f5f9", color: text.trim() ? "#fff" : "#94a3b8", fontSize: 12, fontWeight: 600, cursor: text.trim() ? "pointer" : "default" }}>+</button>
+        style={{ padding: "6px 12px", borderRadius: 6, border: "none", background: text.trim() ? "#1a1a1a" : "#E8E4DE", color: text.trim() ? "#fff" : "#94a3b8", fontSize: 12, fontWeight: 600, cursor: text.trim() ? "pointer" : "default" }}>+</button>
     </div>
   );
 }
@@ -982,7 +1044,7 @@ function TaskDocumentsPanel({ taskId, documents, uploading, dragOver, setUploadi
       <div style={{ marginBottom: 10 }}>
         <span style={{ fontSize: 12, color: "#64748b", marginRight: 8 }}>Kategorie (optional):</span>
         <select value={uploadCategory} onChange={e => setUploadCategory(e.target.value)}
-          style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #e2e8f0", fontSize: 12 }}>
+          style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #E8E4DE", fontSize: 12 }}>
           <option value="">Keine</option>
           {DOC_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
@@ -995,7 +1057,7 @@ function TaskDocumentsPanel({ taskId, documents, uploading, dragOver, setUploadi
         onDrop={e => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); }}
         onClick={() => fileInputRef.current?.click()}
         style={{
-          border: `2px dashed ${dragOver ? '#2563eb' : '#d1d5db'}`,
+          border: `2px dashed ${dragOver ? '#1a1a1a' : '#d1d5db'}`,
           borderRadius: 12, padding: '24px 16px', textAlign: 'center',
           cursor: 'pointer', marginBottom: 16, transition: 'all 0.2s',
           background: dragOver ? '#eff6ff' : '#fafafa',
@@ -1004,7 +1066,7 @@ function TaskDocumentsPanel({ taskId, documents, uploading, dragOver, setUploadi
         <input ref={fileInputRef} type="file" multiple accept={ALLOWED_EXT.join(',')} style={{ display: 'none' }}
           onChange={e => { if (e.target.files?.length) { handleFiles(e.target.files); e.target.value = ''; } }} />
         <div style={{ fontSize: 20, marginBottom: 4 }}>📎</div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: dragOver ? '#2563eb' : '#64748b' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: dragOver ? '#1a1a1a' : '#64748b' }}>
           {uploading ? 'Wird hochgeladen…' : 'Dateien hierher ziehen oder klicken'}
         </div>
         <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>PDF, DWG, DXF, Bilder, Office · max. 50 MB</div>
@@ -1014,7 +1076,7 @@ function TaskDocumentsPanel({ taskId, documents, uploading, dragOver, setUploadi
       {documents.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '20px 0', color: '#94a3b8', fontSize: 13 }}>Noch keine Dokumente.</div>
       ) : documents.map((doc: any) => (
-        <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 14px', marginBottom: 8 }}>
+        <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#FAF9F6', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 14px', marginBottom: 8 }}>
           <span style={{ fontSize: 18 }}>📄</span>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, fontSize: 13, color: '#1e293b' }}>{doc.name}</div>
@@ -1026,7 +1088,7 @@ function TaskDocumentsPanel({ taskId, documents, uploading, dragOver, setUploadi
             </div>
           </div>
           <a href={doc.url} target="_blank" rel="noopener noreferrer" download
-            style={{ background: '#eff6ff', border: 'none', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: '#2563eb', display: 'flex', alignItems: 'center', textDecoration: 'none', fontSize: 12 }}>
+            style={{ background: '#eff6ff', border: 'none', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: '#1a1a1a', display: 'flex', alignItems: 'center', textDecoration: 'none', fontSize: 12 }}>
             ⬇
           </a>
           <button onClick={() => handleDelete(doc.id)}

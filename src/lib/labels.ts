@@ -15,8 +15,10 @@ export const ACTION_LABELS: Record<string, string> = {
   CREATE: 'Erstellt',
   UPDATE: 'Aktualisiert',
   DELETE: 'Gelöscht',
-  change_stage: 'Phase geändert',
-  PHASE_UPDATE: 'Phase aktualisiert',
+  change_stage: 'Phasenänderung',
+  PHASE_UPDATE: 'Phasenänderung',
+  DEAL_CREATED: 'Deal erstellt',
+  DEAL_UPDATED: 'Deal aktualisiert',
   timer_stop: 'Zeit gestoppt',
   COMMENT: 'Kommentiert',
 };

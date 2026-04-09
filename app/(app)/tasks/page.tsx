@@ -58,31 +58,27 @@ export default function TasksPage() {
   };
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '9px 12px', borderRadius: 8,
-    border: '1.5px solid #e2e8f0', fontSize: 13, color: '#1e293b',
-    background: '#f8fafc', boxSizing: 'border-box', outline: 'none',
+    width: '100%', padding: '10px 12px', borderRadius: 8,
+    border: '1px solid #E8E4DE', fontSize: 13, color: '#1a1a1a',
+    background: '#FAF9F6', boxSizing: 'border-box', outline: 'none',
   };
-  const labelStyle: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 5 };
+  const labelStyle: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 5 };
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px 40px', fontFamily: 'Inter, system-ui, sans-serif' }}>
 
       {/* Header */}
-      <div style={{
-        background: 'linear-gradient(135deg, #f8f9fb 60%, #e9effd 100%)',
-        borderRadius: 18, boxShadow: '0 4px 16px rgba(30,41,59,0.10)',
-        padding: '28px 28px 22px', marginBottom: 18,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      <div className="tasks-header-row" style={{
+        display: 'flex', justifyContent: 'space-between',
+        marginBottom: 24, flexWrap: 'wrap', gap: 12,
       }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#1e293b', margin: 0, letterSpacing: '-0.5px' }}>Aufgaben</h1>
-          <div style={{ fontSize: 14, color: '#64748b', fontWeight: 400, marginTop: 5 }}>Verwalte und priorisiere deine Aufgaben im Kanban-Board.</div>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>Aufgaben</h1>
+          <div style={{ fontSize: 13, color: '#999', fontWeight: 400, marginTop: 4 }}>Verwalte und priorisiere deine Aufgaben im Kanban-Board.</div>
         </div>
         <button
           onClick={() => setShowForm(true)}
-          style={{ fontSize: 14, fontWeight: 600, borderRadius: 8, border: '1.5px solid #2563eb', background: '#2563eb', color: '#fff', padding: '9px 20px', cursor: 'pointer', transition: 'background 0.15s' }}
-          onMouseOver={e => (e.currentTarget.style.background = '#1d4ed8')}
-          onMouseOut={e => (e.currentTarget.style.background = '#2563eb')}
+          style={{ fontSize: 13, fontWeight: 600, borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', padding: '9px 20px', cursor: 'pointer' }}
         >
           + Neue Aufgabe
         </button>
@@ -93,9 +89,9 @@ export default function TasksPage() {
 
       {/* Create modal */}
       {showForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 500, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', fontWeight: 700, fontSize: 16, color: '#0f172a' }}>Neue Aufgabe</div>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(3px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#fff', borderRadius: 14, width: '100%', maxWidth: 500, boxShadow: '0 16px 48px rgba(0,0,0,0.12)', maxHeight: '90vh', overflowY: 'auto', border: '1px solid #E8E4DE' }}>
+            <div style={{ padding: '18px 24px', borderBottom: '1px solid #E8E4DE', fontWeight: 700, fontSize: 16, color: '#1a1a1a', background: '#FAF9F6' }}>Neue Aufgabe</div>
             <form onSubmit={handleSubmit}>
               <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
@@ -193,9 +189,9 @@ export default function TasksPage() {
                   <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} value={form.specification} onChange={e => setForm(f => ({ ...f, specification: e.target.value }))} placeholder="Freitext-Spezifikation (optional)" />
                 </div>
               </div>
-              <div style={{ padding: '16px 24px', borderTop: '1px solid #f1f5f9', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setShowForm(false)} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}>Abbrechen</button>
-                <button type="submit" disabled={saving} style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+              <div style={{ padding: '16px 24px', borderTop: '1px solid #E8E4DE', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setShowForm(false)} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #E8E4DE', background: '#fff', color: '#666', fontSize: 13, cursor: 'pointer' }}>Abbrechen</button>
+                <button type="submit" disabled={saving} style={{ padding: '9px 20px', borderRadius: 10, border: 'none', background: '#1a1a1a', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
                   {saving ? 'Erstelle...' : 'Aufgabe erstellen'}
                 </button>
               </div>

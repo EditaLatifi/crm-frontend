@@ -215,7 +215,7 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
                               style={{
                                 fontSize: 12, fontWeight: 600, padding: '6px 14px',
                                 borderRadius: 7, border: 'none', cursor: 'pointer',
-                                background: '#eff6ff', color: '#2563eb',
+                                background: '#eff6ff', color: '#1a1a1a',
                                 opacity: isLoading ? 0.6 : 1,
                               }}
                             >

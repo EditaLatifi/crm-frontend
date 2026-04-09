@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "../../src/api/client";
+import { formatCHF } from "../../src/lib/formatCurrency";
 
 interface MonthBucket {
   label: string;
@@ -66,7 +67,7 @@ export default function DealForecastWidget() {
   return (
     <div>
       <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>
-        Gewichtet gesamt: <b style={{ color: "#2563eb" }}>{Math.round(totalWeighted).toLocaleString("de-CH")} CHF</b>
+        Gewichtet gesamt: <b style={{ color: "#2563eb" }}>{formatCHF(totalWeighted)}</b>
       </div>
 
       <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 120, width: '100%', overflow: 'hidden' }}>

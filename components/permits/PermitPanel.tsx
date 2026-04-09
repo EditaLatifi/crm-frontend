@@ -72,7 +72,7 @@ export default function PermitPanel({ projectId, canEdit }: { projectId: string;
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Baubewilligungen ({permits.length})</div>
         {canEdit && (
-          <button onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#2563eb,#6366f1)', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+          <button onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
             <FiPlus size={14} /> Neue Bewilligung
           </button>
         )}
@@ -185,7 +185,7 @@ export default function PermitPanel({ projectId, canEdit }: { projectId: string;
             </div>
             <div style={{ padding: '16px 24px', borderTop: '1px solid #f1f5f9', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button onClick={() => setShowForm(false)} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}>Abbrechen</button>
-              <button onClick={save} disabled={saving || !form.title} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#2563eb,#6366f1)', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', opacity: saving || !form.title ? 0.7 : 1 }}>
+              <button onClick={save} disabled={saving || !form.title} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', opacity: saving || !form.title ? 0.7 : 1 }}>
                 {saving ? 'Speichern...' : 'Speichern'}
               </button>
             </div>

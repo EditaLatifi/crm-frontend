@@ -3,7 +3,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, fetchWithAuth } from "../../../../src/api/client";
-import { formatCHF } from "../../../../src/lib/formatCurrency";
+import { formatCurrency } from "../../../../src/lib/formatCurrency";
 import { SIA_PHASES as SIA_PHASES_FULL } from "../../../../src/lib/siaPhases";
 import { FiArrowLeft, FiEdit2, FiDollarSign, FiCalendar, FiUser, FiTag, FiPaperclip, FiMessageSquare, FiClock, FiDownload, FiTrash2, FiUpload } from "react-icons/fi";
 import FollowUpBadge from "../../../../components/ui/FollowUpBadge";
@@ -41,7 +41,7 @@ function formatSize(bytes: number) {
 const STAGE_BADGE: Record<string, { bg: string; color: string }> = {
   won: { bg: '#dcfce7', color: '#16a34a' },
   lost: { bg: '#fee2e2', color: '#dc2626' },
-  default: { bg: '#eff6ff', color: '#2563eb' },
+  default: { bg: '#eff6ff', color: '#1a1a1a' },
 };
 
 export default function DealDetailPage({ params }: { params: { id: string } }) {
@@ -149,7 +149,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-      <div style={{ width: 28, height: 28, border: '3px solid #e5e7eb', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+      <div style={{ width: 28, height: 28, border: '3px solid #e5e7eb', borderTopColor: '#1a1a1a', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
@@ -175,9 +175,9 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
               <div style={{ flex: 1 }}>
                 {editingField === 'name' ? (
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <input value={editVal} onChange={e => setEditVal(e.target.value)} style={{ flex: 1, fontSize: 22, fontWeight: 800, color: '#1e293b', border: '1.5px solid #2563eb', borderRadius: 8, padding: '4px 10px' }} autoFocus />
-                    <button onClick={() => saveField('name', editVal)} disabled={saving} style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 7, padding: '0 14px', cursor: 'pointer', fontWeight: 600 }}>Speichern</button>
-                    <button onClick={() => setEditingField(null)} style={{ background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: 7, padding: '0 12px', cursor: 'pointer' }}>✕</button>
+                    <input value={editVal} onChange={e => setEditVal(e.target.value)} style={{ flex: 1, fontSize: 22, fontWeight: 800, color: '#1e293b', border: '1.5px solid #1a1a1a', borderRadius: 8, padding: '4px 10px' }} autoFocus />
+                    <button onClick={() => saveField('name', editVal)} disabled={saving} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 7, padding: '0 14px', cursor: 'pointer', fontWeight: 600 }}>Speichern</button>
+                    <button onClick={() => setEditingField(null)} style={{ background: '#E8E4DE', color: '#64748b', border: 'none', borderRadius: 7, padding: '0 12px', cursor: 'pointer' }}>✕</button>
                   </div>
                 ) : (
                   <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -192,30 +192,63 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
               </div>
             </div>
 
-            {/* Phase tags */}
-            {selectedPhases.length > 0 && (
-              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 14 }}>
-                {selectedPhases.map(nr => (
-                  <span key={nr} style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', background: '#f3e8ff', borderRadius: 5, padding: '2px 8px' }}>
-                    Phase {nr}
-                  </span>
-                ))}
-              </div>
-            )}
+            {/* Phase progress bar */}
+            {selectedPhases.length > 0 && (() => {
+              const tasksByPhase: Record<string, any[]> = {};
+              dealTasks.forEach((t: any) => { if (t.phase) { (tasksByPhase[t.phase] ??= []).push(t); } });
+              const phaseData = selectedPhases.map(nr => {
+                const code = String(nr);
+                const pt = tasksByPhase[code] || [];
+                const status = getPhaseStatus(pt);
+                const label = SIA_PHASES.flatMap(g => g.items).find(i => i.nr === nr);
+                return { nr, code, status, name: label?.name || `Phase ${nr}`, tasks: pt.length };
+              });
+              const doneCount = phaseData.filter(p => p.status === 'done').length;
+              const inProgressCount = phaseData.filter(p => p.status === 'in_progress').length;
+              return (
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phasen-Fortschritt</span>
+                    <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                      {doneCount}/{phaseData.length} abgeschlossen{inProgressCount > 0 ? ` · ${inProgressCount} in Arbeit` : ''}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 3, borderRadius: 8, overflow: 'hidden' }}>
+                    {phaseData.map(p => {
+                      const bg = p.status === 'done' ? '#16a34a' : p.status === 'in_progress' ? '#eab308' : '#E8E4DE';
+                      return (
+                        <div key={p.nr} title={`${p.nr} ${p.name} — ${STATUS_CFG[p.status].label}`}
+                          style={{ flex: 1, height: 8, background: bg, borderRadius: 2, transition: 'background 0.3s' }} />
+                      );
+                    })}
+                  </div>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 8 }}>
+                    {phaseData.map(p => {
+                      const cfg = STATUS_CFG[p.status];
+                      return (
+                        <span key={p.nr} style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, borderRadius: 5, padding: '2px 7px', whiteSpace: 'nowrap' }}>
+                          {p.nr}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Fields grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {[
-                { label: 'Betrag', field: 'amount', icon: <FiDollarSign size={14} />, display: formatCHF(deal.amount ?? 0), type: 'number' },
+                { label: 'Betrag', field: 'amount', icon: <FiDollarSign size={14} />, display: formatCurrency(deal.amount ?? 0, deal.currency || 'CHF'), type: 'number' },
                 { label: 'Erw. Abschlussdatum', field: 'expectedCloseDate', icon: <FiCalendar size={14} />, display: deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString('de-CH') : '—', type: 'date' },
               ].map(item => (
-                <div key={item.field} style={{ background: '#f8fafc', borderRadius: 10, padding: '12px 16px' }}>
+                <div key={item.field} style={{ background: '#FAF9F6', borderRadius: 10, padding: '12px 16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{item.icon} {item.label}</div>
                   {editingField === item.field ? (
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <input type={item.type} value={editVal} onChange={e => setEditVal(e.target.value)} style={{ flex: 1, fontSize: 14, border: '1.5px solid #2563eb', borderRadius: 6, padding: '4px 8px' }} autoFocus />
-                      <button onClick={() => saveField(item.field, editVal)} style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, padding: '0 10px', cursor: 'pointer', fontSize: 12 }}>✓</button>
-                      <button onClick={() => setEditingField(null)} style={{ background: '#f1f5f9', border: 'none', borderRadius: 6, padding: '0 8px', cursor: 'pointer', fontSize: 12 }}>✕</button>
+                      <input type={item.type} value={editVal} onChange={e => setEditVal(e.target.value)} style={{ flex: 1, fontSize: 14, border: '1.5px solid #1a1a1a', borderRadius: 6, padding: '4px 8px' }} autoFocus />
+                      <button onClick={() => saveField(item.field, editVal)} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 6, padding: '0 10px', cursor: 'pointer', fontSize: 12 }}>✓</button>
+                      <button onClick={() => setEditingField(null)} style={{ background: '#E8E4DE', border: 'none', borderRadius: 6, padding: '0 8px', cursor: 'pointer', fontSize: 12 }}>✕</button>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -234,10 +267,10 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {stages.map((s: any) => {
                 const active = s.id === deal.stageId;
-                const color = s.isWon ? '#16a34a' : s.isLost ? '#dc2626' : '#2563eb';
+                const color = s.isWon ? '#16a34a' : s.isLost ? '#dc2626' : '#1a1a1a';
                 return (
                   <button key={s.id} onClick={() => !active && handleStageChange(s.id)} disabled={active || saving}
-                    style={{ padding: '7px 14px', borderRadius: 8, border: active ? `2px solid ${color}` : '1.5px solid #e5e7eb', background: active ? `${color}12` : '#f8fafc', color: active ? color : '#64748b', fontWeight: active ? 700 : 500, fontSize: 12, cursor: active ? 'default' : 'pointer' }}>
+                    style={{ padding: '7px 14px', borderRadius: 8, border: active ? `2px solid ${color}` : '1.5px solid #e5e7eb', background: active ? `${color}12` : '#FAF9F6', color: active ? color : '#64748b', fontWeight: active ? 700 : 500, fontSize: 12, cursor: active ? 'default' : 'pointer' }}>
                     {s.name}
                   </button>
                 );
@@ -254,7 +287,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                 ['phases', <FiTag size={14} key="p" />, `Leistungsphasen (${selectedPhases.length})`],
               ] as [string, any, string][]).map(([tab, icon, label]) => (
                 <button key={tab} onClick={() => setActiveTab(tab as any)}
-                  style={{ flex: 1, padding: '14px 16px', border: 'none', background: activeTab === tab ? '#fff' : '#f8fafc', color: activeTab === tab ? '#2563eb' : '#64748b', fontWeight: activeTab === tab ? 700 : 500, fontSize: 13, cursor: 'pointer', borderBottom: activeTab === tab ? '2px solid #2563eb' : '2px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  style={{ flex: 1, padding: '14px 16px', border: 'none', background: activeTab === tab ? '#fff' : '#FAF9F6', color: activeTab === tab ? '#1a1a1a' : '#64748b', fontWeight: activeTab === tab ? 700 : 500, fontSize: 13, cursor: 'pointer', borderBottom: activeTab === tab ? '2px solid #1a1a1a' : '2px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                   {icon} {label}
                 </button>
               ))}
@@ -268,16 +301,16 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                     <textarea value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Kommentar eingeben..."
                       style={{ width: '100%', minHeight: 80, borderRadius: 9, border: '1.5px solid #e5e7eb', padding: '10px 14px', fontSize: 13, resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
                     <button type="submit" disabled={!noteText.trim() || saving}
-                      style={{ marginTop: 8, background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontWeight: 700, fontSize: 13, cursor: noteText.trim() ? 'pointer' : 'not-allowed', opacity: noteText.trim() ? 1 : 0.5 }}>
+                      style={{ marginTop: 8, background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontWeight: 700, fontSize: 13, cursor: noteText.trim() ? 'pointer' : 'not-allowed', opacity: noteText.trim() ? 1 : 0.5 }}>
                       Kommentar hinzufügen
                     </button>
                   </form>
                   {notes.length === 0 ? (
                     <div style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Noch keine Kommentare.</div>
                   ) : notes.map(n => (
-                    <div key={n.id} style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10, padding: '14px 18px', marginBottom: 10 }}>
+                    <div key={n.id} style={{ background: '#FAF9F6', border: '1px solid #e5e7eb', borderRadius: 10, padding: '14px 18px', marginBottom: 10 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#1a1a1a', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
                           {(n.createdBy?.name || '?').charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -301,7 +334,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                     onDrop={e => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files.length) handleFileUpload(e.dataTransfer.files); }}
                     onClick={() => fileInputRef.current?.click()}
                     style={{
-                      border: `2px dashed ${dragOver ? '#2563eb' : '#d1d5db'}`,
+                      border: `2px dashed ${dragOver ? '#1a1a1a' : '#d1d5db'}`,
                       borderRadius: 12, padding: '28px 20px', textAlign: 'center',
                       cursor: 'pointer', marginBottom: 20, transition: 'border-color 0.2s',
                       background: dragOver ? '#eff6ff' : '#fafafa',
@@ -309,8 +342,8 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                   >
                     <input ref={fileInputRef} type="file" multiple accept={ALLOWED_EXT.join(',')} style={{ display: 'none' }}
                       onChange={e => { if (e.target.files?.length) { handleFileUpload(e.target.files); e.target.value = ''; } }} />
-                    <FiUpload size={24} color={dragOver ? '#2563eb' : '#94a3b8'} />
-                    <div style={{ fontSize: 14, fontWeight: 600, color: dragOver ? '#2563eb' : '#64748b', marginTop: 8 }}>
+                    <FiUpload size={24} color={dragOver ? '#1a1a1a' : '#94a3b8'} />
+                    <div style={{ fontSize: 14, fontWeight: 600, color: dragOver ? '#1a1a1a' : '#64748b', marginTop: 8 }}>
                       {uploading ? 'Wird hochgeladen…' : 'Dateien hierher ziehen oder klicken'}
                     </div>
                     <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>
@@ -321,7 +354,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                   {attachments.length === 0 ? (
                     <div style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Noch keine Anhänge.</div>
                   ) : attachments.map(a => (
-                    <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 16px', marginBottom: 8 }}>
+                    <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#FAF9F6', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 16px', marginBottom: 8 }}>
                       <FiPaperclip size={16} color="#64748b" />
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 600, fontSize: 13, color: '#1e293b' }}>{a.filename}</div>
@@ -331,7 +364,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                         </div>
                       </div>
                       <a href={a.url} target="_blank" rel="noopener noreferrer" download
-                        style={{ background: '#eff6ff', border: 'none', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', color: '#2563eb', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+                        style={{ background: '#eff6ff', border: 'none', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', color: '#1a1a1a', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
                         <FiDownload size={14} />
                       </a>
                       <button onClick={() => deleteAttachment(a.id)}
@@ -398,9 +431,8 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
               { label: 'Zuletzt geändert', value: deal.updatedAt ? new Date(deal.updatedAt).toLocaleDateString('de-CH') : '—', icon: <FiCalendar size={13} /> },
               { label: 'Besitzer', value: deal.owner?.name || deal.ownerUserId || '—', icon: <FiUser size={13} /> },
               { label: 'Erstellt von', value: deal.creator?.name || deal.createdByUserId || '—', icon: <FiUser size={13} /> },
-              { label: 'Deal-Score', value: deal.dealScore ?? 0, icon: <FiTag size={13} /> },
             ].map(item => (
-              <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
+              <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #E8E4DE' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#94a3b8' }}>{item.icon} {item.label}</div>
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{item.value}</span>
               </div>
@@ -412,7 +444,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
               <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>Verknüpftes Konto</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>{deal.account.name}</div>
               <div style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>{deal.account.type}</div>
-              <Link href="/accounts" style={{ fontSize: 12, color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>Konto anzeigen →</Link>
+              <Link href="/accounts" style={{ fontSize: 12, color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>Konto anzeigen →</Link>
             </div>
           )}
         </div>
@@ -423,7 +455,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
 
 /* ══════════ Phase Overview Table ══════════ */
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-  pending:     { label: 'Ausstehend',      color: '#64748b', bg: '#f1f5f9' },
+  pending:     { label: 'Ausstehend',      color: '#64748b', bg: '#E8E4DE' },
   in_progress: { label: 'In Bearbeitung',  color: '#d97706', bg: '#fef3c7' },
   done:        { label: 'Abgeschlossen',   color: '#16a34a', bg: '#dcfce7' },
 };
@@ -482,8 +514,8 @@ function PhaseOverview({ deal, tasks, selectedPhases, onBudgetSave }: {
   // Totals
   let totalBudget = 0, totalUsed = 0;
 
-  const thS: React.CSSProperties = { padding: '10px 12px', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid #e5e7eb', textAlign: 'left', background: '#f8fafc', whiteSpace: 'nowrap' };
-  const tdS: React.CSSProperties = { padding: '10px 12px', borderBottom: '1px solid #f1f5f9', fontSize: 12 };
+  const thS: React.CSSProperties = { padding: '10px 12px', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid #e5e7eb', textAlign: 'left', background: '#FAF9F6', whiteSpace: 'nowrap' };
+  const tdS: React.CSSProperties = { padding: '10px 12px', borderBottom: '1px solid #E8E4DE', fontSize: 12 };
 
   return (
     <div style={{ marginTop: 24, borderTop: '1px solid #e5e7eb', paddingTop: 20 }}>
@@ -537,7 +569,7 @@ function PhaseOverview({ deal, tasks, selectedPhases, onBudgetSave }: {
                     <td style={tdS}>
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                         {assignees.slice(0, 3).map((n, i) => (
-                          <span key={i} style={{ fontSize: 10, background: '#eff6ff', color: '#2563eb', borderRadius: 4, padding: '1px 6px', fontWeight: 600 }}>{n.split(' ')[0]}</span>
+                          <span key={i} style={{ fontSize: 10, background: '#eff6ff', color: '#1a1a1a', borderRadius: 4, padding: '1px 6px', fontWeight: 600 }}>{n.split(' ')[0]}</span>
                         ))}
                         {assignees.length > 3 && <span style={{ fontSize: 10, color: '#94a3b8' }}>+{assignees.length - 3}</span>}
                         {assignees.length === 0 && <span style={{ color: '#cbd5e1', fontSize: 11 }}>—</span>}
@@ -551,7 +583,7 @@ function PhaseOverview({ deal, tasks, selectedPhases, onBudgetSave }: {
                           style={{ width: 50, padding: '2px 4px', borderRadius: 4, border: '1px solid #d1d5db', fontSize: 11, textAlign: 'center' }} />
                         <button onClick={e => { e.stopPropagation(); saveBudget(row.code); }}
                           disabled={savingPhase === row.code}
-                          style={{ padding: '1px 6px', borderRadius: 3, border: 'none', background: '#2563eb', color: '#fff', fontSize: 10, cursor: 'pointer' }}>
+                          style={{ padding: '1px 6px', borderRadius: 3, border: 'none', background: '#1a1a1a', color: '#fff', fontSize: 10, cursor: 'pointer' }}>
                           {savingPhase === row.code ? '…' : '✓'}
                         </button>
                       </div>
@@ -571,7 +603,7 @@ function PhaseOverview({ deal, tasks, selectedPhases, onBudgetSave }: {
                     return (
                       <tr key={t.id} style={{ background: '#f0f7ff' }}>
                         <td style={{ ...tdS, paddingLeft: row.isSub ? 44 : 32, fontSize: 12 }} colSpan={2}>
-                          <Link href={`/tasks/${t.id}`} style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>{t.title}</Link>
+                          <Link href={`/tasks/${t.id}`} style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>{t.title}</Link>
                           <span style={{ fontSize: 10, color: '#94a3b8', marginLeft: 8 }}>{t.assignee?.name || ''}</span>
                         </td>
                         <td style={{ ...tdS, fontSize: 11 }}>{t.budgetHours ?? '—'}</td>
@@ -603,7 +635,7 @@ function PhaseOverview({ deal, tasks, selectedPhases, onBudgetSave }: {
             ))}
           </tbody>
           <tfoot>
-            <tr style={{ background: '#f8fafc', fontWeight: 700 }}>
+            <tr style={{ background: '#FAF9F6', fontWeight: 700 }}>
               <td style={{ ...tdS, fontWeight: 700, color: '#1e293b', borderTop: '2px solid #e5e7eb' }} colSpan={2}>Gesamtsumme</td>
               <td style={{ ...tdS, fontWeight: 700, color: '#1e293b', borderTop: '2px solid #e5e7eb' }}>{totalBudget.toFixed(1)}</td>
               <td style={{ ...tdS, fontWeight: 700, color: totalUsed > totalBudget && totalBudget > 0 ? '#dc2626' : '#1e293b', borderTop: '2px solid #e5e7eb' }}>{totalUsed.toFixed(1)}</td>

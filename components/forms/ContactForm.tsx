@@ -82,7 +82,7 @@ export default function ContactForm({ onSubmit, initialData }: {
           </select>
         )}
       </div>
-      <button type="submit" disabled={saving} style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', marginTop: 8, opacity: saving ? 0.7 : 1 }}>{saving ? 'Speichern…' : 'Kontakt speichern'}</button>
+      <button type="submit" disabled={saving} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 24px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', marginTop: 8, opacity: saving ? 0.7 : 1, fontSize: 14 }}>{saving ? 'Speichern…' : 'Kontakt speichern'}</button>
     </form>
   );
 }

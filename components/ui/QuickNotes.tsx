@@ -93,7 +93,7 @@ export default function QuickNotes({ entityType, entityId, initialNotes }: Quick
             onClick={handleSavePlain}
             disabled={saving}
             style={{
-              background: "#2563eb", color: "#fff", border: "none", borderRadius: 7,
+              background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8,
               padding: "7px 16px", fontWeight: 600, fontSize: 13,
               cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1,
             }}
@@ -124,7 +124,7 @@ export default function QuickNotes({ entityType, entityId, initialNotes }: Quick
           onClick={handleAddNote}
           disabled={saving || !input.trim()}
           style={{
-            background: "#2563eb", color: "#fff", border: "none", borderRadius: 8,
+            background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8,
             padding: "8px 14px", cursor: (saving || !input.trim()) ? "not-allowed" : "pointer",
             opacity: (saving || !input.trim()) ? 0.5 : 1,
             display: "flex", alignItems: "center", gap: 5, fontWeight: 600, fontSize: 13,

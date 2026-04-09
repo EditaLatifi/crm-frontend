@@ -125,7 +125,7 @@ export default function VacationPage() {
         </div>
         <button
           onClick={() => setModalOpen(true)}
-          style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}
+          style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}
         >
           + Antrag stellen
         </button>
@@ -135,7 +135,7 @@ export default function VacationPage() {
       <div style={{ display: "flex", gap: 16, marginBottom: 28, flexWrap: "wrap" }}>
         {myStats?.quota != null ? (
           <>
-            <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1.5px solid #e5e7eb", borderLeft: "4px solid #2563eb", borderRadius: 12, padding: "16px 20px" }}>
+            <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1.5px solid #e5e7eb", borderLeft: "4px solid #1a1a1a", borderRadius: 12, padding: "16px 20px" }}>
               <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Kontingent {year}</div>
               <div style={{ fontSize: 28, fontWeight: 800, color: "#1e293b" }}>{myStats.quota} AT</div>
             </div>
@@ -158,7 +158,7 @@ export default function VacationPage() {
           <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Ausstehende Anträge</div>
           <div style={{ fontSize: 28, fontWeight: 800, color: "#1e293b" }}>{pending}</div>
         </div>
-        <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1.5px solid #e5e7eb", borderLeft: "4px solid #2563eb", borderRadius: 12, padding: "16px 20px" }}>
+        <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1.5px solid #e5e7eb", borderLeft: "4px solid #1a1a1a", borderRadius: 12, padding: "16px 20px" }}>
           <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Anträge gesamt</div>
           <div style={{ fontSize: 28, fontWeight: 800, color: "#1e293b" }}>{requests.length}</div>
         </div>
@@ -166,7 +166,7 @@ export default function VacationPage() {
 
       {/* Request list */}
       <div style={{ background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, overflow: "hidden" }}>
-        <div style={{ padding: "14px 20px", borderBottom: "1px solid #f1f5f9" }}>
+        <div style={{ padding: "14px 20px", borderBottom: "1px solid #E8E4DE" }}>
           <span style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>Alle Anträge</span>
         </div>
         {loading ? (
@@ -180,9 +180,9 @@ export default function VacationPage() {
           requests.map(r => {
             const s = STATUS_STYLE[r.status];
             return (
-              <div key={r.id} style={{ padding: "16px 20px", borderBottom: "1px solid #f8fafc", display: "flex", alignItems: "flex-start", gap: 16 }}>
-                <div style={{ flexShrink: 0, textAlign: "center", background: "#f8fafc", borderRadius: 10, padding: "10px 14px", minWidth: 70 }}>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: "#2563eb" }}>
+              <div key={r.id} style={{ padding: "16px 20px", borderBottom: "1px solid #FAF9F6", display: "flex", alignItems: "flex-start", gap: 16 }}>
+                <div style={{ flexShrink: 0, textAlign: "center", background: "#FAF9F6", borderRadius: 10, padding: "10px 14px", minWidth: 70 }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: "#1a1a1a" }}>
                     {new Date(r.startDate).getDate()}
                   </div>
                   <div style={{ fontSize: 11, color: "#94a3b8" }}>
@@ -197,7 +197,7 @@ export default function VacationPage() {
                     <span style={{ fontSize: 11, fontWeight: 700, color: s.color, background: s.bg, borderRadius: 20, padding: "2px 10px" }}>
                       {s.label}
                     </span>
-                    <span style={{ fontSize: 12, color: "#64748b", background: "#f1f5f9", borderRadius: 6, padding: "2px 8px" }}>
+                    <span style={{ fontSize: 12, color: "#64748b", background: "#E8E4DE", borderRadius: 6, padding: "2px 8px" }}>
                       {r.days} Arbeitstag{r.days !== 1 ? "e" : ""}
                     </span>
                   </div>
@@ -259,7 +259,7 @@ export default function VacationPage() {
           </div>
 
           {previewDays > 0 && (
-            <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "8px 14px", marginBottom: 14, fontSize: 13, color: "#2563eb", fontWeight: 600 }}>
+            <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "8px 14px", marginBottom: 14, fontSize: 13, color: "#1a1a1a", fontWeight: 600 }}>
               📅 {previewDays} Arbeitstag{previewDays !== 1 ? "e" : ""} ausgewählt
             </div>
           )}
@@ -288,11 +288,11 @@ export default function VacationPage() {
 
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 20 }}>
             <button type="button" onClick={() => setModalOpen(false)}
-              style={{ background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 7, padding: "9px 20px", fontWeight: 600, cursor: "pointer" }}>
+              style={{ background: "#E8E4DE", color: "#64748b", border: "none", borderRadius: 7, padding: "9px 20px", fontWeight: 600, cursor: "pointer" }}>
               Abbrechen
             </button>
             <button type="submit" disabled={saving || previewDays === 0}
-              style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 7, padding: "9px 20px", fontWeight: 700, cursor: "pointer", opacity: (saving || previewDays === 0) ? 0.6 : 1 }}>
+              style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 7, padding: "9px 20px", fontWeight: 700, cursor: "pointer", opacity: (saving || previewDays === 0) ? 0.6 : 1 }}>
               {saving ? "Einreichen…" : "Antrag einreichen"}
             </button>
           </div>

@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from 'react';
 
-const field: React.CSSProperties = { width: '100%', padding: '8px 10px', borderRadius: 6, border: '1.5px solid #e2e8f0', fontSize: 13, fontFamily: 'inherit', boxSizing: 'border-box' };
+const field: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #E8E4DE', fontSize: 13, fontFamily: 'inherit', boxSizing: 'border-box', background: '#FAF9F6', color: '#1a1a1a' };
 const errStyle: React.CSSProperties = { color: '#dc2626', fontSize: 12, marginTop: 3 };
-const label: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 5 };
+const label: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: '#555', display: 'block', marginBottom: 5 };
 
 const VENDOR_TYPE_OPTIONS = [
   { value: 'ARCHITEKT', label: 'Architekt' },
@@ -22,7 +22,11 @@ const VENDOR_TYPE_OPTIONS = [
 export default function AccountForm({ onSubmit, initialData }: { onSubmit: (data: any) => void; initialData?: any; }) {
   const [name, setName] = useState(initialData?.name || '');
   const [type, setType] = useState(initialData?.type || 'CLIENT');
-  const [address, setAddress] = useState(initialData?.address || '');
+  const [addressStreet, setAddressStreet] = useState(initialData?.addressStreet || '');
+  const [addressNumber, setAddressNumber] = useState(initialData?.addressNumber || '');
+  const [addressZip, setAddressZip] = useState(initialData?.addressZip || '');
+  const [addressCity, setAddressCity] = useState(initialData?.addressCity || '');
+  const [addressCanton, setAddressCanton] = useState(initialData?.addressCanton || '');
   const [phone, setPhone] = useState(initialData?.phone || '');
   const [email, setEmail] = useState(initialData?.email || '');
   const [notes, setNotes] = useState(initialData?.notes || '');
@@ -48,7 +52,7 @@ export default function AccountForm({ onSubmit, initialData }: { onSubmit: (data
     if (Object.keys(errs).length > 0) return;
     setSaving(true);
     try {
-      const payload: any = { name: name.trim(), type, address, phone, email, notes };
+      const payload: any = { name: name.trim(), type, addressStreet, addressNumber, addressZip, addressCity, addressCanton, phone, email, notes };
       if (type === 'SUPPLIER') {
         if (vendorType) payload.vendorType = vendorType;
         if (rating) payload.rating = parseInt(rating);
@@ -73,12 +77,36 @@ export default function AccountForm({ onSubmit, initialData }: { onSubmit: (data
         <select value={type} onChange={e => setType(e.target.value)} style={{ ...field }}>
           <option value="CLIENT">Kunde</option>
           <option value="POTENTIAL_CLIENT">Interessent</option>
+          <option value="PARTNER">Partner</option>
           <option value="SUPPLIER">Lieferant</option>
         </select>
       </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10 }}>
+        <div>
+          <label style={label}>Strasse</label>
+          <input value={addressStreet} onChange={e => setAddressStreet(e.target.value)} style={field} placeholder="Bahnhofstrasse" />
+        </div>
+        <div style={{ width: 90 }}>
+          <label style={label}>Nr.</label>
+          <input value={addressNumber} onChange={e => setAddressNumber(e.target.value)} style={field} placeholder="12a" />
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: 10 }}>
+        <div>
+          <label style={label}>PLZ</label>
+          <input value={addressZip} onChange={e => setAddressZip(e.target.value)} style={field} placeholder="8001" maxLength={4} />
+        </div>
+        <div>
+          <label style={label}>Ort</label>
+          <input value={addressCity} onChange={e => setAddressCity(e.target.value)} style={field} placeholder="Zürich" />
+        </div>
+      </div>
       <div>
-        <label style={label}>Adresse</label>
-        <input value={address} onChange={e => setAddress(e.target.value)} style={field} placeholder="Straße, PLZ, Ort" />
+        <label style={label}>Kanton</label>
+        <select value={addressCanton} onChange={e => setAddressCanton(e.target.value)} style={{ ...field }}>
+          <option value="">Kein Kanton</option>
+          {['AG','AI','AR','BE','BL','BS','FR','GE','GL','GR','JU','LU','NE','NW','OW','SG','SH','SO','SZ','TG','TI','UR','VD','VS','ZG','ZH'].map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
       </div>
       <div>
         <label style={label}>Telefon</label>
@@ -120,7 +148,7 @@ export default function AccountForm({ onSubmit, initialData }: { onSubmit: (data
           </div>
         </div>
       )}
-      <button type="submit" disabled={saving} style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 7, padding: '10px 20px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontSize: 14, marginTop: 4, opacity: saving ? 0.7 : 1 }}>
+      <button type="submit" disabled={saving} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 24px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontSize: 14, marginTop: 4, opacity: saving ? 0.7 : 1 }}>
         {saving ? 'Speichern…' : 'Speichern'}
       </button>
     </form>

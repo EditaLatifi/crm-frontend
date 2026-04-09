@@ -13,6 +13,8 @@ interface Task {
   assigneeName?: string;
   assignedToUserId?: string;
   assignee?: { id: string; name?: string; email?: string } | null;
+  project?: { id: string; name: string } | null;
+  account?: { id: string; name: string } | null;
 }
 
 const PRIORITY_LABELS: Record<string, string> = { HIGH: 'Wichtig', MEDIUM: 'Mittel', LOW: 'Niedrig' };
@@ -98,8 +100,14 @@ export default function TasksTable() {
                         <Text fontWeight="bold" fontSize="md">{t.title}</Text>
                         <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: pc.bg, color: pc.color }}>{PRIORITY_LABELS[t.priority || 'LOW']}</span>
                       </Flex>
+                      {(t.project?.name || t.account?.name) && (
+                        <Flex gap={2} fontSize="xs" color="gray.500" mb={1} flexWrap="wrap">
+                          {t.project?.name && <span style={{ background: '#ede9fe', color: '#7c3aed', borderRadius: 4, padding: '1px 6px', fontWeight: 600 }}>{t.project.name}</span>}
+                          {t.account?.name && <span style={{ background: '#dbeafe', color: '#2563eb', borderRadius: 4, padding: '1px 6px', fontWeight: 600 }}>{t.account.name}</span>}
+                        </Flex>
+                      )}
                       <Flex align="center" gap={2} fontSize="sm" color="gray.600">
-                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{initials}</div>
+                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#e8a838', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{initials}</div>
                         <Text>{assigneeName}</Text>
                         {t.dueDate && <Text ml={2} color={new Date(t.dueDate) < new Date() ? 'red.500' : 'gray.400'}>Fällig: {new Date(t.dueDate).toLocaleDateString('de-CH')}</Text>}
                       </Flex>
@@ -161,7 +169,7 @@ export default function TasksTable() {
                                   </div>
                                 )}
                                 <Flex align="center" gap={2} fontSize="sm" color="gray.600">
-                                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{initials}</div>
+                                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#e8a838', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{initials}</div>
                                   <Text>{assigneeName}</Text>
                                   {t.dueDate && <Text ml={2} color={new Date(t.dueDate) < new Date() ? 'red.500' : 'gray.400'}>Fällig: {new Date(t.dueDate).toLocaleDateString('de-CH')}</Text>}
                                 </Flex>

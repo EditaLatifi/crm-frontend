@@ -53,7 +53,7 @@ export default function VendorPanel({ projectId, canEdit }: { projectId: string;
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Lieferanten ({assigned.length})</div>
         {canEdit && (
-          <button onClick={() => setShowAdd(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#2563eb,#6366f1)', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+          <button onClick={() => setShowAdd(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
             <FiPlus size={14} /> Lieferant zuweisen
           </button>
         )}
@@ -121,7 +121,7 @@ export default function VendorPanel({ projectId, canEdit }: { projectId: string;
             </div>
             <div style={{ padding: '16px 24px', borderTop: '1px solid #f1f5f9', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button onClick={() => setShowAdd(false)} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}>Abbrechen</button>
-              <button onClick={assign} disabled={saving || !selectedAccountId} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#2563eb,#6366f1)', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', opacity: saving || !selectedAccountId ? 0.7 : 1 }}>
+              <button onClick={assign} disabled={saving || !selectedAccountId} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', opacity: saving || !selectedAccountId ? 0.7 : 1 }}>
                 {saving ? 'Zuweisen...' : 'Zuweisen'}
               </button>
             </div>

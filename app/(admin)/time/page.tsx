@@ -139,11 +139,11 @@ function TimePageContent() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {!loading && (
-            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 20px', textAlign: 'center' }}>
+            <div style={{ background: '#fff', border: '1px solid #E8E4DE', borderRadius: 10, padding: '10px 20px', textAlign: 'center' }}>
               <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 {hasFilters ? 'Gefiltert' : 'Gesamt'}
               </div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#2563eb' }}>{totalH}h {totalM}m</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#1a1a1a' }}>{totalH}h {totalM}m</div>
               <div style={{ fontSize: 11, color: '#94a3b8' }}>{entries.length} Einträge</div>
             </div>
           )}
@@ -151,8 +151,8 @@ function TimePageContent() {
             onClick={() => exportCSV(entries, isAdmin)}
             disabled={loading || entries.length === 0}
             style={{
-              padding: '9px 18px', borderRadius: 8, border: '1.5px solid #2563eb',
-              background: '#fff', color: '#2563eb', fontWeight: 600, fontSize: 13,
+              padding: '9px 18px', borderRadius: 8, border: '1.5px solid #1a1a1a',
+              background: '#fff', color: '#1a1a1a', fontWeight: 600, fontSize: 13,
               cursor: loading || entries.length === 0 ? 'not-allowed' : 'pointer',
               opacity: loading || entries.length === 0 ? 0.5 : 1,
             }}
@@ -164,7 +164,7 @@ function TimePageContent() {
 
       {/* Filter bar */}
       <div style={{
-        background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0',
+        background: '#fff', borderRadius: 10, border: '1px solid #E8E4DE',
         padding: '16px 20px', marginBottom: 16,
         display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end',
       }}>
@@ -202,7 +202,7 @@ function TimePageContent() {
         {hasFilters && (
           <button
             onClick={() => { setFilterUser(''); setFilterFrom(''); setFilterTo(''); setFilterAccount(''); setFilterProject(''); }}
-            style={{ padding: '7px 14px', borderRadius: 6, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#64748b', fontSize: 12, cursor: 'pointer', height: 34 }}
+            style={{ padding: '7px 14px', borderRadius: 6, border: '1px solid #E8E4DE', background: '#FAF9F6', color: '#64748b', fontSize: 12, cursor: 'pointer', height: 34 }}
           >
             Filter zurücksetzen
           </button>
@@ -210,7 +210,7 @@ function TimePageContent() {
       </div>
 
       {/* Table */}
-      <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #f1f5f9' }}>
+      <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #E8E4DE' }}>
         {loading ? (
           <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Lade...</div>
         ) : (
@@ -218,7 +218,7 @@ function TimePageContent() {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
-                  <tr style={{ background: '#f8fafc' }}>
+                  <tr style={{ background: '#FAF9F6' }}>
                     {isAdmin && <th style={thStyle}>Benutzer</th>}
                     <th style={thStyle}>Konto</th>
                     <th style={thStyle}>Projekt</th>
@@ -247,19 +247,19 @@ function TimePageContent() {
                       <td style={tdStyle}>{e.account?.name ?? e.accountId ?? '—'}</td>
                       <td style={tdStyle}>
                         {e.project
-                          ? <Link href={`/projects/${e.project.id}`} style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 500 }}>{e.project.name}</Link>
+                          ? <Link href={`/projects/${e.project.id}`} style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: 500 }}>{e.project.name}</Link>
                           : <span style={{ color: '#94a3b8' }}>—</span>
                         }
                       </td>
                       <td style={tdStyle}>
                         {e.task
-                          ? <Link href={`/tasks/${e.task.id}`} style={{ color: '#2563eb', textDecoration: 'none' }}>{e.task.title}</Link>
+                          ? <Link href={`/tasks/${e.task.id}`} style={{ color: '#1a1a1a', textDecoration: 'none' }}>{e.task.title}</Link>
                           : <span style={{ color: '#94a3b8' }}>—</span>
                         }
                       </td>
                       <td style={tdStyle}>{e.startedAt ? new Date(e.startedAt).toLocaleString('de-CH') : '—'}</td>
                       <td style={tdStyle}>{e.endedAt ? new Date(e.endedAt).toLocaleString('de-CH') : '—'}</td>
-                      <td style={{ ...tdStyle, fontWeight: 600, color: '#2563eb', whiteSpace: 'nowrap' }}>
+                      <td style={{ ...tdStyle, fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap' }}>
                         {typeof e.durationMinutes === 'number' ? formatDuration(e.durationMinutes) : '—'}
                       </td>
                       <td style={{ ...tdStyle, color: '#64748b' }}>{e.description || '—'}</td>
@@ -271,7 +271,7 @@ function TimePageContent() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderTop: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderTop: '1px solid #E8E4DE' }}>
                 <span style={{ fontSize: 13, color: '#64748b' }}>
                   {entries.length} Einträge · Seite {page} / {totalPages}
                 </span>
@@ -279,14 +279,14 @@ function TimePageContent() {
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    style={{ padding: '5px 14px', borderRadius: 6, border: '1px solid #e2e8f0', background: page === 1 ? '#f8fafc' : '#fff', color: page === 1 ? '#94a3b8' : '#1e293b', cursor: page === 1 ? 'not-allowed' : 'pointer', fontSize: 13 }}
+                    style={{ padding: '5px 14px', borderRadius: 6, border: '1px solid #E8E4DE', background: page === 1 ? '#FAF9F6' : '#fff', color: page === 1 ? '#94a3b8' : '#1e293b', cursor: page === 1 ? 'not-allowed' : 'pointer', fontSize: 13 }}
                   >
                     ← Zurück
                   </button>
                   <button
                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
-                    style={{ padding: '5px 14px', borderRadius: 6, border: '1px solid #e2e8f0', background: page === totalPages ? '#f8fafc' : '#fff', color: page === totalPages ? '#94a3b8' : '#1e293b', cursor: page === totalPages ? 'not-allowed' : 'pointer', fontSize: 13 }}
+                    style={{ padding: '5px 14px', borderRadius: 6, border: '1px solid #E8E4DE', background: page === totalPages ? '#FAF9F6' : '#fff', color: page === totalPages ? '#94a3b8' : '#1e293b', cursor: page === totalPages ? 'not-allowed' : 'pointer', fontSize: 13 }}
                   >
                     Weiter →
                   </button>
@@ -303,11 +303,11 @@ function TimePageContent() {
 const thStyle: React.CSSProperties = {
   padding: '11px 16px', fontWeight: 700, color: '#374151',
   borderBottom: '2px solid #e5e7eb', textAlign: 'left',
-  background: '#f8fafc', whiteSpace: 'nowrap',
+  background: '#FAF9F6', whiteSpace: 'nowrap',
 };
 
 const tdStyle: React.CSSProperties = {
-  padding: '10px 16px', borderBottom: '1px solid #f1f5f9',
+  padding: '10px 16px', borderBottom: '1px solid #E8E4DE',
   color: '#1e293b', maxWidth: 200, overflow: 'hidden',
   textOverflow: 'ellipsis', whiteSpace: 'nowrap',
 };

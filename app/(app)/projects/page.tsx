@@ -8,6 +8,7 @@ import ProjectForm from '../../../components/projects/ProjectForm';
 import Modal from '../../../components/ui/Modal';
 import { STATUS_LABELS, STATUS_COLORS, TYPE_LABELS } from '../../../components/projects/phaseConfig';
 import { FiSearch, FiPlus, FiBarChart2, FiGrid, FiList, FiRefreshCw } from 'react-icons/fi';
+import { formatCurrency } from '../../../src/lib/formatCurrency';
 import './projects.css';
 
 const STATUSES = ['ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED'];
@@ -80,7 +81,7 @@ export default function ProjectsPage() {
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '9px 16px', borderRadius: 8, border: '1px solid #e2e8f0',
                 background: showStats ? '#eff6ff' : '#fff',
-                color: showStats ? '#2563eb' : '#64748b',
+                color: showStats ? '#1a1a1a' : '#64748b',
                 fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >
@@ -99,9 +100,9 @@ export default function ProjectsPage() {
               style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 padding: '10px 20px', borderRadius: 9, border: 'none',
-                background: 'linear-gradient(135deg,#2563eb,#6366f1)', color: '#fff',
+                background: '#1a1a1a', color: '#fff',
                 fontWeight: 700, fontSize: 14, cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(37,99,235,0.25)', whiteSpace: 'nowrap',
+                boxShadow: 'none', whiteSpace: 'nowrap',
               }}
             >
               <FiPlus size={15} /> Neues Projekt
@@ -139,7 +140,7 @@ export default function ProjectsPage() {
         <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 8, padding: 3, gap: 2, flexShrink: 0 }}>
           {(['grid', 'list'] as View[]).map(v => (
             <button key={v} onClick={() => setView(v)}
-              style={{ padding: '5px 12px', borderRadius: 6, border: 'none', background: view === v ? '#fff' : 'transparent', color: view === v ? '#2563eb' : '#64748b', cursor: 'pointer', fontSize: 13, boxShadow: view === v ? '0 1px 3px rgba(0,0,0,0.08)' : 'none' }}>
+              style={{ padding: '5px 12px', borderRadius: 6, border: 'none', background: view === v ? '#fff' : 'transparent', color: view === v ? '#1a1a1a' : '#64748b', cursor: 'pointer', fontSize: 13, boxShadow: view === v ? '0 1px 3px rgba(0,0,0,0.08)' : 'none' }}>
               {v === 'grid' ? <FiGrid size={14} /> : <FiList size={14} />}
             </button>
           ))}
@@ -179,7 +180,7 @@ export default function ProjectsPage() {
           </div>
           {isAdmin && projects.length === 0 && (
             <button onClick={() => setCreateOpen(true)}
-              style={{ padding: '10px 24px', borderRadius: 9, border: 'none', background: 'linear-gradient(135deg,#2563eb,#6366f1)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+              style={{ padding: '10px 24px', borderRadius: 9, border: 'none', background: '#1a1a1a', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
               + Erstes Projekt erstellen
             </button>
           )}
@@ -232,7 +233,7 @@ export default function ProjectsPage() {
                           </div>
                         </td>
                         <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap' }}>
-                          {p.budget ? p.budget.toLocaleString('de-CH', { style: 'currency', currency: p.currency || 'CHF', minimumFractionDigits: 0 }) : '—'}
+                          {p.budget ? formatCurrency(p.budget, p.currency || 'CHF') : '—'}
                         </td>
                       </tr>
                     );
@@ -245,7 +246,7 @@ export default function ProjectsPage() {
       )}
 
       {isAdmin && (
-        <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="🏗️  Neues Projekt erstellen" width={640}>
+        <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Neues Projekt erstellen" width={640}>
           <ProjectForm onSubmit={handleCreate} onCancel={() => setCreateOpen(false)} />
         </Modal>
       )}

@@ -3,14 +3,14 @@ import { useEffect, useState, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import Link from "next/link";
 import { api } from "../../src/api/client";
-import { formatCHF } from "../../src/lib/formatCurrency";
+import { formatCHF, formatCurrency } from "../../src/lib/formatCurrency";
 import { useToast } from "../ui/Toast";
 import { FiEdit2, FiTrash2, FiCalendar, FiDollarSign } from "react-icons/fi";
 
 interface Stage { id: string; name: string; order: number; isWon: boolean; isLost: boolean; }
 interface Deal {
   id: string; name: string; amount: number; currency: string;
-  dealScore: number; stageId: string;
+  stageId: string;
   expectedCloseDate?: string;
   account?: { name: string }; owner?: { name: string };
 }
@@ -180,7 +180,7 @@ export default function DealsKanbanBoard({ onEdit, onRefresh }: { onEdit?: (deal
                               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
                                 <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 13, fontWeight: 700, color: "#1e293b" }}>
                                   <FiDollarSign size={12} color="#94a3b8" />
-                                  {formatCHF(deal.amount ?? 0)}
+                                  {formatCurrency(deal.amount ?? 0, deal.currency || 'CHF')}
                                 </span>
                               </div>
                               {deal.expectedCloseDate && (

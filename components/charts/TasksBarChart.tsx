@@ -23,6 +23,12 @@ export default function TasksBarChart({ data }: { data: { labels: string[], valu
             legend: { display: false },
             title: { display: true, text: 'Aufgabenübersicht' },
           },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 1, precision: 0 },
+            },
+          },
         }}
       />
     </div>

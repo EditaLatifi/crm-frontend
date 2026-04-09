@@ -111,7 +111,7 @@ export default function UserProfilePage() {
   };
 
   const STATUS_COLOR: Record<string, string> = {
-    OPEN: '#2563eb', IN_PROGRESS: '#f59e0b', DONE: '#22c55e', PENDING: '#94a3b8',
+    OPEN: '#1a1a1a', IN_PROGRESS: '#f59e0b', DONE: '#22c55e', PENDING: '#94a3b8',
   };
 
   return (
@@ -126,7 +126,7 @@ export default function UserProfilePage() {
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 20 }}>
+                <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#e8a838', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 20 }}>
                   {user.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
                 </div>
                 <div>
@@ -134,7 +134,7 @@ export default function UserProfilePage() {
                   <div style={{ fontSize: 13, color: '#64748b' }}>{ROLE_LABELS[user.role] ?? user.role}</div>
                 </div>
               </div>
-              <button onClick={openEdit} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+              <button onClick={openEdit} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
                 Bearbeiten
               </button>
             </div>
@@ -161,7 +161,7 @@ export default function UserProfilePage() {
             <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Passwort</div>
             <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Passwort ändern</div>
           </div>
-          <button onClick={() => { setPwOpen(o => !o); setPwError(''); setPwSuccess(''); }} style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px solid #e5e7eb', background: '#f8fafc', color: '#374151', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+          <button onClick={() => { setPwOpen(o => !o); setPwError(''); setPwSuccess(''); }} style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px solid #e5e7eb', background: '#FAF9F6', color: '#374151', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
             {pwOpen ? 'Schliessen' : 'Ändern'}
           </button>
         </div>
@@ -181,7 +181,7 @@ export default function UserProfilePage() {
             </div>
             {pwError && <div style={{ color: '#dc2626', fontSize: 13 }}>{pwError}</div>}
             {pwSuccess && <div style={{ color: '#16a34a', fontSize: 13 }}>{pwSuccess}</div>}
-            <button type="submit" disabled={pwSaving} style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff', fontWeight: 700, fontSize: 14, cursor: pwSaving ? 'not-allowed' : 'pointer', opacity: pwSaving ? 0.7 : 1, alignSelf: 'flex-start' }}>
+            <button type="submit" disabled={pwSaving} style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', fontWeight: 700, fontSize: 14, cursor: pwSaving ? 'not-allowed' : 'pointer', opacity: pwSaving ? 0.7 : 1, alignSelf: 'flex-start' }}>
               {pwSaving ? 'Speichern...' : 'Passwort speichern'}
             </button>
           </form>
@@ -201,9 +201,9 @@ export default function UserProfilePage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {tasks.map(task => (
               <Link key={task.id} href={`/tasks/${task.id}`} style={{ textDecoration: 'none' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 8, border: '1px solid #f1f5f9', background: '#f8fafc', cursor: 'pointer' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#f1f5f9')}
-                  onMouseLeave={e => (e.currentTarget.style.background = '#f8fafc')}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 8, border: '1px solid #E8E4DE', background: '#FAF9F6', cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#E8E4DE')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '#FAF9F6')}
                 >
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{task.title}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -225,7 +225,7 @@ export default function UserProfilePage() {
       {editOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 420, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', fontWeight: 700, fontSize: 16, color: '#0f172a' }}>Profil bearbeiten</div>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #E8E4DE', fontWeight: 700, fontSize: 16, color: '#0f172a' }}>Profil bearbeiten</div>
             <form onSubmit={handleEditSave}>
               <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
@@ -238,9 +238,9 @@ export default function UserProfilePage() {
                 </div>
                 {editError && <div style={{ color: '#dc2626', fontSize: 13 }}>{editError}</div>}
               </div>
-              <div style={{ padding: '16px 24px', borderTop: '1px solid #f1f5f9', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setEditOpen(false)} style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}>Abbrechen</button>
-                <button type="submit" disabled={editSaving} style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff', fontWeight: 700, fontSize: 13, cursor: editSaving ? 'not-allowed' : 'pointer', opacity: editSaving ? 0.7 : 1 }}>
+              <div style={{ padding: '16px 24px', borderTop: '1px solid #E8E4DE', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setEditOpen(false)} style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #E8E4DE', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}>Abbrechen</button>
+                <button type="submit" disabled={editSaving} style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', fontWeight: 700, fontSize: 13, cursor: editSaving ? 'not-allowed' : 'pointer', opacity: editSaving ? 0.7 : 1 }}>
                   {editSaving ? 'Speichern...' : 'Speichern'}
                 </button>
               </div>

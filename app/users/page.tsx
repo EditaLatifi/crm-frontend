@@ -123,35 +123,35 @@ export default function UsersPage() {
 
   if (user?.role !== 'ADMIN') return <div className="users-container"><h2 className="users-title">Zugriff verweigert</h2></div>;
 
-  const inputS: Record<string, any> = { width: '100%', padding: '8px 12px', borderRadius: 7, border: '1.5px solid #d1d5db', fontSize: 14, boxSizing: 'border-box' };
+  const inputS: Record<string, any> = { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #E8E4DE', fontSize: 13, boxSizing: 'border-box', background: '#FAF9F6', color: '#1a1a1a' };
 
   return (
     <div className="users-container" style={{ padding: '28px 32px', maxWidth: 1100, margin: '0 auto' }}>
-      <h1 className="users-title" style={{ fontSize: 26, fontWeight: 800, color: '#1e293b', margin: '0 0 24px' }}>Benutzerverwaltung</h1>
+      <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', margin: '0 0 24px' }}>Benutzerverwaltung</h1>
 
       {/* ─── Create form ─── */}
-      <form className="users-form" onSubmit={handleAddUser} style={{ background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 14, padding: '20px 24px', marginBottom: 28 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 16 }}>Neuen Benutzer anlegen</div>
+      <form className="users-form" onSubmit={handleAddUser} style={{ background: '#fff', border: '1px solid #E8E4DE', borderRadius: 14, padding: '20px 24px', marginBottom: 28 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginBottom: 16 }}>Neuen Benutzer anlegen</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Name *</label>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Name *</label>
             <input required value={newUser.name} onChange={e => setNewUser(f => ({ ...f, name: e.target.value }))} style={inputS} />
           </div>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>E-Mail *</label>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>E-Mail *</label>
             <input type="email" required value={newUser.email} onChange={e => setNewUser(f => ({ ...f, email: e.target.value }))} style={inputS} />
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Rolle *</label>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Rolle *</label>
             <select value={newUser.role} onChange={e => setNewUser(f => ({ ...f, role: e.target.value }))} style={inputS}>
               <option value="USER">Mitarbeiter</option>
               <option value="ADMIN">Admin/Management</option>
             </select>
           </div>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Passwort *</label>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Passwort *</label>
             <div style={{ position: 'relative' }}>
               <input
                 type={showPw ? 'text' : 'password'}
@@ -163,30 +163,33 @@ export default function UsersPage() {
               <button
                 type="button"
                 onClick={() => setShowPw(v => !v)}
-                style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', padding: '2px 4px' }}
+                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#999', padding: '2px 4px', display: 'flex' }}
               >
-                {showPw ? '🙈' : '👁️'}
+                {showPw
+                  ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                }
               </button>
             </div>
           </div>
         </div>
         <button type="submit" disabled={loading}
-          style={{ padding: '10px 24px', fontWeight: 700, fontSize: 14, background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+          style={{ padding: '10px 24px', fontWeight: 700, fontSize: 14, background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
           {loading ? 'Wird hinzugefügt…' : 'Benutzer hinzufügen'}
         </button>
       </form>
 
       {/* ─── Users table ─── */}
-      <div style={{ background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 14, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9' }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#1e293b' }}>Alle Benutzer ({users.length})</span>
+      <div style={{ background: '#fff', border: '1px solid #E8E4DE', borderRadius: 14, overflow: 'hidden' }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid #E8E4DE' }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Alle Benutzer ({users.length})</span>
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
-              <tr style={{ background: '#f8fafc' }}>
+              <tr style={{ background: '#FAF9F6' }}>
                 {['Name', 'E-Mail', 'Rolle', 'Erstellt am', 'Letzter Login', 'Aktionen'].map(h => (
-                  <th key={h} style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '2px solid #e5e7eb', whiteSpace: 'nowrap' }}>{h}</th>
+                  <th key={h} style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '2px solid #E8E4DE', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -194,14 +197,14 @@ export default function UsersPage() {
               {users.map(u => {
                 const isSelf = u.id === user?.id;
                 return (
-                  <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: 600, color: '#1e293b' }}>
+                  <tr key={u.id} style={{ borderBottom: '1px solid #E8E4DE' }}>
+                    <td style={{ padding: '12px 16px', fontWeight: 600, color: '#1a1a1a' }}>
                       {u.name}
                       {isSelf && <span style={{ fontSize: 10, color: '#94a3b8', marginLeft: 6 }}>(Du)</span>}
                     </td>
                     <td style={{ padding: '12px 16px', color: '#64748b' }}>{u.email}</td>
                     <td style={{ padding: '12px 16px' }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: u.role === 'ADMIN' ? '#7c3aed' : '#2563eb', background: u.role === 'ADMIN' ? '#f3e8ff' : '#eff6ff', borderRadius: 20, padding: '3px 10px' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: u.role === 'ADMIN' ? '#7c3aed' : '#1a1a1a', background: u.role === 'ADMIN' ? '#f3e8ff' : '#eff6ff', borderRadius: 20, padding: '3px 10px' }}>
                         {u.role === 'ADMIN' ? 'Admin/Management' : 'Mitarbeiter'}
                       </span>
                     </td>
@@ -213,10 +216,10 @@ export default function UsersPage() {
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={() => openEdit(u)} style={{ padding: '4px 10px', borderRadius: 5, border: '1px solid #e2e8f0', background: '#fff', color: '#1e293b', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                        <button onClick={() => openEdit(u)} style={{ padding: '4px 10px', borderRadius: 5, border: '1px solid #E8E4DE', background: '#fff', color: '#1a1a1a', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                           Bearbeiten
                         </button>
-                        <button onClick={() => { setResetTarget(u); setResetPw(''); setShowResetPw(false); }} style={{ padding: '4px 10px', borderRadius: 5, border: '1px solid #e2e8f0', background: '#fff', color: '#d97706', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                        <button onClick={() => { setResetTarget(u); setResetPw(''); setShowResetPw(false); }} style={{ padding: '4px 10px', borderRadius: 5, border: '1px solid #E8E4DE', background: '#fff', color: '#d97706', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                           Passwort
                         </button>
                         {!isSelf && (
@@ -239,23 +242,23 @@ export default function UsersPage() {
         {editUser && (
           <form onSubmit={handleEdit}>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Name</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Name</label>
               <input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} style={inputS} />
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>E-Mail</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>E-Mail</label>
               <input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} style={inputS} />
             </div>
             <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Rolle</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Rolle</label>
               <select value={editForm.role} onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))} style={inputS}>
                 <option value="USER">Mitarbeiter</option>
                 <option value="ADMIN">Admin/Management</option>
               </select>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button type="button" onClick={() => setEditUser(null)} style={{ background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: 7, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Abbrechen</button>
-              <button type="submit" disabled={editSaving} style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 18px', fontWeight: 700, cursor: 'pointer', opacity: editSaving ? 0.7 : 1 }}>
+              <button type="button" onClick={() => setEditUser(null)} style={{ background: '#E8E4DE', color: '#64748b', border: 'none', borderRadius: 7, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Abbrechen</button>
+              <button type="submit" disabled={editSaving} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 18px', fontWeight: 700, cursor: 'pointer', opacity: editSaving ? 0.7 : 1 }}>
                 {editSaving ? 'Speichern…' : 'Speichern'}
               </button>
             </div>
@@ -267,11 +270,11 @@ export default function UsersPage() {
       <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Benutzer löschen">
         {deleteTarget && (
           <div>
-            <p style={{ fontSize: 14, color: '#374151', marginBottom: 20 }}>
+            <p style={{ fontSize: 14, color: '#555', marginBottom: 20 }}>
               Möchtest du den Benutzer <b>{deleteTarget.name}</b> ({deleteTarget.email}) wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
             </p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => setDeleteTarget(null)} style={{ background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: 7, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Abbrechen</button>
+              <button onClick={() => setDeleteTarget(null)} style={{ background: '#E8E4DE', color: '#64748b', border: 'none', borderRadius: 7, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Abbrechen</button>
               <button onClick={handleDelete} disabled={deleting} style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 18px', fontWeight: 700, cursor: 'pointer', opacity: deleting ? 0.7 : 1 }}>
                 {deleting ? 'Löschen…' : 'Endgültig löschen'}
               </button>
@@ -306,7 +309,7 @@ export default function UsersPage() {
               </button>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button type="button" onClick={() => setResetTarget(null)} style={{ background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: 7, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Abbrechen</button>
+              <button type="button" onClick={() => setResetTarget(null)} style={{ background: '#E8E4DE', color: '#64748b', border: 'none', borderRadius: 7, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Abbrechen</button>
               <button type="submit" disabled={resetting} style={{ background: '#d97706', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 18px', fontWeight: 700, cursor: 'pointer', opacity: resetting ? 0.7 : 1 }}>
                 {resetting ? 'Zurücksetzen…' : 'Passwort zurücksetzen'}
               </button>

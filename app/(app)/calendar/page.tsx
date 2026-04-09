@@ -66,7 +66,7 @@ function pad2(n: number) { return String(n).padStart(2, '0'); }
 function dateStr(d: Date) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
 function timeStr(d: Date) { return d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' }); }
 
-const APPT_COLORS = ['#2563eb', '#7c3aed', '#0891b2', '#16a34a', '#ea580c', '#db2777'];
+const APPT_COLORS = ['#1a1a1a', '#7c3aed', '#0891b2', '#16a34a', '#ea580c', '#db2777'];
 function apptColor(idx: number) { return APPT_COLORS[idx % APPT_COLORS.length]; }
 
 /* ─── Page ─── */
@@ -81,13 +81,15 @@ export default function CalendarPage() {
   const [editAppt, setEditAppt] = useState<Appointment | null>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
-  const [form, setForm] = useState({ title: '', description: '', startAt: '', endAt: '', accountId: '', contactId: '', dealId: '' });
+  const [form, setForm] = useState({ title: '', description: '', startAt: '', endAt: '', accountId: '', contactId: '', dealId: '', assigneeUserId: '' });
+  const [allUsers, setAllUsers] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     api.get('/appointments').then((d: any) => setAppointments(Array.isArray(d) ? d : [])).catch(() => {});
     api.get('/accounts').then((d: any) => setAccounts(Array.isArray(d) ? d : [])).catch(() => {});
     api.get('/contacts').then((d: any) => setContacts(Array.isArray(d) ? d : [])).catch(() => {});
+    api.get('/users').then((d: any) => setAllUsers(Array.isArray(d) ? d : [])).catch(() => {});
   }, []);
 
   /* ─ Navigation ─ */
@@ -120,14 +122,14 @@ export default function CalendarPage() {
   /* ─ Create / Edit ─ */
   function openNewOnDay(date: Date) {
     const ds = dateStr(date);
-    setForm({ title: '', description: '', startAt: `${ds}T09:00`, endAt: `${ds}T10:00`, accountId: '', contactId: '', dealId: '' });
+    setForm({ title: '', description: '', startAt: `${ds}T09:00`, endAt: `${ds}T10:00`, accountId: '', contactId: '', dealId: '', assigneeUserId: '' });
     setEditAppt(null);
     setModalOpen(true);
   }
 
   function openNewAtTime(date: Date, hour: number) {
     const ds = dateStr(date);
-    setForm({ title: '', description: '', startAt: `${ds}T${pad2(hour)}:00`, endAt: `${ds}T${pad2(hour + 1)}:00`, accountId: '', contactId: '', dealId: '' });
+    setForm({ title: '', description: '', startAt: `${ds}T${pad2(hour)}:00`, endAt: `${ds}T${pad2(hour + 1)}:00`, accountId: '', contactId: '', dealId: '', assigneeUserId: '' });
     setEditAppt(null);
     setModalOpen(true);
   }
@@ -138,7 +140,7 @@ export default function CalendarPage() {
       title: appt.title, description: appt.description || '',
       startAt: new Date(appt.startAt).toISOString().slice(0, 16),
       endAt: new Date(appt.endAt).toISOString().slice(0, 16),
-      accountId: appt.account?.id || '', contactId: appt.contact?.id || '', dealId: appt.deal?.id || '',
+      accountId: appt.account?.id || '', contactId: appt.contact?.id || '', dealId: appt.deal?.id || '', assigneeUserId: (appt as any).assigneeUserId || '',
     });
     setEditAppt(appt);
     setModalOpen(true);
@@ -149,7 +151,7 @@ export default function CalendarPage() {
     if (!form.title || !form.startAt || !form.endAt) return;
     setSaving(true);
     try {
-      const payload = { ...form, accountId: form.accountId || null, contactId: form.contactId || null, dealId: form.dealId || null };
+      const payload = { ...form, accountId: form.accountId || null, contactId: form.contactId || null, dealId: form.dealId || null, assigneeUserId: form.assigneeUserId || null };
       if (editAppt) {
         const updated: any = await api.patch(`/appointments/${editAppt.id}`, payload);
         setAppointments(prev => prev.map(a => a.id === editAppt.id ? updated : a));
@@ -184,33 +186,32 @@ export default function CalendarPage() {
   }
 
   /* ─────────────────── RENDER ─────────────────── */
-  const inputS: React.CSSProperties = { width: '100%', padding: '8px 12px', borderRadius: 7, border: '1.5px solid #d1d5db', fontSize: 14, boxSizing: 'border-box' };
+  const inputS: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #E8E4DE', fontSize: 13, boxSizing: 'border-box', background: '#FAF9F6', color: '#1a1a1a' };
 
   return (
     <div className="calendar-container" style={{ padding: '28px 32px', maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1e293b', margin: 0 }}>Kalender</h1>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>Kalender</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {/* View toggle */}
-          <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 8, padding: 3, gap: 2 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderRadius: 8, border: '1px solid #E8E4DE', overflow: 'hidden' }}>
             {(['month', 'week', 'day'] as const).map(v => (
               <button key={v} onClick={() => setView(v)} style={{
-                padding: '6px 14px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                background: view === v ? '#fff' : 'transparent', color: view === v ? '#2563eb' : '#64748b',
-                boxShadow: view === v ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                padding: '8px 16px', border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                background: view === v ? '#1a1a1a' : '#fff', color: view === v ? '#fff' : '#666',
               }}>
                 {{ month: 'Monat', week: 'Woche', day: 'Tag' }[v]}
               </button>
             ))}
           </div>
           {/* Nav */}
-          <button onClick={goToday} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid #e2e8f0', background: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#2563eb' }}>
+          <button onClick={goToday} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid #E8E4DE', background: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#1a1a1a' }}>
             Heute
           </button>
-          <button onClick={() => navigate(-1)} style={{ background: '#f1f5f9', border: 'none', borderRadius: 7, padding: '6px 12px', cursor: 'pointer', fontWeight: 700, fontSize: 16 }}>‹</button>
+          <button onClick={() => navigate(-1)} style={{ background: '#E8E4DE', border: 'none', borderRadius: 7, padding: '6px 12px', cursor: 'pointer', fontWeight: 700, fontSize: 16 }}>‹</button>
           <span style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', minWidth: 180, textAlign: 'center' }}>{navLabel}</span>
-          <button onClick={() => navigate(1)} style={{ background: '#f1f5f9', border: 'none', borderRadius: 7, padding: '6px 12px', cursor: 'pointer', fontWeight: 700, fontSize: 16 }}>›</button>
+          <button onClick={() => navigate(1)} style={{ background: '#E8E4DE', border: 'none', borderRadius: 7, padding: '6px 12px', cursor: 'pointer', fontWeight: 700, fontSize: 16 }}>›</button>
         </div>
       </div>
 
@@ -224,17 +225,17 @@ export default function CalendarPage() {
       {view === 'day' && <DayView date={currentDate} today={today} appointments={appointments} openNewAtTime={openNewAtTime} openEdit={openEdit} />}
 
       {/* Upcoming */}
-      <div style={{ marginTop: 28, background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 14, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9' }}>
+      <div style={{ marginTop: 28, background: '#fff', border: '1.5px solid #E8E4DE', borderRadius: 14, overflow: 'hidden' }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid #E8E4DE' }}>
           <span style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Nächste Termine</span>
         </div>
         {appointments.filter(a => new Date(a.startAt) >= today).sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime()).slice(0, 8).length === 0 ? (
           <div style={{ padding: 20, color: '#94a3b8', fontSize: 13 }}>Keine anstehenden Termine.</div>
         ) : (
           appointments.filter(a => new Date(a.startAt) >= today).sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime()).slice(0, 8).map(a => (
-            <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 20px', borderBottom: '1px solid #f8fafc' }}>
+            <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 20px', borderBottom: '1px solid #FAF9F6' }}>
               <div style={{ width: 46, textAlign: 'center', flexShrink: 0 }}>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#2563eb', lineHeight: 1 }}>{new Date(a.startAt).getDate()}</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#1a1a1a', lineHeight: 1 }}>{new Date(a.startAt).getDate()}</div>
                 <div style={{ fontSize: 11, color: '#94a3b8' }}>{MONTHS[new Date(a.startAt).getMonth()].slice(0, 3)}</div>
               </div>
               <div style={{ flex: 1 }}>
@@ -244,7 +245,7 @@ export default function CalendarPage() {
                   {a.account && <> · {a.account.name}</>}
                 </div>
               </div>
-              <button onClick={e => openEdit(a, e)} style={{ background: 'none', border: '1px solid #e5e7eb', borderRadius: 6, padding: '4px 12px', fontSize: 12, color: '#64748b', cursor: 'pointer' }}>Bearbeiten</button>
+              <button onClick={e => openEdit(a, e)} style={{ background: 'none', border: '1px solid #E8E4DE', borderRadius: 6, padding: '4px 12px', fontSize: 12, color: '#64748b', cursor: 'pointer' }}>Bearbeiten</button>
             </div>
           ))
         )}
@@ -287,13 +288,20 @@ export default function CalendarPage() {
               </select>
             </div>
           </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Verantwortlich</label>
+            <select value={form.assigneeUserId} onChange={e => setForm(f => ({ ...f, assigneeUserId: e.target.value }))} style={inputS}>
+              <option value="">— Kein Verantwortlicher —</option>
+              {allUsers.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
+            </select>
+          </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'space-between', marginTop: 20 }}>
             <div>
               {editAppt && <button type="button" onClick={handleDelete} disabled={saving} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: 7, padding: '8px 16px', fontWeight: 600, cursor: 'pointer' }}>Löschen</button>}
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button type="button" onClick={() => setModalOpen(false)} style={{ background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: 7, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Abbrechen</button>
-              <button type="submit" disabled={saving} style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 18px', fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+              <button type="button" onClick={() => setModalOpen(false)} style={{ background: '#fff', color: '#666', border: '1px solid #E8E4DE', borderRadius: 8, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Abbrechen</button>
+              <button type="submit" disabled={saving} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 18px', fontWeight: 600, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
                 {saving ? 'Speichern…' : 'Speichern'}
               </button>
             </div>
@@ -312,8 +320,8 @@ function MonthView({ days, today, apptsForDay, openNew, openEdit }: {
   openEdit: (a: Appointment, e?: React.MouseEvent) => void;
 }) {
   return (
-    <div style={{ background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid #e5e7eb' }}>
+    <div style={{ background: '#fff', border: '1.5px solid #E8E4DE', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid #E8E4DE' }}>
         {WEEKDAYS.map(d => (
           <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{d}</div>
         ))}
@@ -325,15 +333,15 @@ function MonthView({ days, today, apptsForDay, openNew, openEdit }: {
           return (
             <div key={i} onClick={() => day && openNew(day)} style={{
               minHeight: 100, padding: 8,
-              borderRight: (i + 1) % 7 !== 0 ? '1px solid #f1f5f9' : 'none',
-              borderBottom: '1px solid #f1f5f9',
+              borderRight: (i + 1) % 7 !== 0 ? '1px solid #E8E4DE' : 'none',
+              borderBottom: '1px solid #E8E4DE',
               cursor: day ? 'pointer' : 'default',
-              background: day ? (isToday ? '#eff6ff' : '#fff') : '#fafafa',
+              background: day ? (isToday ? '#FFF8EC' : '#fff') : '#FAF9F6',
             }}>
               {day && (
                 <>
-                  <div style={{ fontSize: 13, fontWeight: isToday ? 800 : 600, color: isToday ? '#2563eb' : '#1e293b', marginBottom: 4 }}>
-                    <span style={isToday ? { background: '#2563eb', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 } : {}}>{day.getDate()}</span>
+                  <div style={{ fontSize: 13, fontWeight: isToday ? 800 : 600, color: isToday ? '#1a1a1a' : '#1e293b', marginBottom: 4 }}>
+                    <span style={isToday ? { background: '#1a1a1a', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 } : {}}>{day.getDate()}</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     {dayAppts.slice(0, 3).map((a, idx) => (
@@ -363,16 +371,16 @@ function WeekView({ weekDays, today, appointments, openNewAtTime, openEdit }: {
   const multiDay = appointments.filter(a => isMultiDay(a) && weekDays.some(d => dayOverlaps(a, d)));
 
   return (
-    <div style={{ background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 14, overflow: 'hidden' }}>
+    <div style={{ background: '#fff', border: '1.5px solid #E8E4DE', borderRadius: 14, overflow: 'hidden' }}>
       {/* Day headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: '56px repeat(7, 1fr)', borderBottom: '1px solid #e5e7eb' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '56px repeat(7, 1fr)', borderBottom: '1px solid #E8E4DE' }}>
         <div />
         {weekDays.map((d, i) => {
           const isToday = isSameDay(d, today);
           return (
-            <div key={i} style={{ padding: '10px 8px', textAlign: 'center', borderLeft: '1px solid #f1f5f9' }}>
+            <div key={i} style={{ padding: '10px 8px', textAlign: 'center', borderLeft: '1px solid #E8E4DE' }}>
               <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{WEEKDAYS[i]}</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: isToday ? '#2563eb' : '#1e293b', background: isToday ? '#dbeafe' : 'transparent', borderRadius: '50%', width: 30, height: 30, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: isToday ? '#fff' : '#1e293b', background: isToday ? '#1a1a1a' : 'transparent', borderRadius: '50%', width: 30, height: 30, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                 {d.getDate()}
               </div>
             </div>
@@ -382,10 +390,10 @@ function WeekView({ weekDays, today, appointments, openNewAtTime, openEdit }: {
 
       {/* Multi-day banners */}
       {multiDay.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '56px repeat(7, 1fr)', borderBottom: '1px solid #e5e7eb', padding: '4px 0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '56px repeat(7, 1fr)', borderBottom: '1px solid #E8E4DE', padding: '4px 0' }}>
           <div />
           {weekDays.map((day, di) => (
-            <div key={di} style={{ paddingRight: 4, borderLeft: '1px solid #f1f5f9' }}>
+            <div key={di} style={{ paddingRight: 4, borderLeft: '1px solid #E8E4DE' }}>
               {multiDay.filter(a => dayOverlaps(a, day)).map((a, idx) => {
                 const isStart = isSameDay(new Date(a.startAt), day);
                 return (
@@ -415,11 +423,11 @@ function WeekView({ weekDays, today, appointments, openNewAtTime, openEdit }: {
 
           {/* Day columns */}
           {weekDays.map((day, di) => (
-            <div key={di} style={{ gridColumn: di + 2, gridRow: `1 / ${HOURS.length + 1}`, position: 'relative', borderLeft: '1px solid #f1f5f9' }}>
+            <div key={di} style={{ gridColumn: di + 2, gridRow: `1 / ${HOURS.length + 1}`, position: 'relative', borderLeft: '1px solid #E8E4DE' }}>
               {/* Hour cells – clickable */}
               {HOURS.map(h => (
-                <div key={h} onClick={() => openNewAtTime(day, h)} style={{ height: HOUR_H, borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = '#f8fafc'; }}
+                <div key={h} onClick={() => openNewAtTime(day, h)} style={{ height: HOUR_H, borderBottom: '1px solid #E8E4DE', cursor: 'pointer' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = '#FAF9F6'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
                 />
               ))}
@@ -469,10 +477,10 @@ function DayView({ date, today, appointments, openNewAtTime, openEdit }: {
   const singleDay = dayAppts.filter(a => !isMultiDay(a));
 
   return (
-    <div style={{ background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 14, overflow: 'hidden' }}>
+    <div style={{ background: '#fff', border: '1.5px solid #E8E4DE', borderRadius: 14, overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '12px 20px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ fontSize: 28, fontWeight: 800, color: isToday ? '#2563eb' : '#1e293b', background: isToday ? '#dbeafe' : '#f1f5f9', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ padding: '12px 20px', borderBottom: '1px solid #E8E4DE', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ fontSize: 28, fontWeight: 800, color: isToday ? '#fff' : '#1e293b', background: isToday ? '#1a1a1a' : '#E8E4DE', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {date.getDate()}
         </div>
         <div>
@@ -490,7 +498,7 @@ function DayView({ date, today, appointments, openNewAtTime, openEdit }: {
 
       {/* Multi-day banners */}
       {multiDay.length > 0 && (
-        <div style={{ padding: '6px 20px 6px 76px', borderBottom: '1px solid #e5e7eb', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <div style={{ padding: '6px 20px 6px 76px', borderBottom: '1px solid #E8E4DE', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {multiDay.map((a, idx) => (
             <div key={a.id} onClick={e => openEdit(a, e)} style={{
               background: apptColor(idx), color: '#fff', borderRadius: 5,
@@ -513,11 +521,11 @@ function DayView({ date, today, appointments, openNewAtTime, openEdit }: {
           ))}
 
           {/* Time column */}
-          <div style={{ gridColumn: 2, gridRow: `1 / ${HOURS.length + 1}`, position: 'relative', borderLeft: '1px solid #f1f5f9' }}>
+          <div style={{ gridColumn: 2, gridRow: `1 / ${HOURS.length + 1}`, position: 'relative', borderLeft: '1px solid #E8E4DE' }}>
             {/* Clickable hour cells */}
             {HOURS.map(h => (
-              <div key={h} onClick={() => openNewAtTime(date, h)} style={{ height: HOUR_H, borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = '#f8fafc'; }}
+              <div key={h} onClick={() => openNewAtTime(date, h)} style={{ height: HOUR_H, borderBottom: '1px solid #E8E4DE', cursor: 'pointer' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = '#FAF9F6'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
               />
             ))}

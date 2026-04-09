@@ -32,30 +32,14 @@ export default function DealsPage() {
   };
 
   return (
-    <div className="deals-page-container" style={{ background: '#f4f6fa', minHeight: '100vh' }}>
+    <div className="deals-page-container">
       {/* Header */}
-      <div className="deals-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <h1 className="deals-title" style={{ margin: 0 }}>Deals</h1>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          {/* View toggle */}
-          <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 8, padding: 3, gap: 2 }}>
-            {(['kanban', 'table'] as ViewMode[]).map((v) => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                style={{
-                  padding: '6px 14px', borderRadius: 6, border: 'none',
-                  background: view === v ? '#fff' : 'transparent',
-                  color: view === v ? '#2563eb' : '#64748b',
-                  fontWeight: view === v ? 700 : 500,
-                  fontSize: 13, cursor: 'pointer',
-                  boxShadow: view === v ? '0 1px 3px rgba(0,0,0,0.10)' : 'none',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {v === 'kanban' ? '⬜ Kanban' : '☰ Tabelle'}
-              </button>
-            ))}
+      <div className="deals-header-row">
+        <h1 className="deals-title">Deals</h1>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderRadius: 8, border: '1px solid #E8E4DE', overflow: 'hidden' }}>
+            <button onClick={() => setView('kanban')} style={{ padding: '8px 16px', border: 'none', background: view === 'kanban' ? '#1a1a1a' : '#fff', color: view === 'kanban' ? '#fff' : '#666', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>Kanban</button>
+            <button onClick={() => setView('table')} style={{ padding: '8px 16px', border: 'none', background: view === 'table' ? '#1a1a1a' : '#fff', color: view === 'table' ? '#fff' : '#666', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>Tabelle</button>
           </div>
           <button className="deals-new-btn" onClick={() => setModalOpen(true)}>
             + Neuer Deal
@@ -64,7 +48,7 @@ export default function DealsPage() {
       </div>
 
       {/* Main view */}
-      <div className="deals-section" style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: 28, marginBottom: 24 }}>
+      <div className="deals-section">
         {view === 'kanban' ? (
           <DealsKanbanBoard
             key={dealsKey}
@@ -77,11 +61,11 @@ export default function DealsPage() {
       </div>
 
       {/* Analytics + Insights */}
-      <div className="deals-analytics-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
-        <div className="deals-analytics-card" style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: 28 }}>
+      <div className="deals-analytics-grid">
+        <div className="deals-analytics-card">
           <DealsAnalytics />
         </div>
-        <div className="deals-analytics-card" style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: 28 }}>
+        <div className="deals-analytics-card">
           <DealInsightsWidget />
         </div>
       </div>

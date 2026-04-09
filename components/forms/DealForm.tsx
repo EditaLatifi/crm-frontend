@@ -17,7 +17,7 @@ const inputStyle = (hasErr: boolean): React.CSSProperties => ({
 export default function DealForm({ onSubmit, initialData }: DealFormProps) {
   const [name, setName] = useState(initialData?.name || '');
   const [amount, setAmount] = useState(initialData?.amount || '');
-  const currency = 'CHF';
+  const [currency, setCurrency] = useState(initialData?.currency || 'CHF');
   const [expectedCloseDate, setExpectedCloseDate] = useState(initialData?.expectedCloseDate ? initialData.expectedCloseDate.slice(0, 10) : '');
   const [customFields, setCustomFields] = useState<{ key: string; value: string }[]>(
     initialData?.customFields ? Object.entries(initialData.customFields).map(([key, value]) => ({ key, value: String(value) })) : []
@@ -106,7 +106,12 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
       </div>
       <div style={{ marginBottom: 16 }}>
         <label>Betrag *</label><br />
-        <input type="number" min={0} value={amount} onChange={e => setAmount(e.target.value)} style={inputStyle(!!errors.amount)} />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input type="number" min={0} value={amount} onChange={e => setAmount(e.target.value)} style={{ ...inputStyle(!!errors.amount), flex: 1 }} />
+          <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ ...inputStyle(false), width: 80, flex: 'none' }}>
+            <option>CHF</option>
+          </select>
+        </div>
         {errors.amount && <div style={errStyle}>{errors.amount}</div>}
       </div>
       <div style={{ marginBottom: 16 }}>
@@ -122,9 +127,9 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
             <button type="button" onClick={() => handleRemoveCustomField(idx)} style={{ background: '#eee', border: 'none', borderRadius: 4, padding: '4px 8px', cursor: 'pointer' }}>Entfernen</button>
           </div>
         ))}
-        <button type="button" onClick={handleAddCustomField} style={{ background: '#f4f5f7', color: '#0052cc', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer', marginTop: 4 }}>+ Feld hinzufügen</button>
+        <button type="button" onClick={handleAddCustomField} style={{ background: '#FAF9F6', color: '#1a1a1a', border: '1px solid #E8E4DE', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', marginTop: 4, fontSize: 13 }}>+ Feld hinzufügen</button>
       </div>
-      <button type="submit" disabled={saving} style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 20px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+      <button type="submit" disabled={saving} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 24px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, fontSize: 14 }}>
         {saving ? 'Speichern…' : 'Speichern'}
       </button>
     </form>
