@@ -65,7 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Start with null to match SSR, then hydrate from localStorage after mount
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  // If we have a pre-loaded token, start loading=true so ProtectedRoute waits for hydration
+  const [loading, setLoading] = useState(!!_preToken);
   const [error, setError] = useState<string | null>(null);
 
   async function fetchProfile() {
@@ -85,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (_preUser) setUser(_preUser);
     if (_preToken) {
       setAccessTokenState(_preToken);
-      fetchProfile();
+      fetchProfile().finally(() => setLoading(false));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
