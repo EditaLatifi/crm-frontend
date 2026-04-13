@@ -117,16 +117,13 @@ export default function VacationPage() {
   const year = myStats?.year ?? new Date().getFullYear();
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 24px 40px", fontFamily: "Inter, system-ui, sans-serif" }}>
+    <div style={{ padding: "28px 32px 40px", maxWidth: 1200, margin: "0 auto" }}>
       {/* Header */}
-      <div className="vacation-header" style={{ display: "flex", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>Meine Urlaubsanträge</h1>
-          <div style={{ fontSize: 13, color: "#999", fontWeight: 400, marginTop: 4 }}>Verwalte deine Urlaubsanträge und freie Tage.</div>
-        </div>
+      <div className="vacation-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>Meine Urlaubsanträge</h1>
         <button
           onClick={() => setModalOpen(true)}
-          style={{ fontSize: 13, fontWeight: 600, borderRadius: 8, border: "none", background: "#1a1a1a", color: "#fff", padding: "9px 20px", cursor: "pointer" }}
+          style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
         >
           + Antrag stellen
         </button>

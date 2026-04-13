@@ -139,10 +139,9 @@ export default function AdminVacationPage() {
   const pendingCount = requests.filter(r => r.status === "PENDING").length;
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 24px 40px", fontFamily: "Inter, system-ui, sans-serif" }}>
-      <div className="admin-vacation-header" style={{ marginBottom: 24 }}>
+    <div style={{ padding: "28px 32px 40px", maxWidth: 1200, margin: "0 auto" }}>
+      <div className="admin-vacation-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>Urlaubsverwaltung</h1>
-        <div style={{ fontSize: 13, color: "#999", fontWeight: 400, marginTop: 4 }}>Übersicht und Genehmigung aller Urlaubsanträge.</div>
       </div>
 
       {/* Tabs */}
@@ -167,14 +166,14 @@ export default function AdminVacationPage() {
       {/* Filters */}
       <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-          style={{ padding: "8px 12px", borderRadius: 7, border: "1.5px solid #d1d5db", fontSize: 13 }}>
+          style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #E8E4DE", background: "#FAF9F6", fontSize: 13, color: "#1a1a1a", outline: "none", cursor: "pointer" }}>
           <option value="">Alle Status</option>
           <option value="PENDING">Ausstehend</option>
           <option value="APPROVED">Genehmigt</option>
           <option value="REJECTED">Abgelehnt</option>
         </select>
         <select value={yearFilter} onChange={e => setYearFilter(e.target.value)}
-          style={{ padding: "8px 12px", borderRadius: 7, border: "1.5px solid #d1d5db", fontSize: 13 }}>
+          style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #E8E4DE", background: "#FAF9F6", fontSize: 13, color: "#1a1a1a", outline: "none", cursor: "pointer" }}>
           {[2024, 2025, 2026, 2027].map(y => (
             <option key={y} value={String(y)}>{y}</option>
           ))}
@@ -183,11 +182,11 @@ export default function AdminVacationPage() {
 
       {/* REQUESTS TAB */}
       {tab === "requests" && (
-        <div style={{ background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, overflow: "hidden" }}>
+        <div style={{ background: "#fff", border: "1px solid #E8E4DE", borderRadius: 14, overflow: "hidden" }}>
           {loading ? (
-            <div style={{ padding: 32, textAlign: "center", color: "#94a3b8" }}>Laden…</div>
+            <div style={{ padding: 32, textAlign: "center", color: "#999" }}>Laden…</div>
           ) : requests.length === 0 ? (
-            <div style={{ padding: "32px 20px", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>
+            <div style={{ padding: "32px 20px", textAlign: "center", color: "#999", fontSize: 14 }}>
               Keine Anträge gefunden.
             </div>
           ) : (
@@ -195,7 +194,7 @@ export default function AdminVacationPage() {
               <thead>
                 <tr style={{ background: "#FAF9F6" }}>
                   {["Mitarbeiter", "Typ", "Zeitraum", "Tage", "Status", "Notiz", "Aktion"].map(h => (
-                    <th key={h} style={{ padding: "11px 16px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e5e7eb" }}>{h}</th>
+                    <th key={h} style={{ padding: "11px 16px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #E8E4DE" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -207,7 +206,7 @@ export default function AdminVacationPage() {
                     <tr key={r.id} style={{ borderBottom: "1px solid #FAF9F6" }}>
                       <td style={{ padding: "12px 16px" }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a" }}>{r.user.name}</div>
-                        <div style={{ fontSize: 11, color: "#94a3b8" }}>{r.user.email}</div>
+                        <div style={{ fontSize: 11, color: "#999" }}>{r.user.email}</div>
                       </td>
                       <td style={{ padding: "12px 16px", fontSize: 13 }}>
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#1a1a1a" }}>
@@ -217,7 +216,7 @@ export default function AdminVacationPage() {
                       </td>
                       <td style={{ padding: "12px 16px", fontSize: 13, color: "#1a1a1a" }}>
                         <div>{new Date(r.startDate).toLocaleDateString("de-CH")}</div>
-                        <div style={{ color: "#94a3b8" }}>bis {new Date(r.endDate).toLocaleDateString("de-CH")}</div>
+                        <div style={{ color: "#999" }}>bis {new Date(r.endDate).toLocaleDateString("de-CH")}</div>
                       </td>
                       <td style={{ padding: "12px 16px", fontSize: 14, fontWeight: 700, color: "#1a1a1a" }}>{r.days}</td>
                       <td style={{ padding: "12px 16px" }}>
@@ -248,7 +247,7 @@ export default function AdminVacationPage() {
                             </button>
                           </div>
                         ) : (
-                          <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                          <span style={{ fontSize: 11, color: "#999" }}>
                             {r.reviewedBy?.name}<br />
                             {r.reviewedAt && new Date(r.reviewedAt).toLocaleDateString("de-CH")}
                           </span>
@@ -267,16 +266,16 @@ export default function AdminVacationPage() {
       {tab === "stats" && (
         <div>
           {stats.length === 0 ? (
-            <div style={{ background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, padding: "32px 20px", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>
+            <div style={{ background: "#fff", border: "1px solid #E8E4DE", borderRadius: 14, padding: "32px 20px", textAlign: "center", color: "#999", fontSize: 14 }}>
               Keine Daten für {yearFilter}.
             </div>
           ) : (
-            <div style={{ background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, overflow: "hidden" }}>
+            <div style={{ background: "#fff", border: "1px solid #E8E4DE", borderRadius: 14, overflow: "hidden" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ background: "#FAF9F6" }}>
                     {["Mitarbeiter", `Kontingent ${yearFilter} (AT)`, "Verbraucht", "Verbleibend", "Anträge"].map(h => (
-                      <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e5e7eb" }}>{h}</th>
+                      <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #E8E4DE" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -288,7 +287,7 @@ export default function AdminVacationPage() {
                       <tr key={i} style={{ borderBottom: "1px solid #FAF9F6" }}>
                         <td style={{ padding: "14px 20px" }}>
                           <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a1a" }}>{s.user.name}</div>
-                          <div style={{ fontSize: 12, color: "#94a3b8" }}>{s.user.email}</div>
+                          <div style={{ fontSize: 12, color: "#999" }}>{s.user.email}</div>
                         </td>
                         <td style={{ padding: "14px 20px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -298,7 +297,7 @@ export default function AdminVacationPage() {
                               value={quotaDraft[s.user.id] ?? ""}
                               onChange={e => setQuotaDraft(d => ({ ...d, [s.user.id]: e.target.value }))}
                               placeholder="—"
-                              style={{ width: 70, padding: "5px 8px", borderRadius: 6, border: "1.5px solid #d1d5db", fontSize: 13, textAlign: "center" }}
+                              style={{ width: 70, padding: "5px 8px", borderRadius: 6, border: "1px solid #E8E4DE", fontSize: 13, textAlign: "center" }}
                             />
                             <button
                               onClick={() => handleSaveQuota(s.user.id)}
@@ -325,7 +324,7 @@ export default function AdminVacationPage() {
                               {remaining >= 0 ? remaining : remaining} AT
                             </span>
                           ) : (
-                            <span style={{ color: "#94a3b8", fontSize: 13 }}>—</span>
+                            <span style={{ color: "#999", fontSize: 13 }}>—</span>
                           )}
                         </td>
                         <td style={{ padding: "14px 20px", fontSize: 14, color: "#64748b" }}>{s.requests}</td>
@@ -341,12 +340,12 @@ export default function AdminVacationPage() {
 
       {/* CALENDAR TAB */}
       {tab === "calendar" && (
-        <div style={{ background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, overflow: "hidden" }}>
+        <div style={{ background: "#fff", border: "1px solid #E8E4DE", borderRadius: 14, overflow: "hidden" }}>
           <div style={{ padding: "14px 20px", borderBottom: "1px solid #E8E4DE" }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: "#1a1a1a" }}>Genehmigte Urlaubszeiten – {yearFilter}</span>
           </div>
           {getCalendarData().length === 0 ? (
-            <div style={{ padding: "32px 20px", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>
+            <div style={{ padding: "32px 20px", textAlign: "center", color: "#999", fontSize: 14 }}>
               Keine genehmigten Urlaubsanträge.
             </div>
           ) : (
@@ -369,7 +368,7 @@ export default function AdminVacationPage() {
                     </div>
                   ))}
                 </div>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>
+                <div style={{ fontSize: 11, color: "#999", marginTop: 6 }}>
                   {u.periods.reduce((s, r) => s + r.days, 0)} Arbeitstage total
                 </div>
               </div>
