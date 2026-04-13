@@ -26,7 +26,7 @@ const NAV_GROUPS = [
     label: "Auswertungen",
     items: [
       { href: "/time", label: "Zeiterfassung", icon: FiClock, countKey: null },
-      { href: "/vacation", label: "Urlaub", icon: FiUmbrella, countKey: null },
+      { href: "/vacation", label: "Urlaub", icon: FiUmbrella, countKey: null, hideForAdmin: true },
       { href: "/reports", label: "Berichte", icon: FiBarChart2, countKey: null },
       { href: "/calendar", label: "Kalender", icon: FiCalendar, countKey: null },
     ],
@@ -120,7 +120,7 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
       {/* Nav groups */}
       <nav style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "4px 10px" }}>
         {NAV_GROUPS.map((group, gi) => {
-          const visibleItems = group.items.filter((item: any) => !item.admin || isAdmin);
+          const visibleItems = group.items.filter((item: any) => (!item.admin || isAdmin) && (!item.hideForAdmin || !isAdmin));
           if (group.admin && !isAdmin) return null;
           if (visibleItems.length === 0) return null;
 
