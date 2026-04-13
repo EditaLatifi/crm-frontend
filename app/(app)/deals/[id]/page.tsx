@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { api, fetchWithAuth } from "../../../../src/api/client";
 import { formatCurrency } from "../../../../src/lib/formatCurrency";
@@ -44,8 +44,10 @@ const STAGE_BADGE: Record<string, { bg: string; color: string }> = {
   default: { bg: '#eff6ff', color: '#1a1a1a' },
 };
 
-export default function DealDetailPage({ params }: { params: { id: string } }) {
+export default function DealDetailPage() {
   const router = useRouter();
+  const routeParams = useParams();
+  const params = { id: routeParams?.id as string };
   const [deal, setDeal] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [attachments, setAttachments] = useState<any[]>([]);
