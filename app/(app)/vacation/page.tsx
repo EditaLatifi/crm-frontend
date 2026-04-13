@@ -4,6 +4,7 @@ import { api } from "../../../src/api/client";
 import { useToast } from "../../../components/ui/Toast";
 import './vacation-mobile.css';
 import Modal from "../../../components/ui/Modal";
+import { FiUmbrella } from "react-icons/fi";
 
 interface VacationRequest {
   id: string;
@@ -173,8 +174,8 @@ export default function VacationPage() {
           <div style={{ padding: 32, textAlign: "center", color: "#94a3b8" }}>Laden…</div>
         ) : requests.length === 0 ? (
           <div style={{ padding: "32px 20px", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>
-            <div style={{ fontSize: 36, marginBottom: 8 }}>🏖️</div>
-            Noch keine Urlaubsanträge gestellt.
+            <FiUmbrella size={36} style={{ marginBottom: 8, color: "#cbd5e1" }} />
+            <div>Noch keine Urlaubsanträge gestellt.</div>
           </div>
         ) : (
           requests.map(r => {

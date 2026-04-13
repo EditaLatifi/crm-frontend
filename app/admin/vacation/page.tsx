@@ -4,6 +4,8 @@ import './admin-vacation-mobile.css';
 import { api } from "../../../src/api/client";
 import { useToast } from "../../../components/ui/Toast";
 import { useAuth } from "../../../src/auth/AuthProvider";
+import { IconType } from "react-icons";
+import { FiUmbrella, FiActivity, FiShield, FiDollarSign, FiFileText } from "react-icons/fi";
 
 interface VacationRequest {
   id: string;
@@ -42,12 +44,12 @@ const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }>
   REJECTED: { bg: "#fee2e2", color: "#dc2626", label: "Abgelehnt" },
 };
 
-const TYPE_ICONS: Record<string, string> = {
-  VACATION: "🏖️",
-  SICK: "🤒",
-  MILITARY_SERVICE: "🎖️",
-  UNPAID: "💸",
-  OTHER: "📝",
+const TYPE_ICONS: Record<string, IconType> = {
+  VACATION: FiUmbrella,
+  SICK: FiActivity,
+  MILITARY_SERVICE: FiShield,
+  UNPAID: FiDollarSign,
+  OTHER: FiFileText,
 };
 
 const btnStyle = (color: string, bg: string): React.CSSProperties => ({
@@ -208,7 +210,10 @@ export default function AdminVacationPage() {
                         <div style={{ fontSize: 11, color: "#94a3b8" }}>{r.user.email}</div>
                       </td>
                       <td style={{ padding: "12px 16px", fontSize: 13 }}>
-                        {TYPE_ICONS[r.type]} {TYPE_LABELS[r.type] || r.type}
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#1e293b" }}>
+                          {(() => { const Icon = TYPE_ICONS[r.type]; return Icon ? <Icon size={14} color="#64748b" /> : null; })()}
+                          {TYPE_LABELS[r.type] || r.type}
+                        </span>
                       </td>
                       <td style={{ padding: "12px 16px", fontSize: 13, color: "#1e293b" }}>
                         <div>{new Date(r.startDate).toLocaleDateString("de-CH")}</div>
@@ -354,7 +359,7 @@ export default function AdminVacationPage() {
                       background: "#dbeafe", color: "#1d4ed8", borderRadius: 8, padding: "6px 14px",
                       fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
                     }}>
-                      <span>{TYPE_ICONS[r.type]}</span>
+                      {(() => { const Icon = TYPE_ICONS[r.type]; return Icon ? <Icon size={13} /> : null; })()}
                       <span>
                         {new Date(r.startDate).toLocaleDateString("de-CH", { day: "2-digit", month: "short" })}
                         {" – "}
