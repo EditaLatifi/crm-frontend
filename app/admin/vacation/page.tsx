@@ -139,10 +139,10 @@ export default function AdminVacationPage() {
   const pendingCount = requests.filter(r => r.status === "PENDING").length;
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
-      <div className="admin-vacation-header" style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1e293b", margin: 0 }}>Urlaubsverwaltung</h1>
-        <div style={{ fontSize: 14, color: "#64748b", marginTop: 4 }}>Übersicht und Genehmigung aller Urlaubsanträge.</div>
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 24px 40px", fontFamily: "Inter, system-ui, sans-serif" }}>
+      <div className="admin-vacation-header" style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>Urlaubsverwaltung</h1>
+        <div style={{ fontSize: 13, color: "#999", fontWeight: 400, marginTop: 4 }}>Übersicht und Genehmigung aller Urlaubsanträge.</div>
       </div>
 
       {/* Tabs */}
@@ -156,7 +156,7 @@ export default function AdminVacationPage() {
             style={{
               padding: "7px 18px", borderRadius: 7, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer",
               background: tab === t.key ? "#fff" : "transparent",
-              color: tab === t.key ? "#1e293b" : "#64748b",
+              color: tab === t.key ? "#1a1a1a" : "#64748b",
               boxShadow: tab === t.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
             }}>
             {t.label}
@@ -206,16 +206,16 @@ export default function AdminVacationPage() {
                   return (
                     <tr key={r.id} style={{ borderBottom: "1px solid #FAF9F6" }}>
                       <td style={{ padding: "12px 16px" }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{r.user.name}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a" }}>{r.user.name}</div>
                         <div style={{ fontSize: 11, color: "#94a3b8" }}>{r.user.email}</div>
                       </td>
                       <td style={{ padding: "12px 16px", fontSize: 13 }}>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#1e293b" }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#1a1a1a" }}>
                           {(() => { const Icon = TYPE_ICONS[r.type]; return Icon ? <Icon size={14} color="#64748b" /> : null; })()}
                           {TYPE_LABELS[r.type] || r.type}
                         </span>
                       </td>
-                      <td style={{ padding: "12px 16px", fontSize: 13, color: "#1e293b" }}>
+                      <td style={{ padding: "12px 16px", fontSize: 13, color: "#1a1a1a" }}>
                         <div>{new Date(r.startDate).toLocaleDateString("de-CH")}</div>
                         <div style={{ color: "#94a3b8" }}>bis {new Date(r.endDate).toLocaleDateString("de-CH")}</div>
                       </td>
@@ -287,7 +287,7 @@ export default function AdminVacationPage() {
                     return (
                       <tr key={i} style={{ borderBottom: "1px solid #FAF9F6" }}>
                         <td style={{ padding: "14px 20px" }}>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>{s.user.name}</div>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a1a" }}>{s.user.name}</div>
                           <div style={{ fontSize: 12, color: "#94a3b8" }}>{s.user.email}</div>
                         </td>
                         <td style={{ padding: "14px 20px" }}>
@@ -316,7 +316,7 @@ export default function AdminVacationPage() {
                                 <div style={{ height: "100%", background: overused ? "#dc2626" : "#1a1a1a", borderRadius: 20, width: `${Math.min(100, (s.days / s.quota) * 100)}%` }} />
                               </div>
                             )}
-                            <span style={{ fontSize: 16, fontWeight: 800, color: "#1e293b" }}>{s.days}</span>
+                            <span style={{ fontSize: 16, fontWeight: 800, color: "#1a1a1a" }}>{s.days}</span>
                           </div>
                         </td>
                         <td style={{ padding: "14px 20px" }}>
@@ -343,7 +343,7 @@ export default function AdminVacationPage() {
       {tab === "calendar" && (
         <div style={{ background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, overflow: "hidden" }}>
           <div style={{ padding: "14px 20px", borderBottom: "1px solid #E8E4DE" }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>Genehmigte Urlaubszeiten – {yearFilter}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#1a1a1a" }}>Genehmigte Urlaubszeiten – {yearFilter}</span>
           </div>
           {getCalendarData().length === 0 ? (
             <div style={{ padding: "32px 20px", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>
@@ -352,7 +352,7 @@ export default function AdminVacationPage() {
           ) : (
             getCalendarData().map((u, i) => (
               <div key={i} style={{ padding: "16px 20px", borderBottom: "1px solid #FAF9F6" }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 8 }}>{u.name}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", marginBottom: 8 }}>{u.name}</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   {u.periods.map(r => (
                     <div key={r.id} style={{

@@ -117,16 +117,16 @@ export default function VacationPage() {
   const year = myStats?.year ?? new Date().getFullYear();
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 900, margin: "0 auto" }}>
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 24px 40px", fontFamily: "Inter, system-ui, sans-serif" }}>
       {/* Header */}
-      <div className="vacation-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
+      <div className="vacation-header" style={{ display: "flex", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1e293b", margin: 0 }}>Meine Urlaubsanträge</h1>
-          <div style={{ fontSize: 14, color: "#64748b", marginTop: 4 }}>Verwalte deine Urlaubsanträge und freie Tage.</div>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>Meine Urlaubsanträge</h1>
+          <div style={{ fontSize: 13, color: "#999", fontWeight: 400, marginTop: 4 }}>Verwalte deine Urlaubsanträge und freie Tage.</div>
         </div>
         <button
           onClick={() => setModalOpen(true)}
-          style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}
+          style={{ fontSize: 13, fontWeight: 600, borderRadius: 8, border: "none", background: "#1a1a1a", color: "#fff", padding: "9px 20px", cursor: "pointer" }}
         >
           + Antrag stellen
         </button>
@@ -136,39 +136,39 @@ export default function VacationPage() {
       <div style={{ display: "flex", gap: 16, marginBottom: 28, flexWrap: "wrap" }}>
         {myStats?.quota != null ? (
           <>
-            <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1.5px solid #e5e7eb", borderLeft: "4px solid #1a1a1a", borderRadius: 12, padding: "16px 20px" }}>
-              <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Kontingent {year}</div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: "#1e293b" }}>{myStats.quota} AT</div>
+            <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1px solid #E8E4DE", borderLeft: "4px solid #1a1a1a", borderRadius: 12, padding: "16px 20px" }}>
+              <div style={{ fontSize: 11, color: "#999", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Kontingent {year}</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a" }}>{myStats.quota} AT</div>
             </div>
-            <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1.5px solid #e5e7eb", borderLeft: "4px solid #16a34a", borderRadius: 12, padding: "16px 20px" }}>
-              <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Verbraucht</div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: "#1e293b" }}>{myStats.used} AT</div>
+            <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1px solid #E8E4DE", borderLeft: "4px solid #16a34a", borderRadius: 12, padding: "16px 20px" }}>
+              <div style={{ fontSize: 11, color: "#999", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Verbraucht</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a" }}>{myStats.used} AT</div>
             </div>
-            <div style={{ flex: 1, minWidth: 160, background: "#fff", border: `1.5px solid #e5e7eb`, borderLeft: `4px solid ${(myStats.remaining ?? 0) < 0 ? "#dc2626" : "#7c3aed"}`, borderRadius: 12, padding: "16px 20px" }}>
-              <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Verbleibend</div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: (myStats.remaining ?? 0) < 0 ? "#dc2626" : "#1e293b" }}>{myStats.remaining} AT</div>
+            <div style={{ flex: 1, minWidth: 160, background: "#fff", border: `1px solid #E8E4DE`, borderLeft: `4px solid ${(myStats.remaining ?? 0) < 0 ? "#dc2626" : "#7c3aed"}`, borderRadius: 12, padding: "16px 20px" }}>
+              <div style={{ fontSize: 11, color: "#999", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Verbleibend</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: (myStats.remaining ?? 0) < 0 ? "#dc2626" : "#1a1a1a" }}>{myStats.remaining} AT</div>
             </div>
           </>
         ) : (
-          <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1.5px solid #e5e7eb", borderLeft: "4px solid #16a34a", borderRadius: 12, padding: "16px 20px" }}>
-            <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Genehmigte Tage ({year})</div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: "#1e293b" }}>{myStats?.used ?? 0} AT</div>
+          <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1px solid #E8E4DE", borderLeft: "4px solid #16a34a", borderRadius: 12, padding: "16px 20px" }}>
+            <div style={{ fontSize: 11, color: "#999", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Genehmigte Tage ({year})</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a" }}>{myStats?.used ?? 0} AT</div>
           </div>
         )}
-        <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1.5px solid #e5e7eb", borderLeft: "4px solid #d97706", borderRadius: 12, padding: "16px 20px" }}>
-          <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Ausstehende Anträge</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: "#1e293b" }}>{pending}</div>
+        <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1px solid #E8E4DE", borderLeft: "4px solid #d97706", borderRadius: 12, padding: "16px 20px" }}>
+          <div style={{ fontSize: 11, color: "#999", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Ausstehende Anträge</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a" }}>{pending}</div>
         </div>
-        <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1.5px solid #e5e7eb", borderLeft: "4px solid #1a1a1a", borderRadius: 12, padding: "16px 20px" }}>
-          <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Anträge gesamt</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: "#1e293b" }}>{requests.length}</div>
+        <div style={{ flex: 1, minWidth: 160, background: "#fff", border: "1px solid #E8E4DE", borderLeft: "4px solid #1a1a1a", borderRadius: 12, padding: "16px 20px" }}>
+          <div style={{ fontSize: 11, color: "#999", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Anträge gesamt</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a" }}>{requests.length}</div>
         </div>
       </div>
 
       {/* Request list */}
-      <div style={{ background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, overflow: "hidden" }}>
+      <div style={{ background: "#fff", border: "1px solid #E8E4DE", borderRadius: 14, overflow: "hidden" }}>
         <div style={{ padding: "14px 20px", borderBottom: "1px solid #E8E4DE" }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>Alle Anträge</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#1a1a1a" }}>Alle Anträge</span>
         </div>
         {loading ? (
           <div style={{ padding: 32, textAlign: "center", color: "#94a3b8" }}>Laden…</div>
@@ -192,7 +192,7 @@ export default function VacationPage() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: "#1a1a1a" }}>
                       {TYPE_LABELS[r.type] || r.type}
                     </span>
                     <span style={{ fontSize: 11, fontWeight: 700, color: s.color, background: s.bg, borderRadius: 20, padding: "2px 10px" }}>

@@ -10,6 +10,43 @@ import NotificationBell from "../components/ui/NotificationBell";
 import { ping } from "../src/api/client";
 import "./responsive.css";
 
+const ROUTE_LABELS: Record<string, string> = {
+  dashboard: "Dashboard",
+  accounts: "Firmen",
+  contacts: "Kontakte",
+  deals: "Deals",
+  projects: "Projekte",
+  tasks: "Aufgaben",
+  time: "Zeiterfassung",
+  vacation: "Urlaub",
+  reports: "Berichte",
+  calendar: "Kalender",
+  users: "Benutzer",
+  profile: "Mein Profil",
+  activity: "Aktivitäten",
+  settings: "Einstellungen",
+  vendors: "Lieferanten",
+  admin: "Verwaltung",
+  permits: "Bewilligungen",
+};
+
+const FULL_PATH_LABELS: Record<string, string> = {
+  "/admin/vacation": "Verwaltung / Urlaubsanträge",
+};
+
+function getBreadcrumb(pathname: string | null): string {
+  if (!pathname) return "Dashboard";
+  if (FULL_PATH_LABELS[pathname]) return FULL_PATH_LABELS[pathname];
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length === 0) return "Dashboard";
+  const labels: string[] = [];
+  for (const seg of segments) {
+    if (ROUTE_LABELS[seg]) labels.push(ROUTE_LABELS[seg]);
+    else break;
+  }
+  return labels.join(" / ") || (ROUTE_LABELS[segments[0]] ?? segments[0].charAt(0).toUpperCase() + segments[0].slice(1));
+}
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLogin = pathname === "/login";
@@ -50,7 +87,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       }}>
         {/* Breadcrumb area */}
         <span style={{ fontSize: 13, color: "#999", fontWeight: 400 }}>
-          {pathname?.split("/").filter(Boolean).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(" / ") || "Dashboard"}
+          {getBreadcrumb(pathname)}
         </span>
 
         {/* Burger menu — mobile only */}
