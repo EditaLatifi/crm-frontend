@@ -51,6 +51,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
   const [attachments, setAttachments] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editVal, setEditVal] = useState<any>("");
@@ -62,20 +63,28 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
   const [dealTasks, setDealTasks] = useState<any[]>([]);
 
   const fetchAll = useCallback(async () => {
+    setLoadError(null);
+    let dealData: any;
     try {
-      const [dealData, notesData, attachData, stagesData, tasksData] = await Promise.all([
-        api.get(`/deals/${params.id}`),
-        api.get(`/deals/${params.id}/notes`),
-        api.get(`/deals/${params.id}/attachments`),
-        api.get('/deals/deal-stages'),
-        api.get('/tasks').catch(() => []),
-      ]);
-      setDeal(dealData);
-      setNotes(Array.isArray(notesData) ? notesData : []);
-      setAttachments(Array.isArray(attachData) ? attachData : []);
-      setStages(Array.isArray(stagesData) ? stagesData.sort((a: any, b: any) => a.order - b.order) : []);
-      setDealTasks((Array.isArray(tasksData) ? tasksData : []).filter((t: any) => t.dealId === params.id));
-    } catch { router.replace('/deals'); }
+      dealData = await api.get(`/deals/${params.id}`);
+    } catch (err: any) {
+      console.error('[DealDetail] failed to load deal', params.id, err);
+      if (err?.status === 404) { router.replace('/deals'); return; }
+      setLoadError(err?.message || 'Deal konnte nicht geladen werden.');
+      setLoading(false);
+      return;
+    }
+    const [notesData, attachData, stagesData, tasksData] = await Promise.all([
+      api.get(`/deals/${params.id}/notes`).catch((e) => { console.warn('[DealDetail] notes failed', e); return []; }),
+      api.get(`/deals/${params.id}/attachments`).catch((e) => { console.warn('[DealDetail] attachments failed', e); return []; }),
+      api.get('/deals/deal-stages').catch((e) => { console.warn('[DealDetail] deal-stages failed', e); return []; }),
+      api.get('/tasks').catch((e) => { console.warn('[DealDetail] tasks failed', e); return []; }),
+    ]);
+    setDeal(dealData);
+    setNotes(Array.isArray(notesData) ? notesData : []);
+    setAttachments(Array.isArray(attachData) ? attachData : []);
+    setStages(Array.isArray(stagesData) ? stagesData.sort((a: any, b: any) => a.order - b.order) : []);
+    setDealTasks((Array.isArray(tasksData) ? tasksData : []).filter((t: any) => t.dealId === params.id));
     setLoading(false);
   }, [params.id, router]);
 
@@ -151,6 +160,18 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
       <div style={{ width: 28, height: 28, border: '3px solid #e5e7eb', borderTopColor: '#1a1a1a', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+  if (loadError) return (
+    <div style={{ padding: '24px 32px', maxWidth: 720, margin: '0 auto' }}>
+      <Link href="/deals" style={{ display: 'inline-flex', alignItems: 'center', color: '#64748b', textDecoration: 'none', fontSize: 13, gap: 4, marginBottom: 16 }}>
+        <FiArrowLeft size={16} /> Zurück zu Deals
+      </Link>
+      <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 14, padding: '20px 24px', color: '#991b1b' }}>
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>Deal konnte nicht geladen werden</div>
+        <div style={{ fontSize: 14, marginBottom: 12 }}>{loadError}</div>
+        <button onClick={() => { setLoading(true); fetchAll(); }} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>Erneut versuchen</button>
+      </div>
     </div>
   );
   if (!deal) return null;
