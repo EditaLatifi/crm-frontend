@@ -123,15 +123,19 @@ export default function AccountsPage() {
 
   // Fetch unique owners (with names) and types for filters
   useEffect(() => {
-    Promise.all([api.get('/accounts'), api.get('/users')])
+    Promise.all([api.get('/accounts'), api.get('/users').catch(() => [])])
       .then(([accData, usersData]: any) => {
         const arr = Array.isArray(accData) ? accData : [];
         const users: any[] = Array.isArray(usersData) ? usersData : [];
-        const ownerIds = Array.from(new Set(arr.map((a: any) => a.ownerUserId).filter(Boolean))) as string[];
-        setOwners(ownerIds.map((id: string) => {
-          const u = users.find((u: any) => u.id === id);
-          return { id, name: u?.name || u?.email || id };
-        }));
+        const seen = new Map<string, { id: string; name: string }>();
+        for (const a of arr) {
+          if (!a.ownerUserId || seen.has(a.ownerUserId)) continue;
+          const embedded = a.owner as { name?: string; email?: string } | undefined;
+          const fallback = users.find((u: any) => u.id === a.ownerUserId);
+          const name = embedded?.name || embedded?.email || fallback?.name || fallback?.email || a.ownerUserId;
+          seen.set(a.ownerUserId, { id: a.ownerUserId, name });
+        }
+        setOwners(Array.from(seen.values()));
         setTypes(Array.from(new Set(arr.map((a: any) => a.type).filter(Boolean))) as string[]);
       })
       .catch(() => {});

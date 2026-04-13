@@ -786,8 +786,9 @@ function AccountsTable({
               </thead>
               <tbody>
                 {filteredAccounts.map(acc => {
-                  const owner = users.find(u => u.id === acc.ownerUserId);
-                  const ownerName = owner?.name || owner?.email || (acc.ownerUserId ? acc.ownerUserId.slice(0, 8) + "…" : "—");
+                  const embeddedOwner = (acc as any).owner as { id: string; name?: string; email?: string } | undefined;
+                  const fallbackOwner = users.find(u => u.id === acc.ownerUserId);
+                  const ownerName = embeddedOwner?.name || embeddedOwner?.email || fallbackOwner?.name || fallbackOwner?.email || (acc.ownerUserId ? acc.ownerUserId.slice(0, 8) + "…" : "—");
                   const typeColor: Record<string, string> = { CLIENT: "#2563eb", POTENTIAL_CLIENT: "#7c3aed", PARTNER: "#d97706", SUPPLIER: "#059669" };
                   const tc = typeColor[acc.type] || "#64748b";
                   return (
