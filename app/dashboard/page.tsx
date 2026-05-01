@@ -122,6 +122,11 @@ export default function DashboardPage() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [overduePermits, setOverduePermits] = useState<any[]>([]);
   const [budgetAlerts, setBudgetAlerts] = useState<any[]>([]);
+  const [budgetOverview, setBudgetOverview] = useState<{
+    totals: { budget: number; estimated: number; actual: number };
+    byType?: Record<string, { count: number; budget: number; estimated: number; actual: number }>;
+    projects?: any[];
+  } | null>(null);
   const [tasksChart, setTasksChart] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] });
   const [dealsChart, setDealsChart] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] });
   const [timeChart, setTimeChart] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] });
@@ -133,6 +138,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user) return;
+    api.get('/projects/budget-overview').then((d: any) => setBudgetOverview(d)).catch(() => {});
     Promise.all([
       api.get('/tasks').catch(() => []),
       api.get('/deals').catch(() => []),
@@ -281,6 +287,56 @@ export default function DashboardPage() {
           <div style={{ fontSize: 12, color: '#888', fontWeight: 500, marginTop: 4 }}>Budget {budgetPct}%</div>
         </div>
       </div>
+
+      {/* Budget overview widget */}
+      {budgetOverview && (
+        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8E4DE', padding: '20px 24px', marginBottom: 28 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>
+              <FiDollarSign size={15} style={{ verticalAlign: 'middle', marginRight: 6, color: '#16a34a' }} />
+              Budget-Übersicht
+            </h2>
+            <Link href="/projects/budget-overview" style={{ fontSize: 12, fontWeight: 600, color: '#1a1a1a', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              Vollständige Ansicht <FiArrowRight size={12} />
+            </Link>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Gesamtbudget</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a' }}>{formatCHF(budgetOverview.totals.budget)}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Geschätzt</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#3b82f6' }}>{formatCHF(budgetOverview.totals.estimated)}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                Tatsächlich
+                {budgetOverview.totals.budget > 0 && (() => {
+                  const pct = Math.round((budgetOverview.totals.actual / budgetOverview.totals.budget) * 100);
+                  const color = pct >= 100 ? '#dc2626' : pct >= 80 ? '#d97706' : '#16a34a';
+                  return <span style={{ fontSize: 11, color, fontWeight: 700, marginLeft: 6 }}>· {pct}%</span>;
+                })()}
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#16a34a' }}>{formatCHF(budgetOverview.totals.actual)}</div>
+            </div>
+          </div>
+          {budgetOverview.totals.budget > 0 && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ height: 6, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' }}>
+                {(() => {
+                  const pct = Math.min(100, Math.round((budgetOverview.totals.actual / budgetOverview.totals.budget) * 100));
+                  const color = pct >= 100 ? '#dc2626' : pct >= 80 ? '#d97706' : '#16a34a';
+                  return <div style={{ height: '100%', width: `${pct}%`, background: color, transition: 'width 0.4s ease' }} />;
+                })()}
+              </div>
+              <div style={{ fontSize: 11, color: '#64748b', marginTop: 6 }}>
+                Verbleibend: <strong>{formatCHF(budgetOverview.totals.budget - budgetOverview.totals.actual)}</strong>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Two-column layout: Termine + Aktivitäten */}
       <div className="dash-bottom-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>

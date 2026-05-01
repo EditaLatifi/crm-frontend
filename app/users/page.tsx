@@ -14,6 +14,10 @@ type User = {
   role: string;
   createdAt?: string;
   lastLoginAt?: string;
+  pensumPercent?: number | null;
+  hoursPerWeek?: number | null;
+  hoursPerYear?: number | null;
+  vacationDaysYearly?: number | null;
 };
 
 export default function UsersPage() {
@@ -28,7 +32,10 @@ export default function UsersPage() {
 
   // Edit modal
   const [editUser, setEditUser] = useState<User | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', email: '', role: '' });
+  const [editForm, setEditForm] = useState({
+    name: '', email: '', role: '',
+    pensumPercent: '', hoursPerWeek: '', hoursPerYear: '', vacationDaysYearly: '',
+  });
   const [editSaving, setEditSaving] = useState(false);
 
   // Delete confirmation
@@ -41,8 +48,17 @@ export default function UsersPage() {
   const [showResetPw, setShowResetPw] = useState(false);
   const [resetting, setResetting] = useState(false);
 
+  const [vacationStats, setVacationStats] = useState<Record<string, { total: number | null; used: number; remaining: number | null }>>({});
+
   const fetchUsers = () => {
     api.get('/users').then((d: any) => setUsers(Array.isArray(d) ? d : [])).catch(() => {});
+    api.get('/vacation/all-stats').then((d: any) => {
+      if (Array.isArray(d)) {
+        const map: any = {};
+        for (const row of d) map[row.userId] = { total: row.total, used: row.used, remaining: row.remaining };
+        setVacationStats(map);
+      }
+    }).catch(() => {});
   };
 
   useEffect(() => {
@@ -67,7 +83,15 @@ export default function UsersPage() {
 
   /* ─ Edit ─ */
   function openEdit(u: User) {
-    setEditForm({ name: u.name, email: u.email, role: u.role });
+    setEditForm({
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      pensumPercent: u.pensumPercent != null ? String(u.pensumPercent) : '',
+      hoursPerWeek: u.hoursPerWeek != null ? String(u.hoursPerWeek) : '',
+      hoursPerYear: u.hoursPerYear != null ? String(u.hoursPerYear) : '',
+      vacationDaysYearly: u.vacationDaysYearly != null ? String(u.vacationDaysYearly) : '',
+    });
     setEditUser(u);
   }
 
@@ -76,7 +100,16 @@ export default function UsersPage() {
     if (!editUser) return;
     setEditSaving(true);
     try {
-      await api.patch(`/users/${editUser.id}`, editForm);
+      const numOrNull = (s: string) => s === '' ? null : Number(s);
+      await api.patch(`/users/${editUser.id}`, {
+        name: editForm.name,
+        email: editForm.email,
+        role: editForm.role,
+        pensumPercent: numOrNull(editForm.pensumPercent),
+        hoursPerWeek: numOrNull(editForm.hoursPerWeek),
+        hoursPerYear: numOrNull(editForm.hoursPerYear),
+        vacationDaysYearly: numOrNull(editForm.vacationDaysYearly),
+      });
       toast.success('Benutzer aktualisiert.');
       setEditUser(null);
       fetchUsers();
@@ -188,7 +221,7 @@ export default function UsersPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: '#FAF9F6' }}>
-                {['Name', 'E-Mail', 'Rolle', 'Erstellt am', 'Letzter Login', 'Aktionen'].map(h => (
+                {['Name', 'E-Mail', 'Rolle', 'Pensum', 'Urlaub (verbraucht/total)', 'Letzter Login', 'Aktionen'].map(h => (
                   <th key={h} style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '2px solid #E8E4DE', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -209,7 +242,26 @@ export default function UsersPage() {
                       </span>
                     </td>
                     <td style={{ padding: '12px 16px', color: '#64748b', whiteSpace: 'nowrap' }}>
-                      {u.createdAt ? new Date(u.createdAt).toLocaleDateString('de-CH') : '—'}
+                      {u.pensumPercent != null ? `${u.pensumPercent}%` : '—'}
+                      {u.hoursPerWeek != null && (
+                        <div style={{ fontSize: 10, color: '#94a3b8' }}>{u.hoursPerWeek}h/W</div>
+                      )}
+                    </td>
+                    <td style={{ padding: '12px 16px', color: '#64748b', whiteSpace: 'nowrap' }}>
+                      {(() => {
+                        const v = vacationStats[u.id];
+                        if (!v) return '—';
+                        if (v.total == null) return `${v.used} / —`;
+                        const pct = v.total > 0 ? Math.round((v.used / v.total) * 100) : 0;
+                        const color = pct >= 90 ? '#dc2626' : pct >= 70 ? '#d97706' : '#16a34a';
+                        return (
+                          <span>
+                            <span style={{ color, fontWeight: 600 }}>{v.used}</span>
+                            <span style={{ color: '#94a3b8' }}> / {v.total}</span>
+                            <div style={{ fontSize: 10, color: '#94a3b8' }}>verbleibend: {v.remaining}</div>
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td style={{ padding: '12px 16px', color: '#64748b', whiteSpace: 'nowrap' }}>
                       {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
@@ -249,12 +301,46 @@ export default function UsersPage() {
               <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>E-Mail</label>
               <input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} style={inputS} />
             </div>
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Rolle</label>
               <select value={editForm.role} onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))} style={inputS}>
                 <option value="USER">Mitarbeiter</option>
                 <option value="ADMIN">Admin/Management</option>
               </select>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Pensum (%)</label>
+                <input type="number" min={0} max={100} value={editForm.pensumPercent}
+                  onChange={e => {
+                    const pct = e.target.value;
+                    setEditForm(f => {
+                      const computedWeek = pct ? (Number(pct) / 100 * 42).toFixed(1) : f.hoursPerWeek;
+                      const computedYear = pct ? Math.round(Number(pct) / 100 * 42 * 52).toString() : f.hoursPerYear;
+                      return { ...f, pensumPercent: pct, hoursPerWeek: computedWeek, hoursPerYear: computedYear };
+                    });
+                  }}
+                  style={inputS} />
+                {editForm.pensumPercent && (
+                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3 }}>
+                    {Number(editForm.pensumPercent)}% = {(Number(editForm.pensumPercent) / 100 * 42).toFixed(1)}h/Woche
+                  </div>
+                )}
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Std. / Woche</label>
+                <input type="number" min={0} step="0.5" value={editForm.hoursPerWeek} onChange={e => setEditForm(f => ({ ...f, hoursPerWeek: e.target.value }))} style={inputS} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Std. / Jahr</label>
+                <input type="number" min={0} step="1" value={editForm.hoursPerYear} onChange={e => setEditForm(f => ({ ...f, hoursPerYear: e.target.value }))} style={inputS} />
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Ferientage / Jahr</label>
+                <input type="number" min={0} step="1" value={editForm.vacationDaysYearly} onChange={e => setEditForm(f => ({ ...f, vacationDaysYearly: e.target.value }))} style={inputS} />
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button type="button" onClick={() => setEditUser(null)} style={{ background: '#E8E4DE', color: '#64748b', border: 'none', borderRadius: 7, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Abbrechen</button>

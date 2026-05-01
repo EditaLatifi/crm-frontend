@@ -10,6 +10,7 @@ import AccountEditForm from "../../../../components/forms/AccountEditForm";
 import { useToast } from "../../../../components/ui/Toast";
 import QuickNotes from "../../../../components/ui/QuickNotes";
 import EmailLog from "../../../../components/ui/EmailLog";
+import MapsLink from "../../../../components/ui/MapsLink";
 
 export default function AccountDetailsPage() {
   const params = useParams();
@@ -219,16 +220,32 @@ export default function AccountDetailsPage() {
           <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e5e7eb", padding: "18px 20px" }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 14 }}>Details</div>
             {[
-              { label: "Adresse", value: [account.addressStreet, account.addressNumber].filter(Boolean).join(' ') || account.address },
+              {
+                label: "Adresse",
+                value: [account.addressStreet, account.addressNumber].filter(Boolean).join(' ') || account.address,
+                extra: (
+                  <MapsLink
+                    parts={[
+                      [account.addressStreet, account.addressNumber].filter(Boolean).join(' '),
+                      [account.addressZip, account.addressCity].filter(Boolean).join(' '),
+                      account.addressCanton,
+                    ].filter(Boolean) as string[]}
+                    address={account.address}
+                  />
+                ),
+              },
               { label: "PLZ / Ort", value: [account.addressZip, account.addressCity].filter(Boolean).join(' ') },
               { label: "Kanton", value: account.addressCanton },
               { label: "Telefon", value: account.phone ? <a href={`tel:${account.phone}`} style={{ color: "#2563eb", textDecoration: "none" }}>{account.phone}</a> : null },
               { label: "E-Mail", value: account.email ? <a href={`mailto:${account.email}`} style={{ color: "#2563eb", textDecoration: "none" }}>{account.email}</a> : null },
               { label: "Erstellt", value: account.createdAt ? new Date(account.createdAt).toLocaleDateString("de-CH") : null },
-            ].map(({ label, value }) => (
+            ].map(({ label, value, extra }: any) => (
               <div key={label} style={{ marginBottom: 12 }}>
                 <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, marginBottom: 2 }}>{label}</div>
-                <div style={{ fontSize: 13, color: "#1e293b" }}>{value || <span style={{ color: "#cbd5e1" }}>—</span>}</div>
+                <div style={{ fontSize: 13, color: "#1e293b", display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <span>{value || <span style={{ color: "#cbd5e1" }}>—</span>}</span>
+                  {extra}
+                </div>
               </div>
             ))}
             <div style={{ marginTop: 4 }}>

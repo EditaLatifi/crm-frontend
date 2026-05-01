@@ -156,17 +156,15 @@ export default function TaskDetailsPage() {
     const durationMinutes = h * 60 + m;
     if (durationMinutes <= 0) { showToast("Bitte Dauer angeben (Stunden/Minuten)", "error"); return; }
     const date = newTime.date || new Date().toISOString().slice(0, 10);
-    const startedAt = new Date(`${date}T08:00:00`).toISOString();
-    const endedAt = new Date(new Date(`${date}T08:00:00`).getTime() + durationMinutes * 60000).toISOString();
     setLoadingTime(true);
     try {
-      const accountId = task?.accountId;
-      if (!accountId) { showToast("Kein Konto verknüpft", "error"); setLoadingTime(false); return; }
-      await api.post(`/tasks/${taskId}/time-entries`, {
-        startedAt, endedAt, durationMinutes, description: newTime.description,
-        userId: user?.id, accountId,
+      await api.post(`/time-entries`, {
+        durationMinutes,
+        date,
+        description: newTime.description,
+        taskId,
         projectId: task?.projectId || undefined,
-        phase: task?.phase || undefined,
+        accountId: task?.accountId || undefined,
       });
       setNewTime({ startedAt: "", endedAt: "", description: "", date: new Date().toISOString().slice(0, 10), hours: "", minutes: "" });
       fetchTask();
@@ -286,6 +284,24 @@ export default function TaskDetailsPage() {
             {task.title}
           </span>
         </div>
+
+        {/* Linked phase badge */}
+        {task.linkedFromPhase && (
+          <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verknüpfte Projektphase</span>
+              <a
+                href={`/projects/${task.linkedFromPhase.project?.id}`}
+                style={{ fontSize: 13, fontWeight: 600, color: '#1e40af', textDecoration: 'none' }}
+              >
+                {task.linkedFromPhase.project?.name} · Phase {String(task.linkedFromPhase.order).padStart(2, '0')}: {task.linkedFromPhase.name} ↗
+              </a>
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#1d4ed8', background: '#fff', borderRadius: 6, padding: '3px 8px', border: '1px solid #bfdbfe' }}>
+              {task.linkedFromPhase.status}
+            </span>
+          </div>
+        )}
 
         <div className="task-detail-grid">
 

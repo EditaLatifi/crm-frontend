@@ -109,7 +109,8 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
         <div style={{ display: 'flex', gap: 8 }}>
           <input type="number" min={0} value={amount} onChange={e => setAmount(e.target.value)} style={{ ...inputStyle(!!errors.amount), flex: 1 }} />
           <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ ...inputStyle(false), width: 80, flex: 'none' }}>
-            <option>CHF</option>
+            <option value="CHF">CHF</option>
+            <option value="EUR">EUR</option>
           </select>
         </div>
         {errors.amount && <div style={errStyle}>{errors.amount}</div>}

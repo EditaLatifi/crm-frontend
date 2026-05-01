@@ -6,6 +6,7 @@ import { ROLE_LABELS } from '../../../../src/lib/labels';
 import { formatCurrency } from '../../../../src/lib/formatCurrency';
 import { useAuth } from '../../../../src/auth/AuthProvider';
 import PhaseTimeline from '../../../../components/projects/PhaseTimeline';
+import BauforschrittPanel from '../../../../components/projects/BauforschrittPanel';
 import ProjectForm from '../../../../components/projects/ProjectForm';
 import Modal from '../../../../components/ui/Modal';
 import PermitPanel from '../../../../components/permits/PermitPanel';
@@ -13,6 +14,7 @@ import BudgetPanel from '../../../../components/budget/BudgetPanel';
 import DocumentPanel from '../../../../components/documents/DocumentPanel';
 import VendorPanel from '../../../../components/vendors/VendorPanel';
 import SharePanel from '../../../../components/vendors/SharePanel';
+import MapsLink from '../../../../components/ui/MapsLink';
 import {
   STATUS_COLORS, STATUS_BG, STATUS_LABELS,
   TYPE_LABELS, TYPE_ICONS,
@@ -211,6 +213,7 @@ export default function ProjectDetailPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                   <FiMapPin size={13} color="#94a3b8" />
                   <span style={{ fontSize: 13, color: '#475569' }}>{project.address}</span>
+                  <MapsLink address={project.address} />
                 </div>
               )}
               {project.startDate && (
@@ -235,6 +238,11 @@ export default function ProjectDetailPage() {
         {/* SIA Phase Bar (always visible) */}
         <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '16px 24px', marginBottom: 16 }}>
           <PhaseTimeline projectId={id} phases={phases} canEdit={canEdit} onUpdate={load} />
+        </div>
+
+        {/* Bauforschritt / Construction Progress */}
+        <div style={{ marginBottom: 16 }}>
+          <BauforschrittPanel projectId={id} canEdit={canEdit} />
         </div>
 
         {/* Tabs */}
@@ -324,8 +332,16 @@ export default function ProjectDetailPage() {
                         <option value="">Person auswählen...</option>
                         {availableUsers.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
                       </select>
-                      <input value={addMemberRole} onChange={e => setAddMemberRole(e.target.value)} placeholder="Rolle (optional)"
-                        style={{ width: '100%', padding: '7px 10px', borderRadius: 7, border: '1px solid #e2e8f0', fontSize: 12, marginBottom: 8, background: '#f8fafc', boxSizing: 'border-box' }} />
+                      <select value={addMemberRole} onChange={e => setAddMemberRole(e.target.value)}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: 7, border: '1px solid #e2e8f0', fontSize: 12, marginBottom: 8, background: '#f8fafc' }}>
+                        <option value="">Rolle wählen…</option>
+                        <option value="DEVELOPER">Developer</option>
+                        <option value="DESIGNER">Designer</option>
+                        <option value="ARCHITECT">Architekt</option>
+                        <option value="PROJECT_MANAGER">Projektmanager</option>
+                        <option value="CONSULTANT">Berater</option>
+                        <option value="OBSERVER">Beobachter</option>
+                      </select>
                       <button disabled={!addMemberUserId || memberLoading} onClick={handleAddMember}
                         style={{ width: '100%', padding: '7px 0', borderRadius: 7, border: 'none', background: addMemberUserId ? '#1a1a1a' : '#e2e8f0', color: addMemberUserId ? '#fff' : '#94a3b8', fontSize: 12, fontWeight: 600, cursor: addMemberUserId ? 'pointer' : 'default' }}>
                         {memberLoading ? 'Hinzufügen...' : '+ Hinzufügen'}

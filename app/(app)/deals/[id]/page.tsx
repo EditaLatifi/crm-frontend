@@ -7,6 +7,8 @@ import { formatCurrency } from "../../../../src/lib/formatCurrency";
 import { SIA_PHASES as SIA_PHASES_FULL } from "../../../../src/lib/siaPhases";
 import { FiArrowLeft, FiEdit2, FiDollarSign, FiCalendar, FiUser, FiTag, FiPaperclip, FiMessageSquare, FiClock, FiDownload, FiTrash2, FiUpload } from "react-icons/fi";
 import FollowUpBadge from "../../../../components/ui/FollowUpBadge";
+import DealPhaseTree from "../../../../components/deals/DealPhaseTree";
+import { useAuth } from "../../../../src/auth/AuthProvider";
 
 /* ─── SIA Leistungsphasen ─── */
 const SIA_PHASES = [
@@ -48,6 +50,8 @@ export default function DealDetailPage() {
   const router = useRouter();
   const routeParams = useParams();
   const params = { id: routeParams?.id as string };
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const [deal, setDeal] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [attachments, setAttachments] = useState<any[]>([]);
@@ -439,6 +443,9 @@ export default function DealDetailPage() {
                     await api.patch(`/deals/${params.id}`, { phaseBudgets: budgets });
                     setDeal((d: any) => ({ ...d, phaseBudgets: budgets }));
                   }} />}
+
+                  {/* Sub-phases + Zahlungsplan */}
+                  <DealPhaseTree dealId={params.id as string} currency={deal.currency || 'CHF'} canViewPayments={isAdmin} />
                 </div>
               )}
             </div>

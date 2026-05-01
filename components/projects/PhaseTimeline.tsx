@@ -1,8 +1,17 @@
 "use client";
 import { useState } from 'react';
-import { api } from '../../src/api/client';
+import { api, fetchWithAuth } from '../../src/api/client';
 import { PHASE_COLORS, PHASE_LABELS, PHASE_BG } from './phaseConfig';
-import { FiCheck, FiClock, FiSkipForward, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import Link from 'next/link';
+import { FiCheck, FiClock, FiSkipForward, FiChevronDown, FiChevronUp, FiTrash2, FiCheckSquare } from 'react-icons/fi';
+
+type LinkedTask = {
+  id: string;
+  title: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'DONE';
+  dueDate?: string | null;
+  assignee?: { id: string; name: string } | null;
+};
 
 type Phase = {
   id: string;
@@ -15,6 +24,14 @@ type Phase = {
   endDate?: string;
   completedAt?: string;
   completedBy?: { id: string; name: string } | null;
+  linkedTaskId?: string | null;
+  linkedTask?: LinkedTask | null;
+};
+
+const TASK_STATUS_LABELS: Record<string, { label: string; bg: string; color: string }> = {
+  OPEN:        { label: 'Offen',        bg: '#eff6ff', color: '#1d4ed8' },
+  IN_PROGRESS: { label: 'In Bearbeitung', bg: '#fef3c7', color: '#b45309' },
+  DONE:        { label: 'Erledigt',     bg: '#dcfce7', color: '#15803d' },
 };
 
 type Props = {
@@ -53,6 +70,36 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
       onUpdate?.();
     } catch (e: any) {
       setError(e.message || 'Fehler beim Aktualisieren');
+    } finally {
+      setLoadingId(null);
+    }
+  }
+
+  async function handleDelete(phase: Phase) {
+    const confirmed = window.confirm(
+      `Phase "${phase.name}" wirklich löschen?\n\nDieser Schritt ist nicht umkehrbar.`,
+    );
+    if (!confirmed) return;
+
+    let linkedTaskAction: 'delete' | 'keep' = 'keep';
+    if ((phase as any).linkedTaskId) {
+      const deleteTask = window.confirm(
+        `Diese Phase ist mit einer Aufgabe verknüpft.\n\nOK = Aufgabe AUCH löschen\nAbbrechen = Aufgabe BEHALTEN`,
+      );
+      linkedTaskAction = deleteTask ? 'delete' : 'keep';
+    }
+
+    setLoadingId(phase.id);
+    setError(null);
+    try {
+      await fetchWithAuth(`/projects/${projectId}/phases/${phase.id}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ linkedTaskAction }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      onUpdate?.();
+    } catch (e: any) {
+      setError(e.message || 'Fehler beim Löschen');
     } finally {
       setLoadingId(null);
     }
@@ -147,6 +194,27 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {phase.linkedTask && (() => {
+                        const cfg = TASK_STATUS_LABELS[phase.linkedTask.status] || TASK_STATUS_LABELS.OPEN;
+                        return (
+                          <Link
+                            href={`/tasks/${phase.linkedTask.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            title={`Verknüpfte Aufgabe: ${phase.linkedTask.title}${phase.linkedTask.assignee ? ` · ${phase.linkedTask.assignee.name}` : ''}`}
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 4,
+                              fontSize: 11, fontWeight: 600,
+                              padding: '2px 8px', borderRadius: 6,
+                              background: cfg.bg, color: cfg.color,
+                              border: `1px solid ${cfg.color}33`,
+                              textDecoration: 'none',
+                            }}
+                          >
+                            <FiCheckSquare size={11} />
+                            Aufgabe · {cfg.label}
+                          </Link>
+                        );
+                      })()}
                       <span style={{
                         fontSize: 11, fontWeight: 600, color, background: PHASE_BG[phase.status],
                         border: `1px solid ${color}`, borderRadius: 20, padding: '2px 10px',
@@ -183,6 +251,31 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
                           </div>
                         )}
                       </div>
+
+                      {/* Linked task block */}
+                      {phase.linkedTask && (
+                        <div style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 12px', marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+                            Verknüpfte Aufgabe
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                            <Link href={`/tasks/${phase.linkedTask.id}`} style={{ fontSize: 13, color: '#1e40af', fontWeight: 600, textDecoration: 'none' }}>
+                              {phase.linkedTask.title} ↗
+                            </Link>
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 11, color: '#64748b' }}>
+                              {phase.linkedTask.assignee && <span>👤 {phase.linkedTask.assignee.name}</span>}
+                              {phase.linkedTask.dueDate && <span>📅 {new Date(phase.linkedTask.dueDate).toLocaleDateString('de-CH')}</span>}
+                              <span style={{
+                                fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 4,
+                                background: TASK_STATUS_LABELS[phase.linkedTask.status]?.bg,
+                                color: TASK_STATUS_LABELS[phase.linkedTask.status]?.color,
+                              }}>
+                                {TASK_STATUS_LABELS[phase.linkedTask.status]?.label}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Notes */}
                       {canEdit && (
@@ -264,6 +357,20 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
                               {isLoading ? '...' : '⟶ Überspringen'}
                             </button>
                           )}
+                          <button
+                            disabled={isLoading}
+                            onClick={() => handleDelete(phase)}
+                            title="Phase löschen"
+                            style={{
+                              fontSize: 12, fontWeight: 500, padding: '6px 12px',
+                              borderRadius: 7, border: '1px solid #fecaca', cursor: 'pointer',
+                              background: '#fff', color: '#dc2626',
+                              display: 'inline-flex', alignItems: 'center', gap: 6,
+                              opacity: isLoading ? 0.6 : 1, marginLeft: 'auto',
+                            }}
+                          >
+                            <FiTrash2 size={12} /> {isLoading ? '...' : 'Löschen'}
+                          </button>
                         </div>
                       )}
                     </div>

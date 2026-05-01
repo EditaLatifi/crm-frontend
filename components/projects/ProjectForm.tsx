@@ -2,11 +2,16 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../src/api/client';
 import {
-  FiTag, FiMapPin, FiDollarSign, FiCalendar,
-  FiUser, FiFileText, FiAlertCircle,
+  FiTag, FiMapPin, FiCalendar,
+  FiUser, FiFileText, FiAlertCircle, FiLayers,
 } from 'react-icons/fi';
 
 const PROJECT_TYPES = [
+  { value: 'HOUSE',                   label: '🏠  Haus' },
+  { value: 'APARTMENT',               label: '🏢  Wohnung' },
+  { value: 'RENOVATION',              label: '🔨  Renovation' },
+  { value: 'COMMERCIAL',              label: '🏪  Gewerbe' },
+  { value: 'CUSTOM',                  label: '✨  Sonstiges' },
   { value: 'ARCHITECTURE',            label: '🏛️  Architektur' },
   { value: 'INTERIOR_DESIGN',         label: '🛋️  Innenarchitektur' },
   { value: 'CONSTRUCTION_MANAGEMENT', label: '🏗️  Bauleitung' },
@@ -38,6 +43,7 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
     budget:          initialData?.budget || '',
     budgetHours:     initialData?.budgetHours || '',
     currency:        initialData?.currency || 'CHF',
+    templateId:      '',
     startDate:       initialData?.startDate       ? initialData.startDate.slice(0, 10)       : '',
     expectedEndDate: initialData?.expectedEndDate ? initialData.expectedEndDate.slice(0, 10) : '',
     notes:           initialData?.notes || '',
@@ -46,12 +52,16 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
   });
   const [accounts, setAccounts] = useState<any[]>([]);
   const [users,    setUsers]    = useState<any[]>([]);
+  const [templates, setTemplates] = useState<any[]>([]);
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
 
   useEffect(() => {
     api.get('/accounts').then((d: any) => setAccounts(Array.isArray(d) ? d : [])).catch(() => {});
     api.get('/users').then((d: any) => setUsers(Array.isArray(d) ? d : [])).catch(() => {});
+    if (!initialData) {
+      api.get('/projects/templates').then((d: any) => setTemplates(Array.isArray(d) ? d : [])).catch(() => {});
+    }
   }, []);
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
@@ -59,6 +69,7 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) { setError('Projektname ist erforderlich'); return; }
+    if (!form.address.trim()) { setError('Adresse ist erforderlich'); return; }
     setLoading(true);
     setError(null);
     try {
@@ -70,6 +81,7 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
         ownerUserId:     form.ownerUserId || undefined,
         startDate:       form.startDate || undefined,
         expectedEndDate: form.expectedEndDate || undefined,
+        templateId:      form.templateId || undefined,
       });
     } catch (e: any) {
       setError(e.message || 'Fehler beim Speichern');
@@ -166,6 +178,16 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
         </div>
       </div>
 
+      {!initialData && templates.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <label style={label}><FiLayers size={11} style={{ marginRight: 4 }} /> Vorlage (optional)</label>
+          <select style={input} value={form.templateId} onChange={e => set('templateId', e.target.value)} onFocus={onFocus} onBlur={onBlur}>
+            <option value="">— Keine Vorlage —</option>
+            {templates.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </div>
+      )}
+
       {/* Description */}
       <div style={{ marginBottom: 22 }}>
         <label style={label}>Beschreibung</label>
@@ -187,12 +209,13 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
         Standort &amp; Budget
       </div>
 
-      {/* Address */}
+      {/* Address (mandatory) */}
       <div style={{ marginBottom: 14 }}>
-        <label style={label}>Adresse / Standort</label>
+        <label style={label}>Adresse / Standort *</label>
         {wrap(
           <FiMapPin size={13} />,
           <input
+            required
             style={inputWithIcon} value={form.address}
             onChange={e => set('address', e.target.value)}
             onFocus={onFocus} onBlur={onBlur}
@@ -204,11 +227,11 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
       {/* Budget + Currency + Budget Hours */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 12, marginBottom: 22 }}>
         <div>
-          <label style={label}>Budget (CHF)</label>
+          <label style={label}>Budget</label>
           {wrap(
-            <FiDollarSign size={13} />,
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.02em' }}>{form.currency}</span>,
             <input
-              style={inputWithIcon} type="number" min="0" value={form.budget}
+              style={{ ...inputWithIcon, paddingLeft: 44 }} type="number" min="0" value={form.budget}
               onChange={e => set('budget', e.target.value)}
               onFocus={onFocus} onBlur={onBlur}
               placeholder="150 000"
@@ -218,7 +241,8 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
         <div>
           <label style={label}>Währung</label>
           <select style={input} value={form.currency} onChange={e => set('currency', e.target.value)} onFocus={onFocus} onBlur={onBlur}>
-            <option>CHF</option>
+            <option value="CHF">CHF</option>
+            <option value="EUR">EUR</option>
           </select>
         </div>
         <div>

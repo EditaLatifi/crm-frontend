@@ -8,6 +8,7 @@ import {
   FiGrid, FiUsers, FiUser, FiBriefcase, FiCheckSquare,
   FiClock, FiBarChart2, FiLogOut, FiX,
   FiCalendar, FiLayers, FiUmbrella,
+  FiDollarSign, FiTrendingUp, FiCopy,
 } from "react-icons/fi";
 
 const NAV_GROUPS = [
@@ -26,6 +27,8 @@ const NAV_GROUPS = [
     label: "Auswertungen",
     items: [
       { href: "/time", label: "Zeiterfassung", icon: FiClock, countKey: null },
+      { href: "/time/overview", label: "Zeit-Übersicht", icon: FiBarChart2, countKey: null },
+      { href: "/projects/budget-overview", label: "Budget-Übersicht", icon: FiDollarSign, countKey: null },
       { href: "/vacation", label: "Urlaub", icon: FiUmbrella, countKey: null, hideForAdmin: true },
       { href: "/reports", label: "Berichte", icon: FiBarChart2, countKey: null },
       { href: "/calendar", label: "Kalender", icon: FiCalendar, countKey: null },
@@ -36,6 +39,8 @@ const NAV_GROUPS = [
     admin: true,
     items: [
       { href: "/users", label: "Benutzer", icon: FiUsers, countKey: null, admin: true },
+      { href: "/admin/milestones", label: "Bauschritte", icon: FiTrendingUp, countKey: null, admin: true },
+      { href: "/admin/templates", label: "Projektvorlagen", icon: FiCopy, countKey: null, admin: true },
       { href: "/admin/vacation", label: "Urlaubsanträge", icon: FiUmbrella, countKey: null, admin: true },
     ],
   },
