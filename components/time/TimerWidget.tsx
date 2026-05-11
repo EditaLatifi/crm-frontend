@@ -115,6 +115,10 @@ export default function TimerWidget() {
       clearTick();
       setElapsed(0);
       setStatus({ running: false });
+      // Refresh time page if currently viewing it
+      if (window.location.pathname.startsWith("/time")) {
+        window.location.reload();
+      }
     } catch {
       toast.error("Timer konnte nicht gestoppt werden.");
     } finally {
