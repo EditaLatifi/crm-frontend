@@ -268,11 +268,6 @@ export default function DashboardPage() {
       {/* Header row */}
       <div className="dash-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>Dashboard</h1>
-        <Link href="/accounts" style={{ textDecoration: 'none' }}>
-          <button style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            + Neue Firma
-          </button>
-        </Link>
       </div>
 
       {/* KPI Cards — clean minimal style */}

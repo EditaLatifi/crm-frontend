@@ -27,15 +27,17 @@ import {
 import Link from 'next/link';
 import '../projects.css';
 
-type Tab = 'overview' | 'tasks' | 'time' | 'documents' | 'budget' | 'permits';
+type Tab = 'overview' | 'baufortschritt' | 'tasks' | 'team' | 'documents' | 'time' | 'budget' | 'permits';
 
-const TABS: { id: Tab; label: string; icon: any }[] = [
-  { id: 'overview',   label: 'Übersicht',       icon: FiLayers },
-  { id: 'tasks',      label: 'Aufgaben',        icon: FiCheckSquare },
-  { id: 'time',       label: 'Zeiterfassung',   icon: FiCalendar },
-  { id: 'documents',  label: 'Dokumente',        icon: FiFolder },
-  { id: 'budget',     label: 'Budget',           icon: FiDollarSign },
-  { id: 'permits',    label: 'Baubewilligung',   icon: FiFileText },
+const TABS: { id: Tab; label: string; icon: any; roles?: string[] }[] = [
+  { id: 'overview',       label: 'Phasen',          icon: FiLayers },
+  { id: 'baufortschritt', label: 'Baufortschritt',  icon: FiTruck },
+  { id: 'tasks',          label: 'Aufgaben',        icon: FiCheckSquare },
+  { id: 'team',           label: 'Team',            icon: FiUsers },
+  { id: 'documents',      label: 'Dokumente',       icon: FiFolder },
+  { id: 'time',           label: 'Zeiterfassung',   icon: FiCalendar },
+  { id: 'budget',         label: 'Budget',          icon: FiDollarSign, roles: ['ADMIN', 'PROJEKTLEITER'] },
+  { id: 'permits',        label: 'Baubewilligung',  icon: FiFileText },
 ];
 
 export default function ProjectDetailPage() {
@@ -242,20 +244,13 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
-        {/* SIA Phase Bar (always visible) */}
-        <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '16px 24px', marginBottom: 16 }}>
-          <PhaseTimeline projectId={id} phases={phases} canEdit={canEdit} onUpdate={load} />
-        </div>
-
-        {/* Bauforschritt / Construction Progress */}
-        <div style={{ marginBottom: 16 }}>
-          <BauforschrittPanel projectId={id} canEdit={canEdit} />
-        </div>
-
         {/* Tabs */}
         <div style={{ marginBottom: 24 }}>
           <div className="proj-tabs-bar">
-            {TABS.filter(t => t.id !== 'budget' || showFinancials).map(t => {
+            {TABS.filter(t => {
+              if (t.roles && !t.roles.includes(user?.role || '')) return false;
+              return true;
+            }).map(t => {
               const Icon = t.icon;
               const active = activeTab === t.id;
               return (
@@ -279,10 +274,16 @@ export default function ProjectDetailPage() {
         {/* Tab content */}
         <div>
 
-          {/* OVERVIEW TAB */}
+          {/* PHASEN TAB (overview) */}
           {activeTab === 'overview' && (
-            <div className="proj-detail-grid">
-              {/* Project info */}
+            <div>
+              {/* SIA Phase Timeline */}
+              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '16px 24px', marginBottom: 16 }}>
+                <PhaseTimeline projectId={id} phases={phases} canEdit={canEdit} onUpdate={load} />
+              </div>
+
+              <div className="proj-detail-grid">
+              {/* Phase details */}
               <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '24px 28px' }}>
                 <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Phasenübersicht</h2>
                 {['PENDING','IN_PROGRESS','COMPLETED','SKIPPED'].map(s => {
@@ -365,6 +366,72 @@ export default function ProjectDetailPage() {
                 )}
 
               </div>
+            </div>
+            </div>
+          )}
+
+          {/* BAUFORTSCHRITT TAB */}
+          {activeTab === 'baufortschritt' && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px 28px' }}>
+              <BauforschrittPanel projectId={id} canEdit={canEdit} />
+            </div>
+          )}
+
+          {/* TEAM TAB */}
+          {activeTab === 'team' && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px 28px' }}>
+              <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#0f172a' }}>
+                <FiUsers size={15} style={{ marginRight: 8, verticalAlign: 'middle' }} />Projektteam
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {(project.members || []).map((m: any) => (
+                  <div key={m.userId} style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between', padding: '10px 14px', background: '#f8fafc', borderRadius: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#e8a838', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                        {m.user?.name?.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#1e293b' }}>{m.user?.name}</div>
+                        <div style={{ fontSize: 12, color: '#64748b' }}>
+                          {m.role && <span>{ROLE_LABELS[m.role] ?? m.role}</span>}
+                          {m.userId === project.ownerUserId && <span style={{ color: '#3b82f6', fontWeight: 600, marginLeft: m.role ? 8 : 0 }}>Projektleiter</span>}
+                        </div>
+                      </div>
+                    </div>
+                    {canEdit && m.userId !== project.ownerUserId && (
+                      <button onClick={() => handleRemoveMember(m.userId)} style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, cursor: 'pointer', color: '#dc2626', padding: '4px 8px', fontSize: 12 }}>
+                        Entfernen
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {canEdit && availableUsers.length > 0 && (
+                <div style={{ marginTop: 20, borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Mitglied hinzufügen</div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <select value={addMemberUserId} onChange={e => setAddMemberUserId(e.target.value)}
+                      style={{ flex: 1, minWidth: 180, padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, background: '#f8fafc' }}>
+                      <option value="">Person auswählen...</option>
+                      {availableUsers.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                    </select>
+                    <select value={addMemberRole} onChange={e => setAddMemberRole(e.target.value)}
+                      style={{ flex: 1, minWidth: 140, padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, background: '#f8fafc' }}>
+                      <option value="">Rolle wählen...</option>
+                      <option value="ARCHITECT">Architekt</option>
+                      <option value="PROJECT_MANAGER">Projektmanager</option>
+                      <option value="DEVELOPER">Developer</option>
+                      <option value="DESIGNER">Designer</option>
+                      <option value="CONSULTANT">Berater</option>
+                      <option value="OBSERVER">Beobachter</option>
+                    </select>
+                    <button disabled={!addMemberUserId || memberLoading} onClick={handleAddMember}
+                      style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: addMemberUserId ? '#1a1a1a' : '#e2e8f0', color: addMemberUserId ? '#fff' : '#94a3b8', fontSize: 13, fontWeight: 600, cursor: addMemberUserId ? 'pointer' : 'default' }}>
+                      {memberLoading ? 'Wird hinzugefügt...' : '+ Hinzufügen'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

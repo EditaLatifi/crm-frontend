@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { api } from '../../src/api/client';
-import { FiPlus, FiTrash2, FiEdit2, FiX, FiCheck, FiDollarSign, FiCalendar, FiUser } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiEdit2, FiX, FiCheck, FiDollarSign, FiCalendar, FiUser, FiChevronRight, FiChevronDown } from 'react-icons/fi';
 import { formatCurrency } from '../../src/lib/formatCurrency';
 
 type Payment = {
@@ -108,13 +108,21 @@ function PhaseRow({ phase, currency, onChange, canViewPayments }: { phase: Phase
   const [addingSub, setAddingSub] = useState(false);
   const [showPayments, setShowPayments] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const statusCfg = PHASE_STATUS_LABELS[phase.status || 'PENDING'];
+  const hasContent = !!(phase.children?.length || showPayments || editing || addingSub);
 
   return (
     <div style={{ ...cardBox, padding: 0, marginBottom: 12 }}>
-      <div style={{ padding: '12px 14px', borderBottom: phase.children?.length || showPayments || editing ? '1px solid #f1f5f9' : 'none' }}>
+      <div style={{ padding: '12px 14px', borderBottom: hasContent && expanded ? '1px solid #f1f5f9' : 'none' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexWrap: 'wrap' }}>
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexWrap: 'wrap', cursor: 'pointer', flex: 1 }}
+            onClick={() => setExpanded(v => !v)}
+          >
+            <span style={{ color: '#64748b', flexShrink: 0, transition: 'transform 0.15s' }}>
+              {expanded ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
+            </span>
             {phase.code && <span style={codeBadge}>{phase.code}</span>}
             <span style={{ fontSize: 14, fontWeight: 600, color: '#1e293b' }}>{phase.name}</span>
             <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 5, background: statusCfg.bg, color: statusCfg.color }}>
@@ -140,7 +148,7 @@ function PhaseRow({ phase, currency, onChange, canViewPayments }: { phase: Phase
               <span style={{ fontSize: 11, color: '#94a3b8' }}>· {(phase as any).offeredHours}h offeriert</span>
             )}
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 6 }} onClick={e => e.stopPropagation()}>
             <button title="Bearbeiten" onClick={() => setEditing(v => !v)} style={{ ...btnIcon, color: editing ? '#3b82f6' : '#64748b' }}><FiEdit2 size={13} /></button>
             <button title="Sub-Phase hinzufügen" onClick={() => setAddingSub(v => !v)} style={btnIcon}><FiPlus size={13} /></button>
             {canViewPayments && (
@@ -162,15 +170,15 @@ function PhaseRow({ phase, currency, onChange, canViewPayments }: { phase: Phase
         )}
       </div>
 
-      {editing && (
+      {expanded && editing && (
         <PhaseEditForm phase={phase} onDone={() => { setEditing(false); onChange(); }} onCancel={() => setEditing(false)} />
       )}
 
-      {addingSub && (
+      {expanded && addingSub && (
         <SubPhaseAddForm parentId={phase.id} parentCode={phase.code} onDone={() => { setAddingSub(false); onChange(); }} onCancel={() => setAddingSub(false)} />
       )}
 
-      {phase.children && phase.children.length > 0 && (
+      {expanded && phase.children && phase.children.length > 0 && (
         <div style={{ padding: '6px 14px 12px 30px' }}>
           {phase.children.map(c => {
             const csCfg = PHASE_STATUS_LABELS[c.status || 'PENDING'];
@@ -181,7 +189,7 @@ function PhaseRow({ phase, currency, onChange, canViewPayments }: { phase: Phase
         </div>
       )}
 
-      {showPayments && canViewPayments && (
+      {expanded && showPayments && canViewPayments && (
         <PaymentList phaseId={phase.id} payments={phase.payments || []} currency={currency} onChange={onChange} />
       )}
     </div>
