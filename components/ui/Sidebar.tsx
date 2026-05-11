@@ -32,7 +32,7 @@ const NAV_GROUPS: { label: string | null; minRole?: MinRole; items: { href: stri
     items: [
       { href: "/time", label: "Zeiterfassung", icon: FiClock, countKey: null },
       { href: "/reports", label: "Berichte", icon: FiBarChart2, countKey: null, minRole: "internal" },
-      { href: "/vacation", label: "Urlaub", icon: FiUmbrella, countKey: null, minRole: "internal" },
+      { href: "/vacation", label: "Urlaub", icon: FiUmbrella, countKey: null, hideForAdmin: true, minRole: "internal" },
       { href: "/calendar", label: "Kalender", icon: FiCalendar, countKey: null },
     ],
   },
