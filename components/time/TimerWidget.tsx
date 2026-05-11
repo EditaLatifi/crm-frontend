@@ -18,6 +18,7 @@ interface TimerStatus {
 interface Project {
   id: string;
   name: string;
+  accountId?: string;
 }
 
 function formatTime(totalSeconds: number): string {
@@ -83,10 +84,16 @@ export default function TimerWidget() {
 
   const handleStart = async () => {
     if (!selectedProject) return;
+    const proj = projects.find((p) => p.id === selectedProject);
+    if (!proj?.accountId) {
+      toast.error("Projekt hat kein verknüpftes Konto.");
+      return;
+    }
     setLoading(true);
     try {
       await api.post("/time-entries/timer/start", {
-        accountId: selectedProject,
+        accountId: proj.accountId,
+        projectId: selectedProject,
         description: description || undefined,
       });
       setShowForm(false);
