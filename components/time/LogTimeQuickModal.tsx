@@ -59,7 +59,7 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
     if (Number(hours) > 10) { toast.warning('Hinweis: Mehr als 10 Stunden erfasst.'); }
     setSaving(true);
     try {
-      await api.post('/time-entries', {
+      const result = await api.post('/time-entries', {
         projectId,
         projectPhaseId: projectPhaseId || undefined,
         taskId: taskId || undefined,
@@ -68,7 +68,11 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
         description: description.trim() || undefined,
         employeeUserId: employeeUserId || undefined,
       });
-      toast.success('Zeit erfasst.');
+      if (result?.kontingentWarning) {
+        toast.warning(result.kontingentWarning);
+      } else {
+        toast.success('Zeit erfasst.');
+      }
       onSaved?.();
       onClose();
     } catch (err: any) {

@@ -72,21 +72,15 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
     if (cached) {
       try { setCounts(JSON.parse(cached)); } catch {}
     }
-    // Fetch fresh counts in background
+    // Fetch counts via efficient /search/counts endpoint (single query, no full entity loads)
     const timer = setTimeout(() => {
-      Promise.all([
-        api.get('/accounts').then((d: any) => ({ key: 'accounts', count: Array.isArray(d) ? d.length : 0 })).catch(() => ({ key: 'accounts', count: 0 })),
-        api.get('/contacts').then((d: any) => ({ key: 'contacts', count: Array.isArray(d) ? d.length : 0 })).catch(() => ({ key: 'contacts', count: 0 })),
-        api.get('/deals').then((d: any) => ({ key: 'deals', count: Array.isArray(d) ? d.length : 0 })).catch(() => ({ key: 'deals', count: 0 })),
-        api.get('/projects').then((d: any) => ({ key: 'projects', count: Array.isArray(d) ? d.length : 0 })).catch(() => ({ key: 'projects', count: 0 })),
-        api.get('/tasks').then((d: any) => ({ key: 'tasks', count: Array.isArray(d) ? d.length : 0 })).catch(() => ({ key: 'tasks', count: 0 })),
-      ]).then(results => {
-        const c: Record<string, number> = {};
-        results.forEach(r => { c[r.key] = r.count; });
-        setCounts(c);
-        sessionStorage.setItem('sidebar-counts', JSON.stringify(c));
-      });
-    }, 500); // Delay sidebar counts so dashboard API calls get priority
+      api.get('/search/counts').then((c: any) => {
+        if (c && typeof c === 'object') {
+          setCounts(c);
+          sessionStorage.setItem('sidebar-counts', JSON.stringify(c));
+        }
+      }).catch(() => {});
+    }, 500);
     return () => clearTimeout(timer);
   }, []);
 

@@ -10,14 +10,14 @@ import FollowUpBadge from "../../../../components/ui/FollowUpBadge";
 import DealPhaseTree from "../../../../components/deals/DealPhaseTree";
 import { useAuth, canViewFinancials } from "../../../../src/auth/AuthProvider";
 
-/* ─── SIA Leistungsphasen ─── */
+/* ─── SIA Leistungsphasen (from central siaPhases.ts) ─── */
 const SIA_PHASES = [
-  { group: '1 — Strategische Planung', items: [{ nr: 11, name: 'Bedürfnisformulierung & Lösungsstrategien' }] },
-  { group: '2 — Vorstudien', items: [{ nr: 21, name: 'Machbarkeitsstudie' }, { nr: 22, name: 'Auswahlverfahren' }] },
+  { group: '1 — Strategische Planung', items: [{ nr: 10, name: 'Strategie/Planung' }] },
+  { group: '2 — Vorstudien', items: [{ nr: 20, name: 'Vorstudie' }] },
   { group: '3 — Projektierung', items: [{ nr: 31, name: 'Vorprojekt' }, { nr: 32, name: 'Bauprojekt' }, { nr: 33, name: 'Bewilligungsverfahren' }] },
-  { group: '4 — Ausschreibung', items: [{ nr: 41, name: 'Ausschreibung & Vergabe' }] },
-  { group: '5 — Realisierung', items: [{ nr: 51, name: 'Ausführungsplanung' }, { nr: 52, name: 'Ausführung' }, { nr: 53, name: 'Inbetriebnahme & Abschluss' }] },
-  { group: '6 — Bewirtschaftung', items: [{ nr: 61, name: 'Betrieb & Unterhalt' }] },
+  { group: '4 — Ausschreibung', items: [{ nr: 41, name: 'Ausschreibung' }] },
+  { group: '5 — Realisierung', items: [{ nr: 51, name: 'Ausführungsplanung' }, { nr: 52, name: 'Ausführung' }, { nr: 53, name: 'Inbetriebnahme' }] },
+  { group: '6 — Bewirtschaftung', items: [{ nr: 61, name: 'Bewirtschaftung' }] },
 ];
 
 const ALL_PHASE_NRS = SIA_PHASES.flatMap(g => g.items.map(i => i.nr));
@@ -269,6 +269,27 @@ export default function DealDetailPage() {
                 </div>
               );
             })()}
+
+            {/* Two-Budget Display */}
+            {showFinancials && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 12, padding: '16px 20px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Kunden-Offerte</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>{formatCurrency(deal.amount ?? 0, deal.currency || 'CHF')}</div>
+                </div>
+                <div style={{ background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: 12, padding: '16px 20px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Internes Kontingent</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>
+                    {(() => {
+                      const totalHours = (deal.phaseBudgets && typeof deal.phaseBudgets === 'object')
+                        ? Object.values(deal.phaseBudgets as Record<string, number>).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
+                        : 0;
+                      return totalHours > 0 ? `${totalHours.toLocaleString('de-CH')}h` : '—';
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Fields grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>

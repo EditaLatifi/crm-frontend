@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../src/api/client';
 import { FiPlus, FiTrash2, FiEdit2, FiX, FiCheck, FiDollarSign, FiCalendar, FiUser } from 'react-icons/fi';
+import { formatCurrency } from '../../src/lib/formatCurrency';
 
 type Payment = {
   id: string;
@@ -430,7 +431,7 @@ function PaymentList({ phaseId, payments, currency, onChange }: { phaseId: strin
         <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #f1f5f9', fontSize: 12 }}>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <span style={{ fontWeight: 600, color: '#1e293b' }}>{p.label}</span>
-            {p.amount != null && <span style={{ color: '#475569' }}>{p.amount} {currency}</span>}
+            {p.amount != null && <span style={{ color: '#475569' }}>{formatCurrency(p.amount, currency)}</span>}
             {p.percentage != null && <span style={{ color: '#475569' }}>{p.percentage}%</span>}
             {p.dueDate && (
               <span style={{ color: '#94a3b8', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
