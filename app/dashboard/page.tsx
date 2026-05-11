@@ -25,9 +25,10 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   DONE:        { bg: '#f0fdf4', text: '#16a34a' },
 };
 const PRIORITY_LABELS: Record<string, string> = {
-  HIGH: 'Wichtig', MEDIUM: 'Mittel', LOW: 'Niedrig',
+  URGENT: 'Dringend', HIGH: 'Hoch', MEDIUM: 'Mittel', LOW: 'Niedrig',
 };
 const PRIORITY_COLORS: Record<string, { bg: string; text: string }> = {
+  URGENT: { bg: '#fef2f2', text: '#991b1b' },
   HIGH:   { bg: '#fef2f2', text: '#dc2626' },
   MEDIUM: { bg: '#fffbeb', text: '#d97706' },
   LOW:    { bg: '#f8fafc', text: '#64748b' },
@@ -227,6 +228,16 @@ export default function DashboardPage() {
     .filter((t) => t.dueDate && t.status !== 'DONE')
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
     .slice(0, 6);
+
+  const upcomingFollowUps = deals
+    .filter((d) => d.followUpDate && new Date(d.followUpDate) >= new Date(new Date().toDateString()))
+    .sort((a, b) => new Date(a.followUpDate).getTime() - new Date(b.followUpDate).getTime())
+    .slice(0, 5);
+
+  const overdueFollowUps = deals
+    .filter((d) => d.followUpDate && new Date(d.followUpDate) < new Date(new Date().toDateString()))
+    .sort((a, b) => new Date(b.followUpDate).getTime() - new Date(a.followUpDate).getTime())
+    .slice(0, 5);
 
   const upcomingAppointments = appointments
     .filter((a) => new Date(a.startAt) >= new Date())
@@ -474,6 +485,38 @@ export default function DashboardPage() {
             );
           })}
         </div>
+        {/* Follow-ups */}
+        {(upcomingFollowUps.length > 0 || overdueFollowUps.length > 0) && (
+          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8E4DE', overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #F0ECE6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>Follow-ups</span>
+              {overdueFollowUps.length > 0 && (
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#dc2626', background: '#fef2f2', borderRadius: 10, padding: '2px 8px' }}>
+                  {overdueFollowUps.length} überfällig
+                </span>
+              )}
+            </div>
+            {[...overdueFollowUps, ...upcomingFollowUps].map((d, idx) => {
+              const isOverdue = new Date(d.followUpDate) < new Date(new Date().toDateString());
+              return (
+                <Link key={d.id} href={`/deals/${d.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div style={{ padding: '10px 20px', borderBottom: idx < overdueFollowUps.length + upcomingFollowUps.length - 1 ? '1px solid #F0ECE6' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#fafafa')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{d.name}</div>
+                      <div style={{ fontSize: 11, color: isOverdue ? '#dc2626' : '#999', marginTop: 2 }}>
+                        {isOverdue ? 'Überfällig: ' : 'Fällig: '}{new Date(d.followUpDate).toLocaleDateString('de-CH')}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 11, color: '#64748b' }}>{d.account?.name || ''}</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
         <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E8E4DE', overflow: 'hidden' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid #F0ECE6', fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>Deal-Prognose (6 Monate)</div>
           <div style={{ padding: '8px 16px 16px' }}><DealForecastWidget /></div>

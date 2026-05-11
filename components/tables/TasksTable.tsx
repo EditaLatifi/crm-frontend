@@ -17,8 +17,9 @@ interface Task {
   account?: { id: string; name: string } | null;
 }
 
-const PRIORITY_LABELS: Record<string, string> = { HIGH: 'Wichtig', MEDIUM: 'Mittel', LOW: 'Niedrig' };
+const PRIORITY_LABELS: Record<string, string> = { URGENT: 'Dringend', HIGH: 'Hoch', MEDIUM: 'Mittel', LOW: 'Niedrig' };
 const PRIORITY_COLORS: Record<string, { bg: string; color: string }> = {
+  URGENT: { bg: '#fef2f2', color: '#991b1b' },
   HIGH:   { bg: '#fef2f2', color: '#dc2626' },
   MEDIUM: { bg: '#fffbeb', color: '#d97706' },
   LOW:    { bg: '#f1f5f9', color: '#64748b' },

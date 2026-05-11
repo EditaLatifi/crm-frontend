@@ -12,9 +12,10 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
 };
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
-  LOW:    { label: "Niedrig", color: "#6b7280", dot: "#9ca3af" },
-  MEDIUM: { label: "Mittel",  color: "#b45309", dot: "#f59e0b" },
-  HIGH:   { label: "Hoch",    color: "#dc2626", dot: "#ef4444" },
+  LOW:    { label: "Niedrig",  color: "#6b7280", dot: "#9ca3af" },
+  MEDIUM: { label: "Mittel",   color: "#b45309", dot: "#f59e0b" },
+  HIGH:   { label: "Hoch",     color: "#dc2626", dot: "#ef4444" },
+  URGENT: { label: "Dringend", color: "#991b1b", dot: "#dc2626" },
 };
 
 function Avatar({ name, size = 32 }: { name: string; size?: number }) {
@@ -91,7 +92,7 @@ export default function TaskDetailsPage() {
   const isAdmin = user?.role === 'ADMIN';
 
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
-  const [activeTab, setActiveTab] = useState<"time" | "comments" | "history" | "checklists" | "documents">("comments");
+  const [activeTab, setActiveTab] = useState<"comments" | "documents" | "time">("comments");
   const [documents, setDocuments] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -638,11 +639,9 @@ export default function TaskDetailsPage() {
             {/* Tabs */}
             <div style={{ display: "flex", borderBottom: "1px solid #E8E4DE" }}>
               {([
-                { key: "comments", label: "Kommentare", count: comments.length },
-                { key: "checklists", label: "Checklisten", count: (Array.isArray(task.checklists) ? task.checklists : []).length },
-                { key: "documents", label: "Dokumente", count: documents.length },
-                { key: "time",     label: "Zeit",        count: timeEntries.length },
-                { key: "history",  label: "Verlauf",     count: history.length },
+                { key: "comments", label: "Kommentare", count: comments.length + history.length },
+                { key: "documents", label: "Dokumente", count: documents.length + (Array.isArray(task.checklists) ? task.checklists : []).length },
+                { key: "time",     label: "Zeiterfassung", count: timeEntries.length },
               ] as const).map(tab => (
                 <button
                   key={tab.key}
@@ -721,6 +720,32 @@ export default function TaskDetailsPage() {
                       {loadingComment ? "Senden..." : "Kommentieren"}
                     </button>
                   </div>
+
+                  {/* History merged into comments tab */}
+                  {history.length > 0 && (
+                    <div style={{ borderTop: "1px solid #E8E4DE", marginTop: 16, paddingTop: 16 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 10 }}>Verlauf</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 0, maxHeight: 300, overflowY: "auto" }}>
+                        {history.map((h, i) => (
+                          <div key={i} style={{ display: "flex", gap: 10, paddingBottom: 12, position: "relative" }}>
+                            {i < history.length - 1 && (
+                              <div style={{ position: "absolute", left: 14, top: 28, bottom: 0, width: 1, background: "#E8E4DE" }} />
+                            )}
+                            <Avatar name={h.user?.name || "U"} size={24} />
+                            <div style={{ flex: 1 }}>
+                              <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                                <span style={{ fontWeight: 600, fontSize: 11, color: "#0f172a" }}>{h.user?.name || "Benutzer"}</span>
+                                <span style={{ fontSize: 10, color: "#94a3b8" }}>{h.createdAt ? new Date(h.createdAt).toLocaleString("de-CH", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                              </div>
+                              <div style={{ fontSize: 11, color: "#64748b", marginTop: 1 }}>
+                                {formatHistoryEntry(h.action, h.payload)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -819,54 +844,30 @@ export default function TaskDetailsPage() {
               {/* ── HISTORY TAB ── */}
               {/* ── DOCUMENTS TAB ── */}
               {activeTab === "documents" && (
-                <TaskDocumentsPanel
-                  taskId={taskId}
-                  documents={documents}
-                  uploading={uploading}
-                  dragOver={dragOver}
-                  setUploading={setUploading}
-                  setDragOver={setDragOver}
-                  onRefresh={() => api.get(`/tasks/${taskId}/documents`).then(d => setDocuments(Array.isArray(d) ? d : [])).catch(() => {})}
-                />
+                <>
+                  <TaskDocumentsPanel
+                    taskId={taskId}
+                    documents={documents}
+                    uploading={uploading}
+                    dragOver={dragOver}
+                    setUploading={setUploading}
+                    setDragOver={setDragOver}
+                    onRefresh={() => api.get(`/tasks/${taskId}/documents`).then(d => setDocuments(Array.isArray(d) ? d : [])).catch(() => {})}
+                  />
+                  {/* Checklists merged into documents tab */}
+                  <div style={{ borderTop: "1px solid #E8E4DE", marginTop: 16, paddingTop: 16 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 10 }}>Checklisten</div>
+                    <ChecklistsPanel
+                      checklists={Array.isArray(task.checklists) ? task.checklists : []}
+                      onSave={async (cls: any[]) => {
+                        await api.patch(`/tasks/${taskId}`, { checklists: cls });
+                        fetchTask();
+                      }}
+                    />
+                  </div>
+                </>
               )}
 
-              {/* ── CHECKLISTS TAB ── */}
-              {activeTab === "checklists" && (
-                <ChecklistsPanel
-                  checklists={Array.isArray(task.checklists) ? task.checklists : []}
-                  onSave={async (cls: any[]) => {
-                    await api.patch(`/tasks/${taskId}`, { checklists: cls });
-                    fetchTask();
-                  }}
-                />
-              )}
-
-              {activeTab === "history" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 0, maxHeight: 500, overflowY: "auto" }}>
-                  {history.length === 0 && (
-                    <div style={{ textAlign: "center", padding: "32px 0", color: "#94a3b8", fontSize: 13 }}>
-                      Noch kein Verlauf.
-                    </div>
-                  )}
-                  {history.map((h, i) => (
-                    <div key={i} style={{ display: "flex", gap: 10, paddingBottom: 16, position: "relative" }}>
-                      {i < history.length - 1 && (
-                        <div style={{ position: "absolute", left: 14, top: 28, bottom: 0, width: 1, background: "#E8E4DE" }} />
-                      )}
-                      <Avatar name={h.user?.name || "U"} size={28} />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                          <span style={{ fontWeight: 600, fontSize: 12, color: "#0f172a" }}>{h.user?.name || "Benutzer"}</span>
-                          <span style={{ fontSize: 11, color: "#94a3b8" }}>{h.createdAt ? new Date(h.createdAt).toLocaleString("de-CH", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}</span>
-                        </div>
-                        <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
-                          {formatHistoryEntry(h.action, h.payload)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from 'react';
 import { api } from '../../../src/api/client';
-import { useAuth } from '../../../src/auth/AuthProvider';
+import { useAuth, canEdit as canEditRole, canViewFinancials } from '../../../src/auth/AuthProvider';
 import ProjectCard from '../../../components/projects/ProjectCard';
 import ProjectStats from '../../../components/projects/ProjectStats';
 import ProjectForm from '../../../components/projects/ProjectForm';
@@ -19,6 +19,8 @@ type View = 'grid' | 'list';
 export default function ProjectsPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
+  const canModify = canEditRole(user?.role);
+  const showFinancials = canViewFinancials(user?.role);
 
   const [projects,     setProjects]     = useState<any[]>([]);
   const [loading,      setLoading]      = useState(true);
@@ -94,7 +96,7 @@ export default function ProjectsPage() {
           >
             <FiRefreshCw size={13} />
           </button>
-          {isAdmin && (
+          {canModify && (
             <button
               onClick={() => setCreateOpen(true)}
               style={{
@@ -200,7 +202,7 @@ export default function ProjectsPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid #f1f5f9', background: '#f8fafc' }}>
-                    {['Projektname','Typ','Status','Kunde','Verantwortlich','Fortschritt','Budget'].map(h => (
+                    {['Projektname','Typ','Status','Kunde','Verantwortlich','Fortschritt', ...(showFinancials ? ['Budget'] : [])].map(h => (
                       <th key={h} style={{ padding: '10px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -232,9 +234,9 @@ export default function ProjectsPage() {
                             <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>{prog}%</span>
                           </div>
                         </td>
-                        <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap' }}>
+                        {showFinancials && <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap' }}>
                           {p.budget ? formatCurrency(p.budget, p.currency || 'CHF') : '—'}
-                        </td>
+                        </td>}
                       </tr>
                     );
                   })}

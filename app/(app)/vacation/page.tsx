@@ -162,6 +162,77 @@ export default function VacationPage() {
         </div>
       </div>
 
+      {/* Visual Calendar Timeline */}
+      {requests.filter(r => r.status !== 'REJECTED').length > 0 && (
+        <div style={{ background: "#fff", border: "1px solid #E8E4DE", borderRadius: 14, padding: "20px 24px", marginBottom: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a1a", marginBottom: 16 }}>Kalenderübersicht {year}</div>
+          {(() => {
+            const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+            const yearStart = new Date(year, 0, 1).getTime();
+            const yearEnd = new Date(year, 11, 31).getTime();
+            const totalDays = Math.ceil((yearEnd - yearStart) / (1000 * 60 * 60 * 24)) + 1;
+            const approved = requests.filter(r => r.status === 'APPROVED');
+            const pending = requests.filter(r => r.status === 'PENDING');
+
+            const getBarStyle = (r: VacationRequest): React.CSSProperties => {
+              const start = Math.max(new Date(r.startDate).getTime(), yearStart);
+              const end = Math.min(new Date(r.endDate).getTime(), yearEnd);
+              const leftPct = ((start - yearStart) / (1000 * 60 * 60 * 24) / totalDays) * 100;
+              const widthPct = Math.max(((end - start) / (1000 * 60 * 60 * 24) + 1) / totalDays * 100, 0.5);
+              return {
+                position: 'absolute', left: `${leftPct}%`, width: `${widthPct}%`,
+                height: 8, borderRadius: 4, top: 0,
+              };
+            };
+
+            return (
+              <div>
+                {/* Month labels */}
+                <div style={{ display: 'flex', marginBottom: 4 }}>
+                  {months.map((m, i) => (
+                    <div key={i} style={{ flex: 1, fontSize: 10, color: '#94a3b8', fontWeight: 600, textAlign: 'center' }}>{m}</div>
+                  ))}
+                </div>
+                {/* Timeline bar */}
+                <div style={{ position: 'relative', height: 32, background: '#f8fafc', borderRadius: 8, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                  {/* Month grid lines */}
+                  {months.map((_, i) => (
+                    <div key={i} style={{ position: 'absolute', left: `${(i / 12) * 100}%`, top: 0, bottom: 0, width: 1, background: '#e5e7eb' }} />
+                  ))}
+                  {/* Today marker */}
+                  {(() => {
+                    const today = new Date();
+                    if (today.getFullYear() === year) {
+                      const todayPct = ((today.getTime() - yearStart) / (1000 * 60 * 60 * 24) / totalDays) * 100;
+                      return <div style={{ position: 'absolute', left: `${todayPct}%`, top: 0, bottom: 0, width: 2, background: '#dc2626', zIndex: 2 }} />;
+                    }
+                    return null;
+                  })()}
+                  {/* Approved bars (green) */}
+                  <div style={{ position: 'absolute', top: 4, left: 0, right: 0 }}>
+                    {approved.map(r => (
+                      <div key={r.id} style={{ ...getBarStyle(r), background: '#22c55e' }} title={`${TYPE_LABELS[r.type] || r.type}: ${new Date(r.startDate).toLocaleDateString('de-CH')} – ${new Date(r.endDate).toLocaleDateString('de-CH')} (${r.days} Tage)`} />
+                    ))}
+                  </div>
+                  {/* Pending bars (yellow) */}
+                  <div style={{ position: 'absolute', top: 18, left: 0, right: 0 }}>
+                    {pending.map(r => (
+                      <div key={r.id} style={{ ...getBarStyle(r), background: '#f59e0b' }} title={`Ausstehend: ${new Date(r.startDate).toLocaleDateString('de-CH')} – ${new Date(r.endDate).toLocaleDateString('de-CH')} (${r.days} Tage)`} />
+                    ))}
+                  </div>
+                </div>
+                {/* Legend */}
+                <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 11, color: '#64748b' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 10, height: 10, borderRadius: 3, background: '#22c55e' }} /> Genehmigt</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 10, height: 10, borderRadius: 3, background: '#f59e0b' }} /> Ausstehend</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 2, height: 10, background: '#dc2626' }} /> Heute</div>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
       {/* Request list */}
       <div style={{ background: "#fff", border: "1px solid #E8E4DE", borderRadius: 14, overflow: "hidden" }}>
         <div style={{ padding: "14px 20px", borderBottom: "1px solid #E8E4DE" }}>

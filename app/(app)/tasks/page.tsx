@@ -2,12 +2,13 @@
 import TasksTable from '../../../components/tables/TasksTable';
 import React, { useState, useEffect } from 'react';
 import { api } from '../../../src/api/client';
-import { useAuth } from '../../../src/auth/AuthProvider';
+import { useAuth, canEdit as canEditRole } from '../../../src/auth/AuthProvider';
 import { getAllPhaseCodes } from '../../../src/lib/siaPhases';
 
 export default function TasksPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
+  const canModify = canEditRole(user?.role);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     title: '',
@@ -76,12 +77,12 @@ export default function TasksPage() {
           <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>Aufgaben</h1>
           <div style={{ fontSize: 13, color: '#999', fontWeight: 400, marginTop: 4 }}>Verwalte und priorisiere deine Aufgaben im Kanban-Board.</div>
         </div>
-        <button
+        {canModify && <button
           onClick={() => setShowForm(true)}
           style={{ fontSize: 13, fontWeight: 600, borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', padding: '9px 20px', cursor: 'pointer' }}
         >
           + Neue Aufgabe
-        </button>
+        </button>}
       </div>
 
       {/* Kanban board */}
@@ -116,7 +117,8 @@ export default function TasksPage() {
                     <select style={inputStyle} value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}>
                       <option value="LOW">Niedrig</option>
                       <option value="MEDIUM">Mittel</option>
-                      <option value="HIGH">Wichtig</option>
+                      <option value="HIGH">Hoch</option>
+                      <option value="URGENT">Dringend</option>
                     </select>
                   </div>
                 </div>

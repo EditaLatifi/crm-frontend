@@ -8,7 +8,7 @@ import { SIA_PHASES as SIA_PHASES_FULL } from "../../../../src/lib/siaPhases";
 import { FiArrowLeft, FiEdit2, FiDollarSign, FiCalendar, FiUser, FiTag, FiPaperclip, FiMessageSquare, FiClock, FiDownload, FiTrash2, FiUpload } from "react-icons/fi";
 import FollowUpBadge from "../../../../components/ui/FollowUpBadge";
 import DealPhaseTree from "../../../../components/deals/DealPhaseTree";
-import { useAuth } from "../../../../src/auth/AuthProvider";
+import { useAuth, canViewFinancials } from "../../../../src/auth/AuthProvider";
 
 /* ─── SIA Leistungsphasen ─── */
 const SIA_PHASES = [
@@ -52,6 +52,7 @@ export default function DealDetailPage() {
   const params = { id: routeParams?.id as string };
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
+  const showFinancials = canViewFinancials(user?.role);
   const [deal, setDeal] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [attachments, setAttachments] = useState<any[]>([]);
@@ -67,6 +68,7 @@ export default function DealDetailPage() {
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dealTasks, setDealTasks] = useState<any[]>([]);
+  const [linkedProject, setLinkedProject] = useState<any>(null);
 
   const fetchAll = useCallback(async () => {
     setLoadError(null);
@@ -91,6 +93,11 @@ export default function DealDetailPage() {
     setAttachments(Array.isArray(attachData) ? attachData : []);
     setStages(Array.isArray(stagesData) ? stagesData.sort((a: any, b: any) => a.order - b.order) : []);
     setDealTasks((Array.isArray(tasksData) ? tasksData : []).filter((t: any) => t.dealId === params.id));
+    // Find linked project
+    api.get('/projects').then((projects: any) => {
+      const linked = (Array.isArray(projects) ? projects : []).find((p: any) => p.dealId === params.id);
+      setLinkedProject(linked || null);
+    }).catch(() => {});
     setLoading(false);
   }, [params.id, router]);
 
@@ -266,7 +273,7 @@ export default function DealDetailPage() {
             {/* Fields grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {[
-                { label: 'Betrag', field: 'amount', icon: <FiDollarSign size={14} />, display: formatCurrency(deal.amount ?? 0, deal.currency || 'CHF'), type: 'number' },
+                ...(showFinancials ? [{ label: 'Betrag', field: 'amount', icon: <FiDollarSign size={14} />, display: formatCurrency(deal.amount ?? 0, deal.currency || 'CHF'), type: 'number' }] : []),
                 { label: 'Erw. Abschlussdatum', field: 'expectedCloseDate', icon: <FiCalendar size={14} />, display: deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString('de-CH') : '—', type: 'date' },
               ].map(item => (
                 <div key={item.field} style={{ background: '#FAF9F6', borderRadius: 10, padding: '12px 16px' }}>
@@ -459,8 +466,8 @@ export default function DealDetailPage() {
             {[
               { label: 'Erstellt am', value: deal.createdAt ? new Date(deal.createdAt).toLocaleDateString('de-CH') : '—', icon: <FiCalendar size={13} /> },
               { label: 'Zuletzt geändert', value: deal.updatedAt ? new Date(deal.updatedAt).toLocaleDateString('de-CH') : '—', icon: <FiCalendar size={13} /> },
-              { label: 'Besitzer', value: deal.owner?.name || deal.ownerUserId || '—', icon: <FiUser size={13} /> },
-              { label: 'Erstellt von', value: deal.creator?.name || deal.createdByUserId || '—', icon: <FiUser size={13} /> },
+              { label: 'Besitzer', value: deal.owner?.name || '—', icon: <FiUser size={13} /> },
+              { label: 'Erstellt von', value: deal.creator?.name || '—', icon: <FiUser size={13} /> },
             ].map(item => (
               <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #E8E4DE' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#94a3b8' }}>{item.icon} {item.label}</div>
@@ -468,6 +475,18 @@ export default function DealDetailPage() {
               </div>
             ))}
           </div>
+
+          {linkedProject && (
+            <Link href={`/projects/${linkedProject.id}`} style={{ textDecoration: 'none' }}>
+              <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 14, padding: '20px 22px', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = '#22c55e')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = '#bbf7d0')}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#15803d', marginBottom: 8 }}>Verknüpftes Projekt</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b' }}>{linkedProject.name}</div>
+                <div style={{ fontSize: 12, color: '#16a34a', marginTop: 4 }}>Zum Projekt →</div>
+              </div>
+            </Link>
+          )}
 
           {deal.account && (
             <div style={{ background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 14, padding: '20px 22px' }}>

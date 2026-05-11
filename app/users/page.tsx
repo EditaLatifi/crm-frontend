@@ -4,6 +4,7 @@ import { useAuth } from '../../src/auth/AuthProvider';
 import { api } from '../../src/api/client';
 import Modal from '../../components/ui/Modal';
 import { useToast } from '../../components/ui/Toast';
+import PasswordStrength from '../../components/ui/PasswordStrength';
 import './users-desktop.css';
 import './users-mobile.css';
 
@@ -179,8 +180,10 @@ export default function UsersPage() {
           <div>
             <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Rolle *</label>
             <select value={newUser.role} onChange={e => setNewUser(f => ({ ...f, role: e.target.value }))} style={inputS}>
-              <option value="USER">Mitarbeiter</option>
+              <option value="MITARBEITER">Mitarbeiter</option>
+              <option value="PROJEKTLEITER">Projektleiter</option>
               <option value="ADMIN">Admin/Management</option>
+              <option value="EXTERN">Extern</option>
             </select>
           </div>
           <div>
@@ -204,6 +207,7 @@ export default function UsersPage() {
                 }
               </button>
             </div>
+            <PasswordStrength password={newUser.password} />
           </div>
         </div>
         <button type="submit" disabled={loading}
@@ -304,8 +308,11 @@ export default function UsersPage() {
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Rolle</label>
               <select value={editForm.role} onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))} style={inputS}>
-                <option value="USER">Mitarbeiter</option>
+                <option value="MITARBEITER">Mitarbeiter</option>
+                <option value="PROJEKTLEITER">Projektleiter</option>
                 <option value="ADMIN">Admin/Management</option>
+                <option value="EXTERN">Extern</option>
+                <option value="USER">Benutzer (Legacy)</option>
               </select>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>

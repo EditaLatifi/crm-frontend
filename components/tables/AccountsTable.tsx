@@ -452,6 +452,7 @@ function AccountsTable({
   onSortChange,
 }: Props) {
   const toast = useToast();
+  const router = useRouter();
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -793,7 +794,8 @@ function AccountsTable({
                   const tc = typeColor[acc.type] || "#64748b";
                   return (
                     <tr key={acc.id}
-                      style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.1s" }}
+                      onClick={() => router.push(`/accounts/${acc.id}`)}
+                      style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.1s", cursor: "pointer" }}
                       onMouseEnter={e => (e.currentTarget.style.background = "#f8fafc")}
                       onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                     >

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from '../../src/auth/AuthProvider';
+import { useAuth, isAdminRole, isManagerRole, isInternalRole } from '../../src/auth/AuthProvider';
 import { useEffect, useState } from "react";
 import { api } from '../../src/api/client';
 import {
@@ -11,14 +11,18 @@ import {
   FiDollarSign, FiTrendingUp, FiCopy,
 } from "react-icons/fi";
 
-const NAV_GROUPS = [
+// minRole: minimum role level to see item
+// 'all' = everyone, 'internal' = not EXTERN, 'manager' = ADMIN+PROJEKTLEITER, 'admin' = ADMIN only
+type MinRole = 'all' | 'internal' | 'manager' | 'admin';
+
+const NAV_GROUPS: { label: string | null; minRole?: MinRole; items: { href: string; label: string; icon: any; countKey: string | null; minRole?: MinRole; hideForAdmin?: boolean }[] }[] = [
   {
     label: null,
     items: [
       { href: "/dashboard", label: "Dashboard", icon: FiGrid, countKey: null },
-      { href: "/accounts", label: "Firmen", icon: FiUsers, countKey: "accounts" },
-      { href: "/contacts", label: "Kontakte", icon: FiUser, countKey: "contacts" },
-      { href: "/deals", label: "Deals", icon: FiBriefcase, countKey: "deals" },
+      { href: "/accounts", label: "Firmen", icon: FiUsers, countKey: "accounts", minRole: "internal" },
+      { href: "/contacts", label: "Kontakte", icon: FiUser, countKey: "contacts", minRole: "internal" },
+      { href: "/deals", label: "Deals", icon: FiBriefcase, countKey: "deals", minRole: "manager" },
       { href: "/projects", label: "Projekte", icon: FiLayers, countKey: "projects" },
       { href: "/tasks", label: "Aufgaben", icon: FiCheckSquare, countKey: "tasks" },
     ],
@@ -27,21 +31,21 @@ const NAV_GROUPS = [
     label: "Auswertungen",
     items: [
       { href: "/time", label: "Zeiterfassung", icon: FiClock, countKey: null },
-      { href: "/time/overview", label: "Zeit-Übersicht", icon: FiBarChart2, countKey: null },
-      { href: "/projects/budget-overview", label: "Budget-Übersicht", icon: FiDollarSign, countKey: null },
-      { href: "/vacation", label: "Urlaub", icon: FiUmbrella, countKey: null, hideForAdmin: true },
-      { href: "/reports", label: "Berichte", icon: FiBarChart2, countKey: null },
+      { href: "/time/overview", label: "Zeit-Übersicht", icon: FiBarChart2, countKey: null, minRole: "manager" },
+      { href: "/projects/budget-overview", label: "Budget-Übersicht", icon: FiDollarSign, countKey: null, minRole: "manager" },
+      { href: "/reports", label: "Berichte", icon: FiBarChart2, countKey: null, minRole: "manager" },
+      { href: "/vacation", label: "Urlaub", icon: FiUmbrella, countKey: null, hideForAdmin: true, minRole: "internal" },
       { href: "/calendar", label: "Kalender", icon: FiCalendar, countKey: null },
     ],
   },
   {
     label: "Verwaltung",
-    admin: true,
+    minRole: "admin",
     items: [
-      { href: "/users", label: "Benutzer", icon: FiUsers, countKey: null, admin: true },
-      { href: "/admin/milestones", label: "Bauschritte", icon: FiTrendingUp, countKey: null, admin: true },
-      { href: "/admin/templates", label: "Projektvorlagen", icon: FiCopy, countKey: null, admin: true },
-      { href: "/admin/vacation", label: "Urlaubsanträge", icon: FiUmbrella, countKey: null, admin: true },
+      { href: "/users", label: "Benutzer", icon: FiUsers, countKey: null, minRole: "admin" },
+      { href: "/admin/milestones", label: "Bauschritte", icon: FiTrendingUp, countKey: null, minRole: "admin" },
+      { href: "/admin/templates", label: "Projektvorlagen", icon: FiCopy, countKey: null, minRole: "admin" },
+      { href: "/admin/vacation", label: "Urlaubsanträge", icon: FiUmbrella, countKey: null, minRole: "admin" },
     ],
   },
 ];
@@ -50,7 +54,16 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
   const pathname = usePathname() || "";
   const router = useRouter();
   const { user, logout } = useAuth();
-  const isAdmin = user?.role === "ADMIN";
+  const role = user?.role;
+  const isAdmin = isAdminRole(role);
+
+  function hasMinRole(minRole?: MinRole): boolean {
+    if (!minRole || minRole === 'all') return true;
+    if (minRole === 'admin') return isAdminRole(role);
+    if (minRole === 'manager') return isManagerRole(role);
+    if (minRole === 'internal') return isInternalRole(role);
+    return true;
+  }
   const [counts, setCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -125,8 +138,8 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
       {/* Nav groups */}
       <nav style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "4px 10px" }}>
         {NAV_GROUPS.map((group, gi) => {
-          const visibleItems = group.items.filter((item: any) => (!item.admin || isAdmin) && (!item.hideForAdmin || !isAdmin));
-          if (group.admin && !isAdmin) return null;
+          if (group.minRole && !hasMinRole(group.minRole)) return null;
+          const visibleItems = group.items.filter((item: any) => hasMinRole(item.minRole) && (!item.hideForAdmin || !isAdmin));
           if (visibleItems.length === 0) return null;
 
           return (
@@ -210,7 +223,7 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
                 {user?.name || user?.email || "Profil"}
               </div>
               <div style={{ fontSize: 11, color: "#999" }}>
-                {user?.role === "ADMIN" ? "Admin / Management" : "Mitarbeiter"}
+                {{ ADMIN: 'Admin / Management', PROJEKTLEITER: 'Projektleiter', MITARBEITER: 'Mitarbeiter', EXTERN: 'Extern', USER: 'Mitarbeiter' }[user?.role || 'USER'] || user?.role}
               </div>
             </div>
           </Link>

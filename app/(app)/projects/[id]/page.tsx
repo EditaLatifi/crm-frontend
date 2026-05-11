@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { api } from '../../../../src/api/client';
 import { ROLE_LABELS } from '../../../../src/lib/labels';
 import { formatCurrency } from '../../../../src/lib/formatCurrency';
-import { useAuth } from '../../../../src/auth/AuthProvider';
+import { useAuth, canViewFinancials } from '../../../../src/auth/AuthProvider';
 import PhaseTimeline from '../../../../components/projects/PhaseTimeline';
 import BauforschrittPanel from '../../../../components/projects/BauforschrittPanel';
 import ProjectForm from '../../../../components/projects/ProjectForm';
@@ -22,7 +22,7 @@ import {
 import {
   FiArrowLeft, FiEdit2, FiTrash2, FiUser, FiCalendar,
   FiMapPin, FiUsers, FiX, FiLayers, FiFileText, FiDollarSign,
-  FiFolder, FiTruck, FiLink, FiCheckSquare,
+  FiFolder, FiTruck, FiLink, FiCheckSquare, FiBriefcase,
 } from 'react-icons/fi';
 import Link from 'next/link';
 import '../projects.css';
@@ -43,6 +43,7 @@ export default function ProjectDetailPage() {
   const id     = params?.id as string;
   const router = useRouter();
   const { user } = useAuth();
+  const showFinancials = canViewFinancials(user?.role);
 
   const [project,         setProject]         = useState<any>(null);
   const [loading,         setLoading]         = useState(true);
@@ -185,14 +186,14 @@ export default function ProjectDetailPage() {
                     {TYPE_LABELS[project.type] || project.type}
                   </span>
                   <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20, background: '#f0fdf4', color: '#16a34a', fontWeight: 600 }}>
-                    {progress}% abgeschlossen
+                    {completedCount} von {phases.length} {phases.length === 1 ? 'Phase' : 'Phasen'} abgeschlossen
                   </span>
                 </div>
                 {project.description && (
                   <p style={{ margin: 0, fontSize: 14, color: '#475569', maxWidth: 500 }}>{project.description}</p>
                 )}
               </div>
-              {isAdmin && project.budget && (
+              {showFinancials && project.budget && (
                 <div style={{ flexShrink: 0 }}>
                   <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Budget</div>
                   <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a' }}>
@@ -203,6 +204,12 @@ export default function ProjectDetailPage() {
             </div>
 
             <div className="proj-detail-meta-row">
+              {project.deal && (
+                <Link href={`/deals/${project.deal.id}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <FiBriefcase size={13} color="#7c3aed" />
+                  <span style={{ fontSize: 13, color: '#7c3aed', fontWeight: 600 }}>Deal: {project.deal.name}</span>
+                </Link>
+              )}
               {project.account && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                   <FiUser size={13} color="#94a3b8" />
@@ -248,7 +255,7 @@ export default function ProjectDetailPage() {
         {/* Tabs */}
         <div style={{ marginBottom: 24 }}>
           <div className="proj-tabs-bar">
-            {TABS.filter(t => t.id !== 'budget' || isAdmin).map(t => {
+            {TABS.filter(t => t.id !== 'budget' || showFinancials).map(t => {
               const Icon = t.icon;
               const active = activeTab === t.id;
               return (
@@ -396,8 +403,9 @@ export default function ProjectDetailPage() {
                             <tr style={{ background: '#f8fafc' }}>
                               <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Phase</th>
                               <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Tasks</th>
-                              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Budget (h)</th>
+                              {showFinancials && <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Budget (h)</th>}
                               <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Effektiv (h)</th>
+                              {showFinancials && <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Verbleibend</th>}
                               <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Status</th>
                             </tr>
                           </thead>
@@ -420,11 +428,14 @@ export default function ProjectDetailPage() {
                                     {ph === 'Ohne Phase' && <span style={{ color: '#94a3b8' }}>{ph}</span>}
                                   </td>
                                   <td style={{ padding: '10px 14px', color: '#64748b' }}>{data.tasks.length}</td>
-                                  <td style={{ padding: '10px 14px', color: '#1e293b', fontWeight: 600 }}>{data.budget > 0 ? data.budget.toFixed(1) : '—'}</td>
+                                  {showFinancials && <td style={{ padding: '10px 14px', color: '#1e293b', fontWeight: 600 }}>{data.budget > 0 ? data.budget.toFixed(1) : '—'}</td>}
                                   <td style={{ padding: '10px 14px', color: over ? '#dc2626' : '#1e293b', fontWeight: 600 }}>
                                     {data.used.toFixed(1)}
                                     {over && <span style={{ marginLeft: 4, fontSize: 9, color: '#dc2626', background: '#fee2e2', borderRadius: 3, padding: '0 4px', fontWeight: 700 }}>!</span>}
                                   </td>
+                                  {showFinancials && <td style={{ padding: '10px 14px', fontWeight: 600, color: data.budget > 0 ? (data.budget - data.used > 0 ? '#16a34a' : '#dc2626') : '#94a3b8' }}>
+                                    {data.budget > 0 ? `${(data.budget - data.used).toFixed(1)}h` : '—'}
+                                  </td>}
                                   <td style={{ padding: '10px 14px' }}>
                                     <span style={{ fontSize: 10, fontWeight: 700, color: sc.color, background: sc.bg, borderRadius: 10, padding: '2px 8px' }}>{sc.label}</span>
                                   </td>
@@ -436,8 +447,11 @@ export default function ProjectDetailPage() {
                             <tr style={{ background: '#f8fafc', fontWeight: 700 }}>
                               <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb' }}>Gesamt</td>
                               <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb' }}>{projectTasks.length}</td>
-                              <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb' }}>{totalBudget > 0 ? totalBudget.toFixed(1) : '—'}</td>
+                              {showFinancials && <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb' }}>{totalBudget > 0 ? totalBudget.toFixed(1) : '—'}</td>}
                               <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb', color: totalBudget > 0 && totalUsed > totalBudget ? '#dc2626' : '#1e293b' }}>{totalUsed.toFixed(1)}</td>
+                              {showFinancials && <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb', fontWeight: 700, color: totalBudget > 0 ? (totalBudget - totalUsed > 0 ? '#16a34a' : '#dc2626') : '#94a3b8' }}>
+                                {totalBudget > 0 ? `${(totalBudget - totalUsed).toFixed(1)}h` : '—'}
+                              </td>}
                               <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb' }}></td>
                             </tr>
                           </tfoot>
@@ -504,16 +518,9 @@ export default function ProjectDetailPage() {
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px 28px' }}>
               <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Zeiterfassung pro SIA-Phase</h2>
               {(() => {
-                // Build data per phase using project phases as the source
-                const phaseTimeMap: Record<string, number> = {};
-                projectTasks.forEach((t: any) => {
-                  const ph = t.phase || 'Ohne Phase';
-                  const used = (t.timeEntries || []).reduce((s: number, e: any) => s + (e.durationMinutes || 0), 0) / 60;
-                  phaseTimeMap[ph] = (phaseTimeMap[ph] || 0) + used;
-                });
-
+                // Calculate used hours directly from phase timeEntries (loaded from backend)
                 const totalBudget = phases.reduce((s: number, p: any) => s + (p.budgetHours || 0), 0);
-                const totalUsed = Object.values(phaseTimeMap).reduce((s, v) => s + v, 0);
+                let totalUsed = 0;
 
                 const handlePhaseBudgetSave = async (phaseId: string, value: number) => {
                   try {
@@ -525,8 +532,12 @@ export default function ProjectDetailPage() {
                 return (
                   <>
                     {phases.map((p: any) => {
-                      const used = phaseTimeMap[p.name] || 0;
+                      // Sum hours from timeEntries directly linked to this phase
+                      const phaseEntries = p.timeEntries || [];
+                      const used = phaseEntries.reduce((s: number, e: any) => s + (e.durationMinutes || 0), 0) / 60;
+                      totalUsed += used;
                       const budget = p.budgetHours || 0;
+                      const remaining = budget > 0 ? budget - used : 0;
                       const ratio = budget > 0 ? used / budget : 0;
                       const pct = Math.min(ratio * 100, 100);
                       const barColor = ratio >= 1 ? '#dc2626' : ratio >= 0.8 ? '#d97706' : '#1a1a1a';
@@ -534,7 +545,7 @@ export default function ProjectDetailPage() {
                         <div key={p.id} style={{ marginBottom: 16, padding: '12px 16px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e5e7eb' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, gap: 8 }}>
                             <span style={{ fontWeight: 600, fontSize: 13, color: '#1e293b', flex: 1 }}>{p.name}</span>
-                            {isAdmin ? (
+                            {showFinancials ? (
                               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                 <span style={{ fontSize: 12, color: ratio >= 1 ? '#dc2626' : ratio >= 0.8 ? '#d97706' : '#475569', fontWeight: 600 }}>{used.toFixed(1)}h /</span>
                                 <input
@@ -545,16 +556,35 @@ export default function ProjectDetailPage() {
                                   style={{ width: 64, fontSize: 12, padding: '3px 6px', borderRadius: 6, border: '1px solid #d1d5db', textAlign: 'right', fontWeight: 600, color: '#1e293b' }}
                                 />
                                 <span style={{ fontSize: 12, color: '#94a3b8' }}>h</span>
+                                {budget > 0 && (
+                                  <span style={{ fontSize: 11, fontWeight: 600, marginLeft: 6, color: remaining <= 0 ? '#dc2626' : '#16a34a', background: remaining <= 0 ? '#fef2f2' : '#f0fdf4', borderRadius: 8, padding: '2px 7px' }}>
+                                    {remaining > 0 ? `${remaining.toFixed(1)}h übrig` : `${Math.abs(remaining).toFixed(1)}h über Budget`}
+                                  </span>
+                                )}
                               </div>
                             ) : (
-                              <span style={{ fontSize: 12, fontWeight: 600, color: ratio >= 1 ? '#dc2626' : ratio >= 0.8 ? '#d97706' : '#475569' }}>
-                                {used.toFixed(1)}h {budget > 0 ? `/ ${budget.toFixed(1)}h` : ''}
+                              <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>
+                                {used.toFixed(1)}h erfasst
                               </span>
                             )}
                           </div>
                           {budget > 0 && (
                             <div style={{ background: '#e2e8f0', borderRadius: 20, height: 6, overflow: 'hidden' }}>
                               <div style={{ height: '100%', background: barColor, borderRadius: 20, width: `${pct}%`, transition: 'width 0.3s' }} />
+                            </div>
+                          )}
+                          {/* Show recent time entries for this phase */}
+                          {phaseEntries.length > 0 && (
+                            <div style={{ marginTop: 8, borderTop: '1px solid #e5e7eb', paddingTop: 8 }}>
+                              {phaseEntries.slice(0, 3).map((e: any) => (
+                                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748b', padding: '2px 0' }}>
+                                  <span>{e.user?.name || '—'} — {e.description || 'Keine Beschreibung'}</span>
+                                  <span style={{ fontWeight: 600 }}>{(e.durationMinutes / 60).toFixed(1)}h · {new Date(e.startedAt).toLocaleDateString('de-CH')}</span>
+                                </div>
+                              ))}
+                              {phaseEntries.length > 3 && (
+                                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>+ {phaseEntries.length - 3} weitere Einträge</div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -564,6 +594,11 @@ export default function ProjectDetailPage() {
                       <span>Gesamt</span>
                       <span style={{ color: totalBudget > 0 && totalUsed > totalBudget ? '#dc2626' : '#1e293b' }}>
                         {totalUsed.toFixed(1)}h {totalBudget > 0 ? `/ ${totalBudget.toFixed(1)}h` : ''}
+                        {totalBudget > 0 && (
+                          <span style={{ fontSize: 12, fontWeight: 600, marginLeft: 8, color: totalBudget - totalUsed <= 0 ? '#dc2626' : '#16a34a' }}>
+                            ({totalBudget - totalUsed > 0 ? `${(totalBudget - totalUsed).toFixed(1)}h übrig` : `${(totalUsed - totalBudget).toFixed(1)}h über Budget`})
+                          </span>
+                        )}
                       </span>
                     </div>
                   </>

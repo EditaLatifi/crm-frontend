@@ -4,16 +4,40 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { login as apiLogin, getMe } from '../api/client';
 import { getAccessToken, setAccessToken, clearAccessToken, loadTokenFromStorage, saveTokenToStorage, clearTokenFromStorage, saveUserToStorage, loadUserFromStorage } from './tokenStore';
 
+export type UserRole = 'ADMIN' | 'PROJEKTLEITER' | 'MITARBEITER' | 'EXTERN' | 'USER';
+
 export type User = {
   id: string;
   email: string;
   name: string;
-  role: 'ADMIN' | 'USER';
+  role: UserRole;
 };
+
+/** Check helpers for role hierarchy */
+export function isAdminRole(role?: string | null): boolean {
+  return role === 'ADMIN';
+}
+export function isManagerRole(role?: string | null): boolean {
+  return role === 'ADMIN' || role === 'PROJEKTLEITER';
+}
+export function isInternalRole(role?: string | null): boolean {
+  return role === 'ADMIN' || role === 'PROJEKTLEITER' || role === 'MITARBEITER' || role === 'USER';
+}
+export function isExternRole(role?: string | null): boolean {
+  return role === 'EXTERN';
+}
+/** Can see financial data (budget, amounts, costs) */
+export function canViewFinancials(role?: string | null): boolean {
+  return role === 'ADMIN' || role === 'PROJEKTLEITER';
+}
+/** Can create/edit/delete entities */
+export function canEdit(role?: string | null): boolean {
+  return role !== 'EXTERN';
+}
 
 interface AuthContextType {
   user: User | null;
-  role: 'ADMIN' | 'USER' | null;
+  role: UserRole | null;
   accessToken: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;

@@ -130,7 +130,13 @@ function PhaseRow({ phase, currency, onChange, canViewPayments }: { phase: Phase
               </span>
             )}
             {phase.hourBudget != null && (
-              <span style={{ fontSize: 11, color: '#94a3b8' }}>· {phase.hourBudget}h Budget</span>
+              <span style={{ fontSize: 11, color: '#94a3b8' }}>· {phase.hourBudget}h</span>
+            )}
+            {(phase as any).budgetChf != null && (
+              <span style={{ fontSize: 11, color: '#94a3b8' }}>· {Number((phase as any).budgetChf).toLocaleString('de-CH')} CHF</span>
+            )}
+            {(phase as any).offeredHours != null && (
+              <span style={{ fontSize: 11, color: '#94a3b8' }}>· {(phase as any).offeredHours}h offeriert</span>
             )}
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
@@ -229,6 +235,9 @@ function PhaseEditForm({ phase, onDone, onCancel }: { phase: Phase; onDone: () =
   const [dueDate, setDueDate] = useState(phase.dueDate ? phase.dueDate.slice(0, 10) : '');
   const [responsibleUserId, setResponsibleUserId] = useState(phase.responsibleUserId || '');
   const [notes, setNotes] = useState(phase.notes || '');
+  const [hourBudget, setHourBudget] = useState<string>(phase.hourBudget != null ? String(phase.hourBudget) : '');
+  const [budgetChf, setBudgetChf] = useState<string>((phase as any).budgetChf != null ? String((phase as any).budgetChf) : '');
+  const [offeredHours, setOfferedHours] = useState<string>((phase as any).offeredHours != null ? String((phase as any).offeredHours) : '');
   const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -242,6 +251,9 @@ function PhaseEditForm({ phase, onDone, onCancel }: { phase: Phase; onDone: () =
       await api.patch(`/deals/phases/${phase.id}`, {
         name, description, status, dueDate: dueDate || null,
         responsibleUserId: responsibleUserId || null, notes,
+        hourBudget: hourBudget ? Number(hourBudget) : null,
+        budgetChf: budgetChf ? Number(budgetChf) : null,
+        offeredHours: offeredHours ? Number(offeredHours) : null,
       });
       onDone();
     } finally {
@@ -261,6 +273,11 @@ function PhaseEditForm({ phase, onDone, onCancel }: { phase: Phase; onDone: () =
           <option value="ON_HOLD">Pausiert</option>
         </select>
         <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} style={{ ...inputS, flex: 1 }} />
+      </div>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <input type="number" min="0" step="0.5" value={hourBudget} onChange={e => setHourBudget(e.target.value)} placeholder="Stundenkontingent (h)" style={{ ...inputS, flex: 1 }} />
+        <input type="number" min="0" step="100" value={budgetChf} onChange={e => setBudgetChf(e.target.value)} placeholder="Budget (CHF)" style={{ ...inputS, flex: 1 }} />
+        <input type="number" min="0" step="0.5" value={offeredHours} onChange={e => setOfferedHours(e.target.value)} placeholder="Offerierte Std." style={{ ...inputS, flex: 1 }} />
       </div>
       <select value={responsibleUserId} onChange={e => setResponsibleUserId(e.target.value)} style={inputS}>
         <option value="">— Verantwortlich (optional) —</option>
@@ -377,10 +394,20 @@ function PaymentList({ phaseId, payments, currency, onChange }: { phaseId: strin
 
   const submit = async () => {
     if (!label.trim()) return;
+    const pctNum = percentage ? Number(percentage) : null;
+    if (pctNum !== null && (pctNum < 0 || pctNum > 100)) {
+      alert('Prozentsatz muss zwischen 0 und 100 liegen.');
+      return;
+    }
+    const amtNum = amount ? Number(amount) : null;
+    if (amtNum !== null && amtNum < 0) {
+      alert('Betrag darf nicht negativ sein.');
+      return;
+    }
     await api.post(`/deals/phases/${phaseId}/payments`, {
       label: label.trim(),
-      amount: amount ? Number(amount) : null,
-      percentage: percentage ? Number(percentage) : null,
+      amount: amtNum,
+      percentage: pctNum,
       dueDate: dueDate || null,
     });
     setLabel(''); setAmount(''); setPercentage(''); setDueDate('');

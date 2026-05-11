@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import './profile-mobile.css';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { api, getMe } from '../../src/api/client';
+import PasswordStrength from '../../components/ui/PasswordStrength';
 import { ROLE_LABELS, TASK_STATUS_LABELS } from '../../src/lib/labels';
 import Link from 'next/link';
 
@@ -39,6 +40,10 @@ export default function UserProfilePage() {
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState('');
 
+  // Notification preferences
+  const [notifPrefs, setNotifPrefs] = useState<Record<string, boolean>>({});
+  const [notifLoading, setNotifLoading] = useState(false);
+
   // Change password
   const [pwOpen, setPwOpen] = useState(false);
   const [oldPw, setOldPw] = useState('');
@@ -65,6 +70,22 @@ export default function UserProfilePage() {
   };
 
   useEffect(() => { fetchData(); }, [authUser]);
+
+  useEffect(() => {
+    api.get('/notifications/preferences').then((d: any) => {
+      if (d && typeof d === 'object') setNotifPrefs(d);
+    }).catch(() => {});
+  }, []);
+
+  const toggleNotifPref = async (key: string) => {
+    const newVal = !notifPrefs[key];
+    setNotifPrefs(prev => ({ ...prev, [key]: newVal }));
+    try {
+      await api.patch('/notifications/preferences', { [key]: newVal });
+    } catch {
+      setNotifPrefs(prev => ({ ...prev, [key]: !newVal }));
+    }
+  };
 
   const openEdit = () => {
     setEditName(user?.name || '');
@@ -174,6 +195,7 @@ export default function UserProfilePage() {
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Neues Passwort</label>
               <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} style={inputStyle} autoComplete="new-password" />
+              <PasswordStrength password={newPw} />
             </div>
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Neues Passwort bestätigen</label>
@@ -248,6 +270,43 @@ export default function UserProfilePage() {
           </div>
         </div>
       )}
+
+      {/* ── Notification Preferences ── */}
+      <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E8E4DE', padding: '20px 24px', marginTop: 24 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', marginBottom: 16 }}>E-Mail-Benachrichtigungen</h2>
+        <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
+          Wähle, welche E-Mail-Benachrichtigungen du erhalten möchtest.
+        </div>
+        {[
+          { key: 'emailOnTaskAssigned', label: 'Aufgabe zugewiesen' },
+          { key: 'emailOnTaskComment', label: 'Neuer Kommentar bei Aufgabe' },
+          { key: 'emailOnDealCreated', label: 'Neuer Deal erstellt' },
+          { key: 'emailOnDealStageChange', label: 'Deal-Phase geändert' },
+          { key: 'emailOnDueDate', label: 'Fälligkeits-Erinnerung (1 Tag vorher)' },
+          { key: 'emailOnFollowUp', label: 'Follow-up Erinnerung' },
+          { key: 'emailOnPaymentDue', label: 'Zahlungsplan-Fälligkeit' },
+          { key: 'emailOnVacation', label: 'Urlaubsantrag-Status' },
+        ].map(item => (
+          <label key={item.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}>
+            <span style={{ fontSize: 14, color: '#374151' }}>{item.label}</span>
+            <div
+              onClick={() => toggleNotifPref(item.key)}
+              style={{
+                width: 40, height: 22, borderRadius: 11, cursor: 'pointer',
+                background: notifPrefs[item.key] !== false ? '#22c55e' : '#d1d5db',
+                position: 'relative', transition: 'background 0.2s',
+              }}
+            >
+              <div style={{
+                width: 18, height: 18, borderRadius: '50%', background: '#fff',
+                position: 'absolute', top: 2,
+                left: notifPrefs[item.key] !== false ? 20 : 2,
+                transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              }} />
+            </div>
+          </label>
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,15 +1,19 @@
 
 "use client";
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { api } from '../../src/api/client';
-import { useAuth } from '../../src/auth/AuthProvider';
+import { useAuth, canViewFinancials, canEdit } from '../../src/auth/AuthProvider';
 import { formatCHF, formatCurrency } from '../../src/lib/formatCurrency';
 import DealForm from '../forms/DealForm';
 import './deals-table-desktop.css';
 
 export default function DealsTable() {
   const { user } = useAuth();
+  const router = useRouter();
   const isAdmin = user?.role === 'ADMIN';
+  const showFinancials = canViewFinancials(user?.role);
+  const canModify = canEdit(user?.role);
   const [deals, setDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editDeal, setEditDeal] = useState<any | null>(null);
@@ -57,7 +61,7 @@ export default function DealsTable() {
             <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>Name</th>
             <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>Konto</th>
             <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>Phase</th>
-            <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>Betrag</th>
+            {showFinancials && <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>Betrag</th>}
             <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>Besitzer</th>
             <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>Erwartetes Enddatum</th>
             <th style={{ fontWeight: 600, color: '#222', fontSize: 15, padding: '12px 8px', border: 'none', textAlign: 'left' }}>SIA-Phasen</th>
@@ -71,12 +75,12 @@ export default function DealsTable() {
             </tr>
           )}
           {deals.map((d: any) => (
-            <tr key={d.id} style={{ borderBottom: '1px solid #e0e0e0', background: '#fff' }}>
+            <tr key={d.id} onClick={() => router.push(`/deals/${d.id}`)} style={{ borderBottom: '1px solid #e0e0e0', background: '#fff', cursor: 'pointer' }} onMouseEnter={e => (e.currentTarget.style.background = '#f8f9fa')} onMouseLeave={e => (e.currentTarget.style.background = '#fff')}>
               <td style={{ padding: '10px 8px', border: 'none', color: '#23272f', fontWeight: 500 }} data-label="Name">{d.name}</td>
-              <td style={{ padding: '10px 8px', border: 'none', color: '#444' }} data-label="Account">{d.account?.name || d.accountId}</td>
+              <td style={{ padding: '10px 8px', border: 'none', color: '#444' }} data-label="Account">{d.account?.name || '—'}</td>
               <td style={{ padding: '10px 8px', border: 'none', color: '#444' }} data-label="Stage">{d.stage?.name || d.stageId}</td>
-              <td style={{ padding: '10px 8px', border: 'none', color: '#444' }} data-label="Amount">{formatCurrency(d.amount ?? 0, d.currency || 'CHF')}</td>
-              <td style={{ padding: '10px 8px', border: 'none', color: '#888', fontSize: 14 }} data-label="Owner">{d.owner?.name || d.ownerUserId}</td>
+              {showFinancials && <td style={{ padding: '10px 8px', border: 'none', color: '#444' }} data-label="Amount">{formatCurrency(d.amount ?? 0, d.currency || 'CHF')}</td>}
+              <td style={{ padding: '10px 8px', border: 'none', color: '#888', fontSize: 14 }} data-label="Owner">{d.owner?.name || '—'}</td>
               <td style={{ padding: '10px 8px', border: 'none', color: '#888', fontSize: 14 }} data-label="Expected Close">{d.expectedCloseDate ? new Date(d.expectedCloseDate).toLocaleDateString('de-CH') : ''}</td>
               <td style={{ padding: '10px 8px', border: 'none' }} data-label="Phasen">
                 {Array.isArray((d as any).phases) && (d as any).phases.length > 0 ? (
@@ -89,8 +93,8 @@ export default function DealsTable() {
               </td>
               <td style={{ padding: '10px 8px', border: 'none' }} data-label="Actions">
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <button
-                    onClick={() => handleEdit(d)}
+                  {canModify && <button
+                    onClick={(e) => { e.stopPropagation(); handleEdit(d); }}
                     style={{
                       background: 'none', border: 'none', cursor: 'pointer',
                       color: '#666', padding: 4,
@@ -98,7 +102,7 @@ export default function DealsTable() {
                     title="Bearbeiten"
                   >
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
+                  </button>}
                   {isAdmin && (
                     <button
                       onClick={() => handleDelete(d.id)}

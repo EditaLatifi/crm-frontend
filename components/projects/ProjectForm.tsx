@@ -5,6 +5,7 @@ import {
   FiTag, FiMapPin, FiCalendar,
   FiUser, FiFileText, FiAlertCircle, FiLayers,
 } from 'react-icons/fi';
+import AddressAutocomplete from '../ui/AddressAutocomplete';
 
 const PROJECT_TYPES = [
   { value: 'HOUSE',                   label: '🏠  Haus' },
@@ -214,10 +215,10 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
         <label style={label}>Adresse / Standort *</label>
         {wrap(
           <FiMapPin size={13} />,
-          <input
+          <AddressAutocomplete
             required
             style={inputWithIcon} value={form.address}
-            onChange={e => set('address', e.target.value)}
+            onChange={v => set('address', v)}
             onFocus={onFocus} onBlur={onBlur}
             placeholder="Musterstrasse 1, 6300 Zug"
           />

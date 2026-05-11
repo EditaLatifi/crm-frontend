@@ -55,6 +55,8 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
     e.preventDefault();
     if (!projectId) { toast.error('Projekt ist erforderlich.'); return; }
     if (!hours || Number(hours) <= 0) { toast.error('Stunden sind erforderlich.'); return; }
+    if (Number(hours) > 14) { toast.error('Maximale Erfassung: 14 Stunden pro Eintrag.'); return; }
+    if (Number(hours) > 10) { toast.warning('Hinweis: Mehr als 10 Stunden erfasst.'); }
     setSaving(true);
     try {
       await api.post('/time-entries', {
@@ -115,7 +117,7 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 10, marginBottom: 12 }}>
             <div>
               <label style={lbl}>Stunden *</label>
-              <input type="number" min="0.25" step="0.25" value={hours} onChange={e => setHours(e.target.value)} style={inp} placeholder="2.5" autoFocus />
+              <input type="number" min="0.25" max="14" step="0.25" value={hours} onChange={e => setHours(e.target.value)} style={inp} placeholder="2.5" autoFocus />
             </div>
             <div>
               <label style={lbl}>Datum *</label>

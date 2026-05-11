@@ -101,7 +101,7 @@ export default function AdminTemplatesPage() {
                 <div style={{ fontSize: 16, fontWeight: 700, color: '#1e293b' }}>{t.name}</div>
                 <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
                   {TYPE_OPTIONS.find(o => o.value === t.type)?.label || t.type} ·{' '}
-                  {(t.defaultPhases || []).length} Phasen ·{' '}
+                  {(t.defaultPhases || []).length} {(t.defaultPhases || []).length === 1 ? 'Phase' : 'Phasen'} ·{' '}
                   {(t.defaultMilestoneIds || []).length} Bauschritte ·{' '}
                   {(t.defaultBudgetItems || []).length} Budget-Posten
                 </div>
@@ -141,6 +141,21 @@ function TemplateModal({
   const [saving, setSaving] = useState(false);
 
   const addPhase = () => setPhases(p => [...p, { name: '', description: '', order: p.length + 1 }]);
+  const loadSiaPhases = () => {
+    const sia = [
+      { name: '10 – Strategische Planung', description: 'Bedürfnisformulierung & Lösungsstrategien', order: 1 },
+      { name: '20 – Vorstudien', description: 'Machbarkeitsstudie', order: 2 },
+      { name: '31 – Vorprojekt', description: 'Vorprojekt', order: 3 },
+      { name: '32 – Bauprojekt', description: 'Bauprojekt', order: 4 },
+      { name: '33 – Bewilligungsverfahren', description: 'Baubewilligungsgesuch und Bewilligung', order: 5 },
+      { name: '41 – Ausschreibung', description: 'Ausschreibung und Vergabe', order: 6 },
+      { name: '51 – Ausführungsplanung', description: 'Detailplanung und Ausführungsprojekt', order: 7 },
+      { name: '52 – Ausführung', description: 'Bau und Bauleitung vor Ort', order: 8 },
+      { name: '53 – Inbetriebnahme', description: 'Inbetriebnahme und Abschluss', order: 9 },
+      { name: '61 – Bewirtschaftung', description: 'Betrieb und Unterhalt', order: 10 },
+    ];
+    setPhases(prev => prev.length > 0 ? [...prev, ...sia.map((s, i) => ({ ...s, order: prev.length + i + 1 }))] : sia);
+  };
   const removePhase = (idx: number) => setPhases(p => p.filter((_, i) => i !== idx).map((x, i) => ({ ...x, order: i + 1 })));
   const updatePhase = (idx: number, patch: Partial<Phase>) => setPhases(p => p.map((x, i) => i === idx ? { ...x, ...patch } : x));
 
@@ -212,7 +227,10 @@ function TemplateModal({
         <div style={{ marginBottom: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <span style={section}>Standard-Phasen</span>
-            <button onClick={addPhase} style={btnSecondarySm}><FiPlus size={11} /> Phase</button>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={loadSiaPhases} style={{ ...btnSecondarySm, color: '#7c3aed', borderColor: '#e9d5ff' }}>SIA-Phasen laden</button>
+              <button onClick={addPhase} style={btnSecondarySm}><FiPlus size={11} /> Phase</button>
+            </div>
           </div>
           {phases.length === 0 && (
             <div style={{ fontSize: 12, color: '#94a3b8', padding: '12px 0' }}>Keine Phasen definiert.</div>
