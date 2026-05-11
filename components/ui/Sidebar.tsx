@@ -8,7 +8,7 @@ import {
   FiGrid, FiUsers, FiUser, FiBriefcase, FiCheckSquare,
   FiClock, FiBarChart2, FiLogOut, FiX,
   FiCalendar, FiLayers, FiUmbrella,
-  FiDollarSign, FiTrendingUp, FiCopy,
+  FiDollarSign, FiTrendingUp, FiCopy, FiList,
 } from "react-icons/fi";
 
 // minRole: minimum role level to see item
@@ -44,6 +44,7 @@ const NAV_GROUPS: { label: string | null; minRole?: MinRole; items: { href: stri
       { href: "/admin/milestones", label: "Bauschritte", icon: FiTrendingUp, countKey: null, minRole: "admin" },
       { href: "/admin/templates", label: "Projektvorlagen", icon: FiCopy, countKey: null, minRole: "admin" },
       { href: "/admin/vacation", label: "Urlaubsanträge", icon: FiUmbrella, countKey: null, minRole: "admin" },
+      { href: "/activity", label: "Aktivitätsprotokoll", icon: FiList, countKey: null, minRole: "admin" },
     ],
   },
 ];
