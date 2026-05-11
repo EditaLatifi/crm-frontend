@@ -8,7 +8,13 @@ import { useNotificationStream } from "../../src/hooks/useNotificationStream";
 const ICONS: Record<string, string> = {
   TASK_ASSIGNED: "📋",
   TASK_COMMENT: "💬",
+  TASK_STATUS_CHANGED: "✅",
+  DEAL_CREATED: "🤝",
   DEAL_STAGE_CHANGED: "💼",
+  PROJECT_CREATED: "🏗️",
+  PHASE_COMPLETED: "🎯",
+  BUDGET_WARNING: "⚠️",
+  APPOINTMENT_CREATED: "📅",
   PERMIT_STATUS_CHANGED: "📄",
   VACATION_REVIEWED: "🌴",
 };

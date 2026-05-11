@@ -2,7 +2,7 @@ import { api } from './client';
 
 export interface AppNotification {
   id: string;
-  type: 'TASK_ASSIGNED' | 'TASK_COMMENT' | 'DEAL_STAGE_CHANGED' | 'PERMIT_STATUS_CHANGED' | 'VACATION_REVIEWED';
+  type: string;
   title: string;
   body: string;
   entityType?: string;
