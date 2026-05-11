@@ -150,7 +150,7 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
                 </div>
               )}
               {visibleItems.map((item) => {
-                const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                const isActive = pathname === item.href || (item.href !== "/dashboard" && (pathname.startsWith(item.href) || pathname.startsWith("/admin" + item.href)));
                 const Icon = item.icon;
                 const count = item.countKey ? counts[item.countKey] : null;
                 return (
