@@ -99,7 +99,7 @@ export default function CalendarPage() {
   const [editAppt, setEditAppt] = useState<Appointment | null>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
-  const [form, setForm] = useState({ title: '', description: '', startAt: '', endAt: '', accountId: '', contactId: '', dealId: '', assigneeUserId: '' });
+  const [form, setForm] = useState({ title: '', description: '', startAt: '', endAt: '', accountId: '', contactId: '', dealId: '', assigneeUserId: '', recurrence: 'NONE', recurrenceEnd: '' });
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
@@ -167,14 +167,14 @@ export default function CalendarPage() {
   /* ─ Create / Edit ─ */
   function openNewOnDay(date: Date) {
     const ds = dateStr(date);
-    setForm({ title: '', description: '', startAt: `${ds}T09:00`, endAt: `${ds}T10:00`, accountId: '', contactId: '', dealId: '', assigneeUserId: '' });
+    setForm({ title: '', description: '', startAt: `${ds}T09:00`, endAt: `${ds}T10:00`, accountId: '', contactId: '', dealId: '', assigneeUserId: '', recurrence: 'NONE', recurrenceEnd: '' });
     setEditAppt(null);
     setModalOpen(true);
   }
 
   function openNewAtTime(date: Date, hour: number) {
     const ds = dateStr(date);
-    setForm({ title: '', description: '', startAt: `${ds}T${pad2(hour)}:00`, endAt: `${ds}T${pad2(hour + 1)}:00`, accountId: '', contactId: '', dealId: '', assigneeUserId: '' });
+    setForm({ title: '', description: '', startAt: `${ds}T${pad2(hour)}:00`, endAt: `${ds}T${pad2(hour + 1)}:00`, accountId: '', contactId: '', dealId: '', assigneeUserId: '', recurrence: 'NONE', recurrenceEnd: '' });
     setEditAppt(null);
     setModalOpen(true);
   }
@@ -185,7 +185,7 @@ export default function CalendarPage() {
       title: appt.title, description: appt.description || '',
       startAt: new Date(appt.startAt).toISOString().slice(0, 16),
       endAt: new Date(appt.endAt).toISOString().slice(0, 16),
-      accountId: appt.account?.id || '', contactId: appt.contact?.id || '', dealId: appt.deal?.id || '', assigneeUserId: (appt as any).assigneeUserId || '',
+      accountId: appt.account?.id || '', contactId: appt.contact?.id || '', dealId: appt.deal?.id || '', assigneeUserId: (appt as any).assigneeUserId || '', recurrence: (appt as any).recurrence || 'NONE', recurrenceEnd: (appt as any).recurrenceEnd ? new Date((appt as any).recurrenceEnd).toISOString().slice(0, 10) : '',
     });
     setEditAppt(appt);
     setModalOpen(true);
@@ -340,10 +340,10 @@ export default function CalendarPage() {
       {view === 'month' && <MonthView days={getMonthDays(currentDate.getFullYear(), currentDate.getMonth())} today={today} apptsForDay={apptsForDay} followUpsForDay={followUpsForDay} vacationsForDay={vacationsForDay} openNew={openNewOnDay} openEdit={openEdit} openEditFollowUp={openEditFollowUp} />}
 
       {/* ─── WEEK VIEW ─── */}
-      {view === 'week' && <WeekView weekDays={getWeekDays(currentDate)} today={today} appointments={appointments} openNewAtTime={openNewAtTime} openEdit={openEdit} />}
+      {view === 'week' && <WeekView weekDays={getWeekDays(currentDate)} today={today} appointments={appointments} vacationsForDay={vacationsForDay} openNewAtTime={openNewAtTime} openEdit={openEdit} />}
 
       {/* ─── DAY VIEW ─── */}
-      {view === 'day' && <DayView date={currentDate} today={today} appointments={appointments} openNewAtTime={openNewAtTime} openEdit={openEdit} />}
+      {view === 'day' && <DayView date={currentDate} today={today} appointments={appointments} vacationsForDay={vacationsForDay} openNewAtTime={openNewAtTime} openEdit={openEdit} />}
 
       {/* Upcoming Follow-ups */}
       {showFollowUps && (
@@ -464,6 +464,26 @@ export default function CalendarPage() {
               {allUsers.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
             </select>
           </div>
+          {!editAppt && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Wiederholung</label>
+                <select value={form.recurrence} onChange={e => setForm(f => ({ ...f, recurrence: e.target.value }))} style={inputS}>
+                  <option value="NONE">Keine</option>
+                  <option value="DAILY">Täglich</option>
+                  <option value="WEEKLY">Wöchentlich</option>
+                  <option value="BIWEEKLY">Alle 2 Wochen</option>
+                  <option value="MONTHLY">Monatlich</option>
+                </select>
+              </div>
+              {form.recurrence !== 'NONE' && (
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Wiederholen bis</label>
+                  <input type="date" value={form.recurrenceEnd} onChange={e => setForm(f => ({ ...f, recurrenceEnd: e.target.value }))} style={inputS} />
+                </div>
+              )}
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'space-between', marginTop: 20 }}>
             <div>
               {editAppt && <button type="button" onClick={handleDelete} disabled={saving} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: 7, padding: '8px 16px', fontWeight: 600, cursor: 'pointer' }}>Löschen</button>}
@@ -576,13 +596,16 @@ function MonthView({ days, today, apptsForDay, followUpsForDay, vacationsForDay,
 }
 
 /* ══════════════════════ WEEK VIEW ══════════════════════ */
-function WeekView({ weekDays, today, appointments, openNewAtTime, openEdit }: {
+function WeekView({ weekDays, today, appointments, vacationsForDay, openNewAtTime, openEdit }: {
   weekDays: Date[]; today: Date; appointments: Appointment[];
+  vacationsForDay: (d: Date) => VacationBlock[];
   openNewAtTime: (d: Date, h: number) => void;
   openEdit: (a: Appointment, e?: React.MouseEvent) => void;
 }) {
   // Multi-day appointments for the banner area
   const multiDay = appointments.filter(a => isMultiDay(a) && weekDays.some(d => dayOverlaps(a, d)));
+  // Check if any day in the week has vacations
+  const hasVacations = weekDays.some(d => vacationsForDay(d).length > 0);
 
   return (
     <div style={{ background: '#fff', border: '1.5px solid #E8E4DE', borderRadius: 14, overflow: 'hidden' }}>
@@ -601,6 +624,26 @@ function WeekView({ weekDays, today, appointments, openNewAtTime, openEdit }: {
           );
         })}
       </div>
+
+      {/* Vacation banners */}
+      {hasVacations && (
+        <div style={{ display: 'grid', gridTemplateColumns: '56px repeat(7, 1fr)', borderBottom: '1px solid #E8E4DE', padding: '4px 0' }}>
+          <div />
+          {weekDays.map((day, di) => (
+            <div key={di} style={{ paddingRight: 4, borderLeft: '1px solid #E8E4DE' }}>
+              {vacationsForDay(day).map(v => (
+                <div key={v.id} style={{
+                  background: '#16a34a', color: '#fff', borderRadius: 4,
+                  padding: '2px 6px', fontSize: 10, fontWeight: 600, marginBottom: 2,
+                  overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+                }}>
+                  🌴 {v.userName}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Multi-day banners */}
       {multiDay.length > 0 && (
@@ -680,8 +723,9 @@ function WeekView({ weekDays, today, appointments, openNewAtTime, openEdit }: {
 }
 
 /* ══════════════════════ DAY VIEW ══════════════════════ */
-function DayView({ date, today, appointments, openNewAtTime, openEdit }: {
+function DayView({ date, today, appointments, vacationsForDay, openNewAtTime, openEdit }: {
   date: Date; today: Date; appointments: Appointment[];
+  vacationsForDay: (d: Date) => VacationBlock[];
   openNewAtTime: (d: Date, h: number) => void;
   openEdit: (a: Appointment, e?: React.MouseEvent) => void;
 }) {
@@ -689,6 +733,7 @@ function DayView({ date, today, appointments, openNewAtTime, openEdit }: {
   const dayAppts = appointments.filter(a => dayOverlaps(a, date));
   const multiDay = dayAppts.filter(a => isMultiDay(a));
   const singleDay = dayAppts.filter(a => !isMultiDay(a));
+  const dayVacations = vacationsForDay(date);
 
   return (
     <div style={{ background: '#fff', border: '1.5px solid #E8E4DE', borderRadius: 14, overflow: 'hidden' }}>
@@ -719,6 +764,20 @@ function DayView({ date, today, appointments, openNewAtTime, openEdit }: {
               padding: '4px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
             }}>
               {a.title} · {new Date(a.startAt).toLocaleDateString('de-CH')} – {new Date(a.endAt).toLocaleDateString('de-CH')}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Vacation banners */}
+      {dayVacations.length > 0 && (
+        <div style={{ padding: '6px 20px 6px 76px', borderBottom: '1px solid #E8E4DE', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {dayVacations.map(v => (
+            <div key={v.id} style={{
+              background: '#16a34a', color: '#fff', borderRadius: 5,
+              padding: '4px 12px', fontSize: 12, fontWeight: 600,
+            }}>
+              🌴 {v.userName}
             </div>
           ))}
         </div>
