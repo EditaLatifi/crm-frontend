@@ -118,7 +118,7 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
         padding: "22px 20px 18px",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 9, color: "#fff", letterSpacing: "0.5px" }}>IP3</div>
+          <img src="/logoip3.png" alt="IP3 CRM" style={{ height: 32, objectFit: "contain" }} />
           <span style={{ fontSize: 15, fontWeight: 700, color: "#1a1a1a", letterSpacing: "0.3px" }}>IP3 CRM</span>
         </div>
         {onClose && (
