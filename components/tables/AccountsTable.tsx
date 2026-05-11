@@ -22,7 +22,6 @@ export interface Account {
   notes?: string;
   address?: string;
   phone?: string;
-  tags?: string[];
   status?: string;
 }
 
@@ -89,7 +88,6 @@ type InlineCardProps = {
   selected: boolean;
   onSelect: (checked: boolean) => void;
   onInlinePatch: (patch: Partial<Account>) => void;
-  getTags: (a: Account) => string[];
   onOpenEditModal: (account: Account) => void;
   onDelete: (id: string) => void;
   onShowActivity: (id: string) => void;
@@ -102,7 +100,6 @@ function InlineEditableAccountCard({
   selected,
   onSelect,
   onInlinePatch,
-  getTags,
   onOpenEditModal,
   onDelete,
   onShowActivity,
@@ -324,30 +321,6 @@ function InlineEditableAccountCard({
               </span>
             )}
 
-            {getTags(acc).map((tag) => (
-              <span
-                key={tag}
-                style={{
-                  marginLeft: 4,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  padding: "2px 8px",
-                  borderRadius: 4,
-                  background: "#f6f7f9",
-                  color:
-                    tag === "VIP"
-                      ? "#2563eb"
-                      : tag === "Prospect"
-                      ? "#36a2eb"
-                      : tag === "Active"
-                      ? "#22c55e"
-                      : "#23272f",
-                  border: "1px solid #d1d5db",
-                }}
-              >
-                {tag}
-              </span>
-            ))}
           </div>
 
           <div
@@ -492,15 +465,8 @@ function AccountsTable({
     return () => { alive = false; };
   }, []);
 
-  // Tags helper
-  const getTags = (a: Account) => {
-    if (Array.isArray(a.tags) && a.tags.length) return a.tags;
-    if (a.status) return [a.status];
-    // fallback: simple demo tags
-    const n = parseInt(a.id || "0", 36);
-    if (Number.isFinite(n)) return n % 3 === 0 ? ["VIP"] : n % 3 === 1 ? ["Prospect"] : ["Active"];
-    return [];
-  };
+  // Tags helper (no tags on Account model — returns empty)
+  const getTags = (_a: Account): string[] => [];
 
   // Selection helpers
   function handleSelectAll(ids: string[], checked: boolean) {
@@ -617,7 +583,6 @@ function AccountsTable({
             notes: r.notes || undefined,
             address: r.address || undefined,
             phone: r.phone || undefined,
-            tags: r.tags ? String(r.tags).split("|").map((t) => t.trim()).filter(Boolean) : undefined,
             status: r.status || undefined,
           } as Account;
         })
@@ -707,12 +672,53 @@ function AccountsTable({
     toast.success(`${selected.length} Konten gelöscht.`);
   }
 
-  function handleBulkAssign() {
-    toast.info("Funktion demnächst verfügbar.");
+  async function handleBulkAssign() {
+    if (!selected.length) return;
+    const options = users.map((u, i) => `${i + 1}: ${u.name || u.email || u.id}`).join('\n');
+    const input = window.prompt(`Besitzer zuweisen.\nWählen Sie eine Nummer:\n${options}`);
+    if (!input) return;
+    const idx = parseInt(input, 10) - 1;
+    const selectedUser = users[idx];
+    if (!selectedUser) {
+      toast.error('Ungültige Auswahl.');
+      return;
+    }
+    try {
+      await api.post('/accounts/bulk-assign', { ids: selected, ownerUserId: selectedUser.id });
+      const res = await api.get('/accounts');
+      const data = (res?.data ?? res) as any;
+      const list: Account[] = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+      setAccounts(list);
+      setSelected([]);
+      toast.success(`${selected.length} Konten zugewiesen an ${selectedUser.name || selectedUser.email}.`);
+    } catch {
+      toast.error('Zuweisung fehlgeschlagen.');
+    }
   }
 
-  function handleBulkType() {
-    toast.info("Funktion demnächst verfügbar.");
+  async function handleBulkType() {
+    if (!selected.length) return;
+    const input = window.prompt(
+      'Typ ändern.\nWählen Sie eine Nummer:\n1: CLIENT\n2: POTENTIAL_CLIENT\n3: PARTNER\n4: SUPPLIER'
+    );
+    if (!input) return;
+    const typeMap: Record<string, string> = { '1': 'CLIENT', '2': 'POTENTIAL_CLIENT', '3': 'PARTNER', '4': 'SUPPLIER' };
+    const selectedType = typeMap[input.trim()];
+    if (!selectedType) {
+      toast.error('Ungültige Auswahl.');
+      return;
+    }
+    try {
+      await api.post('/accounts/bulk-type', { ids: selected, type: selectedType });
+      const res = await api.get('/accounts');
+      const data = (res?.data ?? res) as any;
+      const list: Account[] = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+      setAccounts(list);
+      setSelected([]);
+      toast.success(`${selected.length} Konten auf ${TYPE_LABELS[selectedType] || selectedType} geändert.`);
+    } catch {
+      toast.error('Typänderung fehlgeschlagen.');
+    }
   }
 
   /* ---------------------------------------------
@@ -740,6 +746,26 @@ function AccountsTable({
             }}
           >
             <FiTrash2 size={13} /> Ausgewählte löschen
+          </button>
+          <button
+            onClick={handleBulkAssign}
+            style={{
+              background: "#2563eb", color: "#fff", border: "none",
+              borderRadius: 7, padding: "6px 14px", fontSize: 13,
+              fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            Besitzer zuweisen
+          </button>
+          <button
+            onClick={handleBulkType}
+            style={{
+              background: "#7c3aed", color: "#fff", border: "none",
+              borderRadius: 7, padding: "6px 14px", fontSize: 13,
+              fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            Typ ändern
           </button>
           <button
             onClick={() => setSelected([])}
