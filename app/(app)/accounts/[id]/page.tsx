@@ -20,7 +20,8 @@ export default function AccountDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'contacts' | 'deals' | 'projects'>('contacts');
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'contacts' | 'deals' | 'projects' | 'tasks'>('contacts');
 
   const fetchAccount = () => {
     api.get(`/accounts/${id}`)
@@ -33,6 +34,10 @@ export default function AccountDetailsPage() {
     api.get('/projects').then((res: any) => {
       const all = res?.data ?? (Array.isArray(res) ? res : []);
       setProjects(all.filter((p: any) => p.accountId === id));
+    }).catch(() => {});
+    api.get('/tasks').then((res: any) => {
+      const all = res?.data ?? (Array.isArray(res) ? res : []);
+      setTasks(all.filter((t: any) => t.accountId === id));
     }).catch(() => {});
   }, [id]);
 
@@ -97,6 +102,7 @@ export default function AccountDetailsPage() {
               { key: 'contacts' as const, label: 'Kontakte', count: account.contacts?.length || 0 },
               { key: 'deals' as const, label: 'Deals', count: account.deals?.length || 0 },
               { key: 'projects' as const, label: 'Projekte', count: projects.length },
+              { key: 'tasks' as const, label: 'Aufgaben', count: tasks.length },
             ]).map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                 style={{ padding: "10px 18px", background: "none", border: "none", borderBottom: activeTab === tab.key ? "2px solid #1a1a1a" : "2px solid transparent", marginBottom: -2, fontSize: 13, fontWeight: activeTab === tab.key ? 700 : 500, color: activeTab === tab.key ? "#1a1a1a" : "#999", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
@@ -200,6 +206,48 @@ export default function AccountDetailsPage() {
                           <td style={{ padding: "11px 20px" }}>
                             <span style={{ fontSize: 11, fontWeight: 700, color: sc, background: `${sc}14`, borderRadius: 20, padding: "2px 9px" }}>{statusLabels[p.status] || p.status}</span>
                           </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          {/* Tasks Tab */}
+          {activeTab === 'tasks' && (
+            <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e5e7eb", overflow: "hidden" }}>
+              {tasks.length === 0 ? (
+                <div style={{ padding: "24px 20px", color: "#94a3b8", fontSize: 13 }}>Keine Aufgaben verknüpft.</div>
+              ) : (
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      {["Titel", "Status", "Priorität", "Verantwortlich"].map(h => (
+                        <th key={h} style={{ padding: "10px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", background: "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tasks.map((t: any) => {
+                      const statusStyles: Record<string, { bg: string; color: string }> = {
+                        OPEN: { bg: "#f1f5f9", color: "#64748b" },
+                        IN_PROGRESS: { bg: "#FFF8EC", color: "#d97706" },
+                        DONE: { bg: "#f0fdf4", color: "#16a34a" },
+                      };
+                      const statusLabels: Record<string, string> = { OPEN: "Offen", IN_PROGRESS: "In Bearbeitung", DONE: "Erledigt" };
+                      const s = statusStyles[t.status] || { bg: "#f1f5f9", color: "#64748b" };
+                      return (
+                        <tr key={t.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                          <td style={{ padding: "11px 20px", fontSize: 13 }}>
+                            <Link href={`/tasks/${t.id}`} style={{ color: "#2563eb", fontWeight: 600, textDecoration: "none" }}>{t.title}</Link>
+                          </td>
+                          <td style={{ padding: "11px 20px" }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: s.color, background: s.bg, borderRadius: 20, padding: "2px 9px" }}>{statusLabels[t.status] || t.status}</span>
+                          </td>
+                          <td style={{ padding: "11px 20px", fontSize: 13, color: "#1e293b" }}>{t.priority || "—"}</td>
+                          <td style={{ padding: "11px 20px", fontSize: 13, color: "#1e293b" }}>{t.assignee?.name || "—"}</td>
                         </tr>
                       );
                     })}

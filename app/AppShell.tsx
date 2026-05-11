@@ -8,6 +8,7 @@ import { FiMenu, FiSearch, FiPlus, FiClock } from "react-icons/fi";
 import GlobalSearch from "../components/ui/GlobalSearch";
 import NotificationBell from "../components/ui/NotificationBell";
 import LogTimeQuickModal from "../components/time/LogTimeQuickModal";
+import TimerWidget from "../components/time/TimerWidget";
 import { ping } from "../src/api/client";
 import "./responsive.css";
 
@@ -131,6 +132,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <LogTimeQuickModal open={logTimeOpen} onClose={() => setLogTimeOpen(false)} />
+      <TimerWidget />
 
       {/* Sidebar for desktop */}
       <div className="sidebar-desktop">

@@ -96,6 +96,9 @@ export default function LoginPage() {
             {submitting ? 'Anmelden...' : 'Anmelden'}
           </button>
         </form>
+        <div style={{ textAlign: 'center', marginTop: 12 }}>
+          <a href="/forgot-password" style={{ color: '#64748b', fontSize: 13, textDecoration: 'none' }}>Passwort vergessen?</a>
+        </div>
         <div className={styles['login-footer']}>Powered by ip3</div>
       </div>
     </div>

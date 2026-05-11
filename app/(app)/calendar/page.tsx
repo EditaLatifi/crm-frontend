@@ -26,6 +26,14 @@ interface FollowUp {
   assignedTo?: { id: string; name: string };
 }
 
+interface VacationBlock {
+  id: string;
+  userName: string;
+  startDate: string;
+  endDate: string;
+  type: string;
+}
+
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const WEEKDAYS_LONG = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
@@ -96,6 +104,11 @@ export default function CalendarPage() {
   const [saving, setSaving] = useState(false);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [showFollowUps, setShowFollowUps] = useState(true);
+  const [vacations, setVacations] = useState<VacationBlock[]>([]);
+  const [fuModalOpen, setFuModalOpen] = useState(false);
+  const [editFu, setEditFu] = useState<FollowUp | null>(null);
+  const [fuForm, setFuForm] = useState({ title: '', dueDate: '', assignedToUserId: '' });
+  const [fuSaving, setFuSaving] = useState(false);
 
   useEffect(() => {
     api.get('/appointments').then((d: any) => setAppointments(Array.isArray(d) ? d : [])).catch(() => {});
@@ -103,6 +116,10 @@ export default function CalendarPage() {
     api.get('/contacts').then((res: any) => setContacts(res?.data ?? (Array.isArray(res) ? res : []))).catch(() => {});
     api.get('/users').then((d: any) => setAllUsers(Array.isArray(d) ? d : [])).catch(() => {});
     api.get('/follow-ups?completed=false').then((d: any) => setFollowUps(Array.isArray(d) ? d : [])).catch(() => {});
+    api.get('/vacation').then((d: any) => {
+      const approved = (Array.isArray(d) ? d : []).filter((v: any) => v.status === 'APPROVED');
+      setVacations(approved.map((v: any) => ({ id: v.id, userName: v.user?.name || '', startDate: v.startDate, endDate: v.endDate, type: v.type })));
+    }).catch(() => {});
   }, []);
 
   /* ─ Navigation ─ */
@@ -136,6 +153,15 @@ export default function CalendarPage() {
   function followUpsForDay(day: Date): FollowUp[] {
     if (!showFollowUps) return [];
     return followUps.filter(f => f.dueDate && isSameDay(new Date(f.dueDate), day));
+  }
+
+  /* ─ Vacations for a day ─ */
+  function vacationsForDay(day: Date): VacationBlock[] {
+    return vacations.filter(v => {
+      const s = new Date(v.startDate); s.setHours(0,0,0,0);
+      const e = new Date(v.endDate); e.setHours(23,59,59,999);
+      return day >= s && day <= e;
+    });
   }
 
   /* ─ Create / Edit ─ */
@@ -204,6 +230,74 @@ export default function CalendarPage() {
     }
   }
 
+  /* ─ Follow-up CRUD ─ */
+  function openNewFollowUp() {
+    setEditFu(null);
+    setFuForm({ title: '', dueDate: dateStr(today), assignedToUserId: '' });
+    setFuModalOpen(true);
+  }
+
+  function openEditFollowUp(fu: FollowUp, e?: React.MouseEvent) {
+    e?.stopPropagation();
+    setEditFu(fu);
+    setFuForm({
+      title: fu.title,
+      dueDate: fu.dueDate ? fu.dueDate.slice(0, 10) : '',
+      assignedToUserId: fu.assignedTo?.id || '',
+    });
+    setFuModalOpen(true);
+  }
+
+  async function handleSaveFollowUp(e: React.FormEvent) {
+    e.preventDefault();
+    if (!fuForm.title || !fuForm.dueDate) return;
+    setFuSaving(true);
+    try {
+      const payload: any = { title: fuForm.title, dueDate: fuForm.dueDate, assignedToUserId: fuForm.assignedToUserId || null };
+      if (editFu) {
+        const updated: any = await api.patch(`/follow-ups/${editFu.id}`, payload);
+        setFollowUps(prev => prev.map(f => f.id === editFu.id ? updated : f));
+        toast.success('Follow-up aktualisiert.');
+      } else {
+        const created: any = await api.post('/follow-ups', payload);
+        setFollowUps(prev => [...prev, created]);
+        toast.success('Follow-up erstellt.');
+      }
+      setFuModalOpen(false);
+    } catch {
+      toast.error('Follow-up konnte nicht gespeichert werden.');
+    } finally {
+      setFuSaving(false);
+    }
+  }
+
+  async function handleDeleteFollowUp() {
+    if (!editFu) return;
+    if (!confirm('Follow-up wirklich löschen?')) return;
+    setFuSaving(true);
+    try {
+      await api.delete(`/follow-ups/${editFu.id}`);
+      setFollowUps(prev => prev.filter(f => f.id !== editFu.id));
+      toast.success('Follow-up gelöscht.');
+      setFuModalOpen(false);
+    } catch {
+      toast.error('Follow-up konnte nicht gelöscht werden.');
+    } finally {
+      setFuSaving(false);
+    }
+  }
+
+  async function handleCompleteFollowUp(id: string, e?: React.MouseEvent) {
+    e?.stopPropagation();
+    try {
+      await api.patch(`/follow-ups/${id}`, { completed: true });
+      setFollowUps(prev => prev.filter(f => f.id !== id));
+      toast.success('Follow-up erledigt.');
+    } catch {
+      toast.error('Follow-up konnte nicht abgeschlossen werden.');
+    }
+  }
+
   /* ─────────────────── RENDER ─────────────────── */
   const inputS: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #E8E4DE', fontSize: 13, boxSizing: 'border-box', background: '#FAF9F6', color: '#1a1a1a' };
 
@@ -243,7 +337,7 @@ export default function CalendarPage() {
       </div>
 
       {/* ─── MONTH VIEW ─── */}
-      {view === 'month' && <MonthView days={getMonthDays(currentDate.getFullYear(), currentDate.getMonth())} today={today} apptsForDay={apptsForDay} followUpsForDay={followUpsForDay} openNew={openNewOnDay} openEdit={openEdit} />}
+      {view === 'month' && <MonthView days={getMonthDays(currentDate.getFullYear(), currentDate.getMonth())} today={today} apptsForDay={apptsForDay} followUpsForDay={followUpsForDay} vacationsForDay={vacationsForDay} openNew={openNewOnDay} openEdit={openEdit} openEditFollowUp={openEditFollowUp} />}
 
       {/* ─── WEEK VIEW ─── */}
       {view === 'week' && <WeekView weekDays={getWeekDays(currentDate)} today={today} appointments={appointments} openNewAtTime={openNewAtTime} openEdit={openEdit} />}
@@ -252,12 +346,16 @@ export default function CalendarPage() {
       {view === 'day' && <DayView date={currentDate} today={today} appointments={appointments} openNewAtTime={openNewAtTime} openEdit={openEdit} />}
 
       {/* Upcoming Follow-ups */}
-      {showFollowUps && followUps.length > 0 && (
+      {showFollowUps && (
         <div style={{ marginTop: 28, background: '#fff', border: '1.5px solid #E8E4DE', borderRadius: 14, overflow: 'hidden' }}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid #E8E4DE', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Offene Follow-ups</span>
             <span style={{ fontSize: 12, fontWeight: 600, color: '#d97706', background: '#FFF8EC', borderRadius: 10, padding: '2px 9px' }}>{followUps.length}</span>
+            <button onClick={openNewFollowUp} title="Neues Follow-up" style={{ marginLeft: 'auto', background: '#d97706', color: '#fff', border: 'none', borderRadius: '50%', width: 26, height: 26, fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>+</button>
           </div>
+          {followUps.length === 0 && (
+            <div style={{ padding: 20, color: '#94a3b8', fontSize: 13 }}>Keine offenen Follow-ups.</div>
+          )}
           {followUps
             .filter(f => f.dueDate)
             .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
@@ -266,7 +364,14 @@ export default function CalendarPage() {
               const due = new Date(f.dueDate);
               const isOverdue = due < today;
               return (
-                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 20px', borderBottom: '1px solid #FAF9F6' }}>
+                <div key={f.id} onClick={() => openEditFollowUp(f)} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 20px', borderBottom: '1px solid #FAF9F6', cursor: 'pointer' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = '#FAF9F6'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
+                >
+                  <button onClick={e => handleCompleteFollowUp(f.id, e)} title="Als erledigt markieren" style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid #d97706', background: 'transparent', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#d97706', padding: 0 }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#FFF8EC'; e.currentTarget.textContent = '\u2713'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; e.currentTarget.textContent = ''; }}
+                  />
                   <div style={{ width: 46, textAlign: 'center', flexShrink: 0 }}>
                     <div style={{ fontSize: 18, fontWeight: 800, color: isOverdue ? '#dc2626' : '#d97706', lineHeight: 1 }}>{due.getDate()}</div>
                     <div style={{ fontSize: 11, color: '#94a3b8' }}>{MONTHS[due.getMonth()].slice(0, 3)}</div>
@@ -372,17 +477,51 @@ export default function CalendarPage() {
           </div>
         </form>
       </Modal>
+
+      {/* ─── Follow-up Modal ─── */}
+      <Modal open={fuModalOpen} onClose={() => setFuModalOpen(false)} title={editFu ? 'Follow-up bearbeiten' : 'Neues Follow-up'}>
+        <form onSubmit={handleSaveFollowUp}>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Titel *</label>
+            <input required value={fuForm.title} onChange={e => setFuForm(f => ({ ...f, title: e.target.value }))} style={inputS} />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Fälligkeitsdatum *</label>
+            <input type="date" required value={fuForm.dueDate} onChange={e => setFuForm(f => ({ ...f, dueDate: e.target.value }))} style={inputS} />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Verantwortlich</label>
+            <select value={fuForm.assignedToUserId} onChange={e => setFuForm(f => ({ ...f, assignedToUserId: e.target.value }))} style={inputS}>
+              <option value="">— Kein Verantwortlicher —</option>
+              {allUsers.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
+            </select>
+          </div>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'space-between', marginTop: 20 }}>
+            <div>
+              {editFu && <button type="button" onClick={handleDeleteFollowUp} disabled={fuSaving} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: 7, padding: '8px 16px', fontWeight: 600, cursor: 'pointer' }}>Löschen</button>}
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="button" onClick={() => setFuModalOpen(false)} style={{ background: '#fff', color: '#666', border: '1px solid #E8E4DE', borderRadius: 8, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Abbrechen</button>
+              <button type="submit" disabled={fuSaving} style={{ background: '#d97706', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 18px', fontWeight: 600, cursor: 'pointer', opacity: fuSaving ? 0.7 : 1 }}>
+                {fuSaving ? 'Speichern…' : 'Speichern'}
+              </button>
+            </div>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
 
 /* ══════════════════════ MONTH VIEW ══════════════════════ */
-function MonthView({ days, today, apptsForDay, followUpsForDay, openNew, openEdit }: {
+function MonthView({ days, today, apptsForDay, followUpsForDay, vacationsForDay, openNew, openEdit, openEditFollowUp }: {
   days: (Date | null)[]; today: Date;
   apptsForDay: (d: Date) => Appointment[];
   followUpsForDay: (d: Date) => FollowUp[];
+  vacationsForDay: (d: Date) => VacationBlock[];
   openNew: (d: Date) => void;
   openEdit: (a: Appointment, e?: React.MouseEvent) => void;
+  openEditFollowUp: (fu: FollowUp, e?: React.MouseEvent) => void;
 }) {
   return (
     <div style={{ background: '#fff', border: '1.5px solid #E8E4DE', borderRadius: 14, overflow: 'hidden' }}>
@@ -415,8 +554,13 @@ function MonthView({ days, today, apptsForDay, followUpsForDay, openNew, openEdi
                       </div>
                     ))}
                     {followUpsForDay(day).slice(0, 2).map(f => (
-                      <div key={f.id} style={{ background: '#d97706', color: '#fff', borderRadius: 4, padding: '2px 6px', fontSize: 11, fontWeight: 600, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                      <div key={f.id} onClick={e => openEditFollowUp(f, e)} style={{ background: '#d97706', color: '#fff', borderRadius: 4, padding: '2px 6px', fontSize: 11, fontWeight: 600, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', cursor: 'pointer' }}>
                         ⏰ {f.title}
+                      </div>
+                    ))}
+                    {vacationsForDay(day).slice(0, 1).map(v => (
+                      <div key={v.id} style={{ background: '#16a34a', color: '#fff', borderRadius: 4, padding: '2px 6px', fontSize: 11, fontWeight: 600, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                        🌴 {v.userName}
                       </div>
                     ))}
                     {dayAppts.length > 3 && <div style={{ fontSize: 10, color: '#94a3b8', paddingLeft: 4 }}>+{dayAppts.length - 3} weitere</div>}

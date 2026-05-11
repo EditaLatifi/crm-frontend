@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import './contact-id-mobile.css';
 import Link from "next/link";
 import { api } from "../../../../src/api/client";
+import { formatCurrency } from "../../../../src/lib/formatCurrency";
 import Modal from "../../../../components/ui/Modal";
 import { useToast } from "../../../../components/ui/Toast";
 import ContactTimeline from "../../../../components/ui/ContactTimeline";
@@ -20,6 +21,7 @@ export default function ContactDetailsPage() {
   const [editForm, setEditForm] = useState({ name: "", email: "", phone: "", title: "", accountId: "" });
   const [accounts, setAccounts] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [linkedDeals, setLinkedDeals] = useState<any[]>([]);
   const toast = useToast();
 
   const fetchContact = () => {
@@ -33,6 +35,15 @@ export default function ContactDetailsPage() {
   useEffect(() => {
     api.get('/accounts').then((d: any) => setAccounts(Array.isArray(d) ? d : [])).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (contact?.accountId) {
+      api.get('/deals').then((res: any) => {
+        const deals = res?.data ?? (Array.isArray(res) ? res : []);
+        setLinkedDeals(deals.filter((d: any) => d.accountId === contact.accountId));
+      }).catch(() => {});
+    }
+  }, [contact?.accountId]);
 
   const openEdit = () => {
     setEditForm({
@@ -135,6 +146,32 @@ export default function ContactDetailsPage() {
         <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 12 }}>Notizen</div>
         <QuickNotes entityType="contact" entityId={id} initialNotes={contact.notes || ""} />
       </div>
+
+      {/* Verknüpfte Deals */}
+      {contact.accountId && linkedDeals.length > 0 && (
+        <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e5e7eb", padding: "18px 24px", marginBottom: 24 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 12 }}>Verknüpfte Deals</div>
+          {linkedDeals.map((d: any) => (
+            <div key={d.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f1f5f9" }}>
+              <Link href={`/deals/${d.id}`} style={{ color: "#1a1a1a", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>
+                {d.name || "Unbenannter Deal"}
+              </Link>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {d.stage?.name && (
+                  <span style={{ background: "#f1f5f9", color: "#64748b", fontSize: 11, fontWeight: 600, borderRadius: 6, padding: "2px 8px" }}>
+                    {d.stage.name}
+                  </span>
+                )}
+                {d.amount != null && (
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1e293b" }}>
+                    {formatCurrency(d.amount)}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Email Log */}
       <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e5e7eb", padding: "18px 24px", marginBottom: 24 }}>

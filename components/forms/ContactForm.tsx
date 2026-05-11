@@ -16,6 +16,8 @@ export default function ContactForm({ onSubmit, initialData }: {
   const [name, setName] = useState(initialData?.name || '');
   const [email, setEmail] = useState(initialData?.email || '');
   const [phone, setPhone] = useState(initialData?.phone || '');
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [notes, setNotes] = useState(initialData?.notes || '');
   const [accountId, setAccountId] = useState(initialData?.accountId || '');
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
@@ -46,7 +48,7 @@ export default function ContactForm({ onSubmit, initialData }: {
     setErrors({});
     setSaving(true);
     try {
-      await Promise.resolve(onSubmit({ name: name.trim(), email: email.trim(), phone, accountId }));
+      await Promise.resolve(onSubmit({ name: name.trim(), email: email.trim(), phone, title, notes, accountId }));
     } finally {
       setSaving(false);
     }
@@ -68,6 +70,14 @@ export default function ContactForm({ onSubmit, initialData }: {
         <label>Telefon</label><br />
         <input value={phone} onChange={e => setPhone(e.target.value)} style={inputStyle(!!errors.phone)} />
         {errors.phone && <div style={errStyle}>{errors.phone}</div>}
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <label>Position / Titel</label><br />
+        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="z.B. Geschäftsführer" style={inputStyle(false)} />
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <label>Notizen</label><br />
+        <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} style={{ ...inputStyle(false), resize: 'vertical', fontFamily: 'inherit' }} />
       </div>
       <div style={{ marginBottom: 12 }}>
         <label>Konto (optional)</label><br />
