@@ -28,8 +28,13 @@ export default function QuickNotes({ entityType, entityId, initialNotes }: Quick
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (entityType === "deal" || entityType === "contact") {
-      const url = entityType === "deal" ? `/deals/${entityId}/notes` : `/contacts/${entityId}/notes`;
+    const urlMap: Record<string, string> = {
+      deal: `/deals/${entityId}/notes`,
+      contact: `/contacts/${entityId}/notes`,
+      account: `/accounts/${entityId}/notes`,
+    };
+    const url = urlMap[entityType];
+    if (url) {
       api.get(url)
         .then((data: any) => setNotes(Array.isArray(data) ? data : []))
         .catch(() => {});
@@ -41,18 +46,15 @@ export default function QuickNotes({ entityType, entityId, initialNotes }: Quick
     if (!text) return;
     setSaving(true);
     try {
-      if (entityType === "deal" || entityType === "contact") {
-        const url = entityType === "deal" ? `/deals/${entityId}/notes` : `/contacts/${entityId}/notes`;
-        const note = await api.post(url, { content: text });
-        setNotes((prev) => [note, ...prev]);
-        toast.success("Notiz hinzugefügt.");
-      } else {
-        const endpoint = `/accounts/${entityId}`;
-        const combined = plainNotes ? `${plainNotes}\n\n${text}` : text;
-        await api.patch(endpoint, { notes: combined });
-        setPlainNotes(combined);
-        toast.success("Notiz gespeichert.");
-      }
+      const urlMap: Record<string, string> = {
+        deal: `/deals/${entityId}/notes`,
+        contact: `/contacts/${entityId}/notes`,
+        account: `/accounts/${entityId}/notes`,
+      };
+      const url = urlMap[entityType];
+      const note = await api.post(url, { content: text });
+      setNotes((prev) => [note, ...prev]);
+      toast.success("Notiz hinzugefügt.");
       setInput("");
     } catch {
       toast.error("Notiz konnte nicht gespeichert werden.");
@@ -61,51 +63,7 @@ export default function QuickNotes({ entityType, entityId, initialNotes }: Quick
     }
   }
 
-  async function handleSavePlain() {
-    setSaving(true);
-    try {
-      const endpoint = entityType === "account" ? `/accounts/${entityId}` : `/contacts/${entityId}`;
-      await api.patch(endpoint, { notes: plainNotes });
-      toast.success("Notizen gespeichert.");
-    } catch {
-      toast.error("Notizen konnten nicht gespeichert werden.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (entityType === "account") {
-    return (
-      <div>
-        <textarea
-          ref={textareaRef}
-          value={plainNotes}
-          onChange={(e) => setPlainNotes(e.target.value)}
-          placeholder="Notizen hinzufügen…"
-          rows={5}
-          style={{
-            width: "100%", padding: "10px 12px", borderRadius: 8,
-            border: "1.5px solid #e5e7eb", fontSize: 13, color: "#1e293b",
-            resize: "vertical", background: "#f8fafc", boxSizing: "border-box",
-            fontFamily: "inherit", lineHeight: 1.6,
-          }}
-        />
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-          <button
-            onClick={handleSavePlain}
-            disabled={saving}
-            style={{
-              background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8,
-              padding: "7px 16px", fontWeight: 600, fontSize: 13,
-              cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1,
-            }}
-          >
-            {saving ? "Speichern…" : "Speichern"}
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // All entity types now use threaded notes view
 
   return (
     <div>
