@@ -42,28 +42,33 @@ export default function ContactsTable({
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 50;
+
+  useEffect(() => { setPage(1); }, [search]);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([
-      api.get(adminView ? '/contacts?admin=1' : '/contacts'),
-      api.get('/accounts'),
-    ]).then(([cData, aData]) => {
-      setContacts(Array.isArray(cData) ? cData : []);
-      setAccounts(Array.isArray(aData) ? aData : []);
-    }).catch(() => {
-      setContacts([]);
-      setAccounts([]);
-    }).finally(() => setLoading(false));
-  }, [refresh, adminView]);
+    const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
+    const adminParam = adminView ? '&admin=1' : '';
+    api.get(`/contacts?page=${page}&pageSize=${pageSize}${searchParam}${adminParam}`)
+      .then((res: any) => {
+        const cData = res?.data ?? (Array.isArray(res) ? res : []);
+        setContacts(cData);
+        setTotal(res?.total ?? cData.length);
+        // Extract accounts from included data (no separate request needed now)
+        const accs = new Map<string, any>();
+        cData.forEach((c: any) => { if (c.account) accs.set(c.account.id, c.account); });
+        setAccounts(Array.from(accs.values()));
+      }).catch(() => {
+        setContacts([]);
+        setAccounts([]);
+      }).finally(() => setLoading(false));
+  }, [refresh, adminView, page, search]);
 
-  const filtered = search
-    ? contacts.filter((c: any) =>
-        (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
-        (c.email || '').toLowerCase().includes(search.toLowerCase()) ||
-        (c.phone || '').toLowerCase().includes(search.toLowerCase())
-      )
-    : contacts;
+  const filtered = contacts; // server-side search now
+  const totalPages = Math.ceil(total / pageSize);
 
   const allSelected = filtered.length > 0 && selected.length === filtered.length;
 
@@ -273,11 +278,23 @@ export default function ContactsTable({
         </table>
       </div>
 
-      {/* Footer count */}
-      {filtered.length > 0 && (
-        <div style={{ padding: '12px 20px', borderTop: '1px solid #f1f5f9', fontSize: 12, color: '#94a3b8' }}>
-          {filtered.length} Kontakt{filtered.length !== 1 ? 'e' : ''}
-          {search && contacts.length !== filtered.length && ` von ${contacts.length}`}
+      {/* Footer with pagination */}
+      {total > 0 && (
+        <div style={{ padding: '12px 20px', borderTop: '1px solid #f1f5f9', fontSize: 12, color: '#94a3b8', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>{total} Kontakt{total !== 1 ? 'e' : ''}</span>
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
+                style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #e2e8f0', background: page <= 1 ? '#f8fafc' : '#fff', cursor: page <= 1 ? 'default' : 'pointer', fontSize: 12, color: '#475569' }}>
+                Zurück
+              </button>
+              <span style={{ fontSize: 12, color: '#64748b' }}>Seite {page} / {totalPages}</span>
+              <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}
+                style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #e2e8f0', background: page >= totalPages ? '#f8fafc' : '#fff', cursor: page >= totalPages ? 'default' : 'pointer', fontSize: 12, color: '#475569' }}>
+                Weiter
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

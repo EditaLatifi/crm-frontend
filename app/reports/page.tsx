@@ -87,10 +87,10 @@ export default function ReportsPage() {
       api.get('/projects').catch(() => []),
     ]).then(([timeData, dealData, stageData, taskData, projData]) => {
       setEntries(Array.isArray(timeData) ? timeData : []);
-      setDeals(Array.isArray(dealData) ? dealData : []);
+      setDeals(dealData?.data ?? (Array.isArray(dealData) ? dealData : []));
       setStages(Array.isArray(stageData) ? stageData : []);
-      setTasks(Array.isArray(taskData) ? taskData : []);
-      setProjects(Array.isArray(projData) ? projData : []);
+      setTasks(taskData?.data ?? (Array.isArray(taskData) ? taskData : []));
+      setProjects(projData?.data ?? (Array.isArray(projData) ? projData : []));
       setLoading(false);
     });
   }, []);

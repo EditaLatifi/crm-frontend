@@ -100,7 +100,7 @@ export default function CalendarPage() {
   useEffect(() => {
     api.get('/appointments').then((d: any) => setAppointments(Array.isArray(d) ? d : [])).catch(() => {});
     api.get('/accounts').then((d: any) => setAccounts(Array.isArray(d) ? d : [])).catch(() => {});
-    api.get('/contacts').then((d: any) => setContacts(Array.isArray(d) ? d : [])).catch(() => {});
+    api.get('/contacts').then((res: any) => setContacts(res?.data ?? (Array.isArray(res) ? res : []))).catch(() => {});
     api.get('/users').then((d: any) => setAllUsers(Array.isArray(d) ? d : [])).catch(() => {});
     api.get('/follow-ups?completed=false').then((d: any) => setFollowUps(Array.isArray(d) ? d : [])).catch(() => {});
   }, []);

@@ -51,10 +51,10 @@ export default function DashboardPage() {
       api.get('/budget/alerts').catch(() => []),
       api.get('/projects/budget-overview').catch(() => null),
     ]).then(([tasksData, dealsData, stagesData, projectsData, timeData, appointmentsData, followUpsData, budgetAlertsData, budgetData]) => {
-      setTasks(Array.isArray(tasksData) ? tasksData : []);
-      setDeals(Array.isArray(dealsData) ? dealsData : []);
+      setTasks(tasksData?.data ?? (Array.isArray(tasksData) ? tasksData : []));
+      setDeals(dealsData?.data ?? (Array.isArray(dealsData) ? dealsData : []));
       setStages(Array.isArray(stagesData) ? stagesData : []);
-      setProjects(Array.isArray(projectsData) ? projectsData : []);
+      setProjects(projectsData?.data ?? (Array.isArray(projectsData) ? projectsData : []));
       setTimeEntries(Array.isArray(timeData) ? timeData : []);
       setAppointments(Array.isArray(appointmentsData) ? appointmentsData : []);
       setFollowUps(Array.isArray(followUpsData) ? followUpsData : []);

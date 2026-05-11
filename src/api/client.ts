@@ -78,12 +78,58 @@ async function refreshToken(): Promise<boolean> {
   }
 }
 
+// ─── Simple GET cache + request deduplication ───
+const _cache = new Map<string, { data: any; ts: number }>();
+const _inflight = new Map<string, Promise<any>>();
+const CACHE_TTL = 30_000; // 30 seconds
+
+function cachedGet(url: string): Promise<any> {
+  const now = Date.now();
+  const hit = _cache.get(url);
+  if (hit && now - hit.ts < CACHE_TTL) return Promise.resolve(hit.data);
+
+  // Deduplicate concurrent requests for the same URL
+  const existing = _inflight.get(url);
+  if (existing) return existing;
+
+  const req = fetchWithAuth(url, { method: 'GET' }).then(data => {
+    _cache.set(url, { data, ts: Date.now() });
+    _inflight.delete(url);
+    return data;
+  }).catch(err => {
+    _inflight.delete(url);
+    throw err;
+  });
+  _inflight.set(url, req);
+  return req;
+}
+
+function invalidateCache(prefix?: string) {
+  if (!prefix) { _cache.clear(); return; }
+  for (const key of _cache.keys()) {
+    if (key.includes(prefix)) _cache.delete(key);
+  }
+}
+
 export const api = {
-  get: (url: string) => fetchWithAuth(url, { method: 'GET' }),
-  post: (url: string, body?: any) => fetchWithAuth(url, { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } }),
-  patch: (url: string, body?: any) => fetchWithAuth(url, { method: 'PATCH', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } }),
-  delete: (url: string) => fetchWithAuth(url, { method: 'DELETE' }),
-  upload: (url: string, formData: FormData) => fetchWithAuth(url, { method: 'POST', body: formData }),
+  get: (url: string) => cachedGet(url),
+  post: (url: string, body?: any) => {
+    invalidateCache();
+    return fetchWithAuth(url, { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
+  },
+  patch: (url: string, body?: any) => {
+    invalidateCache();
+    return fetchWithAuth(url, { method: 'PATCH', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
+  },
+  delete: (url: string) => {
+    invalidateCache();
+    return fetchWithAuth(url, { method: 'DELETE' });
+  },
+  upload: (url: string, formData: FormData) => {
+    invalidateCache();
+    return fetchWithAuth(url, { method: 'POST', body: formData });
+  },
+  invalidateCache,
 };
 
 // Unauthenticated health ping — used for keep-alive

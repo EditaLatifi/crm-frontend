@@ -18,8 +18,8 @@ export default function DealForecastWidget() {
     Promise.all([
       api.get("/deals").catch(() => []),
       api.get("/deals/deal-stages").catch(() => []),
-    ]).then(([dealsData, stagesData]: any) => {
-      const deals = Array.isArray(dealsData) ? dealsData : [];
+    ]).then(([dealsRes, stagesData]: any) => {
+      const deals = dealsRes?.data ?? (Array.isArray(dealsRes) ? dealsRes : []);
       const stages = Array.isArray(stagesData) ? stagesData : [];
       const stageMap = Object.fromEntries(stages.map((s: any) => [s.id, s]));
 

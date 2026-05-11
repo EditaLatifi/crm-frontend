@@ -36,7 +36,8 @@ export default function DealsKanbanBoard({ onEdit, onRefresh }: { onEdit?: (deal
         api.get("/deals"),
       ]);
       setStages(Array.isArray(stagesData) ? stagesData.sort((a: Stage, b: Stage) => a.order - b.order) : []);
-      setDeals(Array.isArray(dealsData) ? dealsData : []);
+      const dealsArr = dealsData?.data ?? (Array.isArray(dealsData) ? dealsData : []);
+      setDeals(dealsArr);
     } catch {}
     setLoading(false);
   }, []);

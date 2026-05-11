@@ -92,10 +92,12 @@ export default function DealDetailPage() {
     setNotes(Array.isArray(notesData) ? notesData : []);
     setAttachments(Array.isArray(attachData) ? attachData : []);
     setStages(Array.isArray(stagesData) ? stagesData.sort((a: any, b: any) => a.order - b.order) : []);
-    setDealTasks((Array.isArray(tasksData) ? tasksData : []).filter((t: any) => t.dealId === params.id));
+    const tasksArr = tasksData?.data ?? (Array.isArray(tasksData) ? tasksData : []);
+    setDealTasks(tasksArr.filter((t: any) => t.dealId === params.id));
     // Find linked project
-    api.get('/projects').then((projects: any) => {
-      const linked = (Array.isArray(projects) ? projects : []).find((p: any) => p.dealId === params.id);
+    api.get('/projects').then((res: any) => {
+      const projects = res?.data ?? (Array.isArray(res) ? res : []);
+      const linked = projects.find((p: any) => p.dealId === params.id);
       setLinkedProject(linked || null);
     }).catch(() => {});
     setLoading(false);

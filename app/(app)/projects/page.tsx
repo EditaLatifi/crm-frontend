@@ -35,8 +35,11 @@ export default function ProjectsPage() {
 
   const load = useCallback(() => {
     setLoading(true);
-    api.get('/projects')
-      .then((d: any) => setProjects(Array.isArray(d) ? d : []))
+    api.get('/projects?pageSize=200')
+      .then((res: any) => {
+        const d = res?.data ?? (Array.isArray(res) ? res : []);
+        setProjects(d);
+      })
       .catch((e: any) => setError(e.message || 'Fehler beim Laden'))
       .finally(() => setLoading(false));
   }, []);

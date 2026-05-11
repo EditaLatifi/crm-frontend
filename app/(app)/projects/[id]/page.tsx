@@ -75,7 +75,7 @@ export default function ProjectDetailPage() {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
-    api.get('/tasks').then((d: any) => setProjectTasks((Array.isArray(d) ? d : []).filter((t: any) => t.projectId === id))).catch(() => {});
+    api.get('/tasks').then((res: any) => { const d = res?.data ?? (Array.isArray(res) ? res : []); setProjectTasks(d.filter((t: any) => t.projectId === id)); }).catch(() => {});
   }, [id]);
   useEffect(() => {
     if (canEdit) api.get('/users').then((d: any) => setAllUsers(Array.isArray(d) ? d : [])).catch(() => {});

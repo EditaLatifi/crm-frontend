@@ -39,9 +39,9 @@ export default function TasksPage() {
     if (showForm) {
       api.get('/users').then(data => setUsers(Array.isArray(data) ? data : [])).catch(() => {});
       api.get('/accounts').then(data => setAccounts(Array.isArray(data) ? data : [])).catch(() => {});
-      api.get('/contacts').then(data => setContacts(Array.isArray(data) ? data : [])).catch(() => {});
-      api.get('/deals').then(data => setDeals(Array.isArray(data) ? data : [])).catch(() => {});
-      api.get('/projects').then(data => setProjects(Array.isArray(data) ? data : [])).catch(() => {});
+      api.get('/contacts').then((res: any) => setContacts(res?.data ?? (Array.isArray(res) ? res : []))).catch(() => {});
+      api.get('/deals').then((res: any) => setDeals(res?.data ?? (Array.isArray(res) ? res : []))).catch(() => {});
+      api.get('/projects').then((res: any) => setProjects(res?.data ?? (Array.isArray(res) ? res : []))).catch(() => {});
     }
   }, [showForm]);
 

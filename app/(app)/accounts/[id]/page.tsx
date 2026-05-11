@@ -30,8 +30,8 @@ export default function AccountDetailsPage() {
 
   useEffect(() => { fetchAccount(); }, [id]);
   useEffect(() => {
-    api.get('/projects').then((data: any) => {
-      const all = Array.isArray(data) ? data : [];
+    api.get('/projects').then((res: any) => {
+      const all = res?.data ?? (Array.isArray(res) ? res : []);
       setProjects(all.filter((p: any) => p.accountId === id));
     }).catch(() => {});
   }, [id]);

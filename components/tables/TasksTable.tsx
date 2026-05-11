@@ -37,10 +37,11 @@ export default function TasksTable() {
   const [isMobile, setIsMobile] = useState(false);
 
   const fetchTasks = () => {
-    api.get('/tasks')
-      .then(data => {
+    api.get('/tasks?pageSize=200')
+      .then((res: any) => {
+        const data = res?.data ?? (Array.isArray(res) ? res : []);
         if (Array.isArray(data)) setTasks(data);
-        else if (data && Array.isArray(data.tasks)) setTasks(data.tasks);
+        else if (data && Array.isArray((data as any).tasks)) setTasks((data as any).tasks);
         else setTasks([]);
         setLoading(false);
       })

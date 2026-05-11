@@ -21,9 +21,10 @@ export default function DealsTable() {
 
   const fetchDeals = () => {
     setLoading(true);
-    api.get('/deals')
-      .then(data => {
-        setDeals(Array.isArray(data) ? data : []);
+    api.get('/deals?pageSize=200')
+      .then((res: any) => {
+        const data = res?.data ?? (Array.isArray(res) ? res : []);
+        setDeals(data);
         setLoading(false);
       })
       .catch(() => { setDeals([]); setLoading(false); });

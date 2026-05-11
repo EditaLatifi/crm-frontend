@@ -29,7 +29,7 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
 
   useEffect(() => {
     if (!open) return;
-    api.get('/projects').then((d: any) => setProjects(Array.isArray(d) ? d.map((p: any) => ({ id: p.id, name: p.name })) : [])).catch(() => {});
+    api.get('/projects').then((res: any) => { const d = res?.data ?? (Array.isArray(res) ? res : []); setProjects(d.map((p: any) => ({ id: p.id, name: p.name }))); }).catch(() => {});
     if (isAdmin) {
       api.get('/users').then((d: any) => setEmployees(Array.isArray(d) ? d : [])).catch(() => {});
     }
