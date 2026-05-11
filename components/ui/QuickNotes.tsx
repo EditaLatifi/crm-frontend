@@ -28,8 +28,9 @@ export default function QuickNotes({ entityType, entityId, initialNotes }: Quick
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (entityType === "deal") {
-      api.get(`/deals/${entityId}/notes`)
+    if (entityType === "deal" || entityType === "contact") {
+      const url = entityType === "deal" ? `/deals/${entityId}/notes` : `/contacts/${entityId}/notes`;
+      api.get(url)
         .then((data: any) => setNotes(Array.isArray(data) ? data : []))
         .catch(() => {});
     }
@@ -40,12 +41,13 @@ export default function QuickNotes({ entityType, entityId, initialNotes }: Quick
     if (!text) return;
     setSaving(true);
     try {
-      if (entityType === "deal") {
-        const note = await api.post(`/deals/${entityId}/notes`, { content: text });
+      if (entityType === "deal" || entityType === "contact") {
+        const url = entityType === "deal" ? `/deals/${entityId}/notes` : `/contacts/${entityId}/notes`;
+        const note = await api.post(url, { content: text });
         setNotes((prev) => [note, ...prev]);
         toast.success("Notiz hinzugefügt.");
       } else {
-        const endpoint = entityType === "account" ? `/accounts/${entityId}` : `/contacts/${entityId}`;
+        const endpoint = `/accounts/${entityId}`;
         const combined = plainNotes ? `${plainNotes}\n\n${text}` : text;
         await api.patch(endpoint, { notes: combined });
         setPlainNotes(combined);
@@ -72,7 +74,7 @@ export default function QuickNotes({ entityType, entityId, initialNotes }: Quick
     }
   }
 
-  if (entityType !== "deal") {
+  if (entityType === "account") {
     return (
       <div>
         <textarea
