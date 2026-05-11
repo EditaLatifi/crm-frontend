@@ -143,16 +143,16 @@ function TemplateModal({
   const addPhase = () => setPhases(p => [...p, { name: '', description: '', order: p.length + 1 }]);
   const loadSiaPhases = () => {
     const sia = [
-      { name: '10 – Strategische Planung', description: 'Bedürfnisformulierung & Lösungsstrategien', order: 1 },
-      { name: '20 – Vorstudien', description: 'Machbarkeitsstudie', order: 2 },
-      { name: '31 – Vorprojekt', description: 'Vorprojekt', order: 3 },
-      { name: '32 – Bauprojekt', description: 'Bauprojekt', order: 4 },
-      { name: '33 – Bewilligungsverfahren', description: 'Baubewilligungsgesuch und Bewilligung', order: 5 },
-      { name: '41 – Ausschreibung', description: 'Ausschreibung und Vergabe', order: 6 },
-      { name: '51 – Ausführungsplanung', description: 'Detailplanung und Ausführungsprojekt', order: 7 },
-      { name: '52 – Ausführung', description: 'Bau und Bauleitung vor Ort', order: 8 },
-      { name: '53 – Inbetriebnahme', description: 'Inbetriebnahme und Abschluss', order: 9 },
-      { name: '61 – Bewirtschaftung', description: 'Betrieb und Unterhalt', order: 10 },
+      { name: '10 - Strategische Planung', description: 'Bedurfnisformulierung & Losungsstrategien', order: 1 },
+      { name: '20 - Vorstudien', description: 'Machbarkeitsstudie', order: 2 },
+      { name: '31 - Vorprojekt', description: 'Vorprojekt', order: 3 },
+      { name: '32 - Bauprojekt', description: 'Bauprojekt', order: 4 },
+      { name: '33 - Bewilligungsverfahren', description: 'Baubewilligungsgesuch und Bewilligung', order: 5 },
+      { name: '41 - Ausschreibung', description: 'Ausschreibung und Vergabe', order: 6 },
+      { name: '51 - Ausfuhrungsplanung', description: 'Detailplanung und Ausfuhrungsprojekt', order: 7 },
+      { name: '52 - Ausfuhrung', description: 'Bau und Bauleitung vor Ort', order: 8 },
+      { name: '53 - Inbetriebnahme', description: 'Inbetriebnahme und Abschluss', order: 9 },
+      { name: '61 - Bewirtschaftung', description: 'Betrieb und Unterhalt', order: 10 },
     ];
     setPhases(prev => prev.length > 0 ? [...prev, ...sia.map((s, i) => ({ ...s, order: prev.length + i + 1 }))] : sia);
   };

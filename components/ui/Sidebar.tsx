@@ -31,8 +31,6 @@ const NAV_GROUPS: { label: string | null; minRole?: MinRole; items: { href: stri
     label: "Auswertungen",
     items: [
       { href: "/time", label: "Zeiterfassung", icon: FiClock, countKey: null },
-      { href: "/time/overview", label: "Zeit-Übersicht", icon: FiBarChart2, countKey: null, minRole: "manager" },
-      { href: "/projects/budget-overview", label: "Budget-Übersicht", icon: FiDollarSign, countKey: null, minRole: "manager" },
       { href: "/reports", label: "Berichte", icon: FiBarChart2, countKey: null, minRole: "manager" },
       { href: "/vacation", label: "Urlaub", icon: FiUmbrella, countKey: null, hideForAdmin: true, minRole: "internal" },
       { href: "/calendar", label: "Kalender", icon: FiCalendar, countKey: null },

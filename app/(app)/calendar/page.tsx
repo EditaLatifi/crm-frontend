@@ -16,6 +16,16 @@ interface Appointment {
   deal?: { id: string; name: string };
 }
 
+interface FollowUp {
+  id: string;
+  title: string;
+  dueDate: string;
+  completed: boolean;
+  entityType?: string;
+  entityId?: string;
+  assignedTo?: { id: string; name: string };
+}
+
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const WEEKDAYS_LONG = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
@@ -84,12 +94,15 @@ export default function CalendarPage() {
   const [form, setForm] = useState({ title: '', description: '', startAt: '', endAt: '', accountId: '', contactId: '', dealId: '', assigneeUserId: '' });
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
+  const [showFollowUps, setShowFollowUps] = useState(true);
 
   useEffect(() => {
     api.get('/appointments').then((d: any) => setAppointments(Array.isArray(d) ? d : [])).catch(() => {});
     api.get('/accounts').then((d: any) => setAccounts(Array.isArray(d) ? d : [])).catch(() => {});
     api.get('/contacts').then((d: any) => setContacts(Array.isArray(d) ? d : [])).catch(() => {});
     api.get('/users').then((d: any) => setAllUsers(Array.isArray(d) ? d : [])).catch(() => {});
+    api.get('/follow-ups?completed=false').then((d: any) => setFollowUps(Array.isArray(d) ? d : [])).catch(() => {});
   }, []);
 
   /* ─ Navigation ─ */
@@ -117,6 +130,12 @@ export default function CalendarPage() {
   /* ─ Appointments for a day ─ */
   function apptsForDay(day: Date) {
     return appointments.filter(a => dayOverlaps(a, day));
+  }
+
+  /* ─ Follow-ups for a day ─ */
+  function followUpsForDay(day: Date): FollowUp[] {
+    if (!showFollowUps) return [];
+    return followUps.filter(f => f.dueDate && isSameDay(new Date(f.dueDate), day));
   }
 
   /* ─ Create / Edit ─ */
@@ -205,6 +224,14 @@ export default function CalendarPage() {
               </button>
             ))}
           </div>
+          {/* Follow-up toggle */}
+          <button onClick={() => setShowFollowUps(s => !s)} style={{
+            padding: '6px 14px', borderRadius: 7, border: '1px solid #E8E4DE',
+            background: showFollowUps ? '#FFF8EC' : '#fff', fontSize: 12, fontWeight: 600,
+            cursor: 'pointer', color: showFollowUps ? '#d97706' : '#64748b',
+          }}>
+            Follow-ups {showFollowUps ? 'an' : 'aus'}
+          </button>
           {/* Nav */}
           <button onClick={goToday} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid #E8E4DE', background: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#1a1a1a' }}>
             Heute
@@ -216,13 +243,50 @@ export default function CalendarPage() {
       </div>
 
       {/* ─── MONTH VIEW ─── */}
-      {view === 'month' && <MonthView days={getMonthDays(currentDate.getFullYear(), currentDate.getMonth())} today={today} apptsForDay={apptsForDay} openNew={openNewOnDay} openEdit={openEdit} />}
+      {view === 'month' && <MonthView days={getMonthDays(currentDate.getFullYear(), currentDate.getMonth())} today={today} apptsForDay={apptsForDay} followUpsForDay={followUpsForDay} openNew={openNewOnDay} openEdit={openEdit} />}
 
       {/* ─── WEEK VIEW ─── */}
       {view === 'week' && <WeekView weekDays={getWeekDays(currentDate)} today={today} appointments={appointments} openNewAtTime={openNewAtTime} openEdit={openEdit} />}
 
       {/* ─── DAY VIEW ─── */}
       {view === 'day' && <DayView date={currentDate} today={today} appointments={appointments} openNewAtTime={openNewAtTime} openEdit={openEdit} />}
+
+      {/* Upcoming Follow-ups */}
+      {showFollowUps && followUps.length > 0 && (
+        <div style={{ marginTop: 28, background: '#fff', border: '1.5px solid #E8E4DE', borderRadius: 14, overflow: 'hidden' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid #E8E4DE', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Offene Follow-ups</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#d97706', background: '#FFF8EC', borderRadius: 10, padding: '2px 9px' }}>{followUps.length}</span>
+          </div>
+          {followUps
+            .filter(f => f.dueDate)
+            .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+            .slice(0, 6)
+            .map(f => {
+              const due = new Date(f.dueDate);
+              const isOverdue = due < today;
+              return (
+                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 20px', borderBottom: '1px solid #FAF9F6' }}>
+                  <div style={{ width: 46, textAlign: 'center', flexShrink: 0 }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: isOverdue ? '#dc2626' : '#d97706', lineHeight: 1 }}>{due.getDate()}</div>
+                    <div style={{ fontSize: 11, color: '#94a3b8' }}>{MONTHS[due.getMonth()].slice(0, 3)}</div>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#1e293b' }}>{f.title}</div>
+                    <div style={{ fontSize: 12, color: isOverdue ? '#dc2626' : '#64748b', marginTop: 2 }}>
+                      {isOverdue ? 'Überfällig' : due.toLocaleDateString('de-CH')}
+                      {f.entityType && <> · {f.entityType}</>}
+                      {f.assignedTo && <> · {f.assignedTo.name}</>}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: isOverdue ? '#fee2e2' : '#FFF8EC', color: isOverdue ? '#dc2626' : '#d97706' }}>
+                    {isOverdue ? 'Überfällig' : 'Offen'}
+                  </span>
+                </div>
+              );
+            })}
+        </div>
+      )}
 
       {/* Upcoming */}
       <div style={{ marginTop: 28, background: '#fff', border: '1.5px solid #E8E4DE', borderRadius: 14, overflow: 'hidden' }}>
@@ -313,9 +377,10 @@ export default function CalendarPage() {
 }
 
 /* ══════════════════════ MONTH VIEW ══════════════════════ */
-function MonthView({ days, today, apptsForDay, openNew, openEdit }: {
+function MonthView({ days, today, apptsForDay, followUpsForDay, openNew, openEdit }: {
   days: (Date | null)[]; today: Date;
   apptsForDay: (d: Date) => Appointment[];
+  followUpsForDay: (d: Date) => FollowUp[];
   openNew: (d: Date) => void;
   openEdit: (a: Appointment, e?: React.MouseEvent) => void;
 }) {
@@ -347,6 +412,11 @@ function MonthView({ days, today, apptsForDay, openNew, openEdit }: {
                     {dayAppts.slice(0, 3).map((a, idx) => (
                       <div key={a.id} onClick={e => openEdit(a, e)} style={{ background: apptColor(idx), color: '#fff', borderRadius: 4, padding: '2px 6px', fontSize: 11, fontWeight: 600, cursor: 'pointer', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                         {timeStr(new Date(a.startAt))} {a.title}
+                      </div>
+                    ))}
+                    {followUpsForDay(day).slice(0, 2).map(f => (
+                      <div key={f.id} style={{ background: '#d97706', color: '#fff', borderRadius: 4, padding: '2px 6px', fontSize: 11, fontWeight: 600, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                        ⏰ {f.title}
                       </div>
                     ))}
                     {dayAppts.length > 3 && <div style={{ fontSize: 10, color: '#94a3b8', paddingLeft: 4 }}>+{dayAppts.length - 3} weitere</div>}

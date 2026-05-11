@@ -108,7 +108,7 @@ export default function AccountsPage() {
   const { user } = useAuth();
   const toast = useToast();
   const tableRef = useRef<any>(null);
-  const [view, setView] = useState<'table' | 'kanban'>('table');
+  const [view, setView] = useState<'table' | 'kanban'>('kanban');
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState('');

@@ -6,7 +6,7 @@ import { useAuth } from '../../src/auth/AuthProvider';
 import { FiX, FiClock } from 'react-icons/fi';
 
 type Project = { id: string; name: string };
-type Phase = { id: string; name: string; order: number };
+type Phase = { id: string; name: string; order: number; budgetHours?: number; usedMinutes?: number };
 type Employee = { id: string; name: string };
 type TaskOpt = { id: string; title: string; projectId?: string };
 
@@ -37,11 +37,17 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
     setDate(new Date().toISOString().slice(0, 10));
   }, [open, isAdmin]);
 
+  const [phaseKontingent, setPhaseKontingent] = useState<{ budgetHours: number; usedHours: number; remaining: number } | null>(null);
+
   useEffect(() => {
-    if (!projectId) { setPhases([]); setTasks([]); return; }
+    if (!projectId) { setPhases([]); setTasks([]); setPhaseKontingent(null); return; }
     api.get(`/projects/${projectId}`).then((d: any) => {
       const list = Array.isArray(d?.phases) ? d.phases : [];
-      setPhases(list.map((p: any) => ({ id: p.id, name: p.name, order: p.order })));
+      setPhases(list.map((p: any) => ({
+        id: p.id, name: p.name, order: p.order,
+        budgetHours: p.budgetHours || 0,
+        usedMinutes: (p.timeEntries || []).reduce((s: number, e: any) => s + (e.durationMinutes || 0), 0),
+      })));
     }).catch(() => setPhases([]));
     api.get(`/tasks`).then((d: any) => {
       const list = Array.isArray(d) ? d : [];
@@ -104,10 +110,25 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
 
           <div style={{ marginBottom: 12 }}>
             <label style={lbl}>Leistungsphase</label>
-            <select value={projectPhaseId} onChange={e => setProjectPhaseId(e.target.value)} style={inp} disabled={!projectId}>
+            <select value={projectPhaseId} onChange={e => {
+              setProjectPhaseId(e.target.value);
+              const ph = phases.find((p: any) => p.id === e.target.value);
+              const bh = ph?.budgetHours ?? 0;
+              if (ph && bh > 0) {
+                const used = (ph.usedMinutes || 0) / 60;
+                setPhaseKontingent({ budgetHours: bh, usedHours: Math.round(used * 10) / 10, remaining: Math.round((bh - used) * 10) / 10 });
+              } else {
+                setPhaseKontingent(null);
+              }
+            }} style={inp} disabled={!projectId}>
               <option value="">— Optional —</option>
-              {phases.sort((a, b) => a.order - b.order).map(p => <option key={p.id} value={p.id}>{String(p.order).padStart(2, '0')} – {p.name}</option>)}
+              {phases.sort((a: any, b: any) => a.order - b.order).map((p: any) => <option key={p.id} value={p.id}>{String(p.order).padStart(2, '0')} - {p.name}</option>)}
             </select>
+            {phaseKontingent && (
+              <div style={{ marginTop: 6, padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: phaseKontingent.remaining <= 0 ? '#fef2f2' : phaseKontingent.remaining < phaseKontingent.budgetHours * 0.2 ? '#fffbeb' : '#f0fdf4', color: phaseKontingent.remaining <= 0 ? '#dc2626' : phaseKontingent.remaining < phaseKontingent.budgetHours * 0.2 ? '#d97706' : '#16a34a' }}>
+                Kontingent: {phaseKontingent.usedHours}h / {phaseKontingent.budgetHours}h verbraucht — {phaseKontingent.remaining > 0 ? `${phaseKontingent.remaining}h ubrig` : `${Math.abs(phaseKontingent.remaining)}h uber Budget`}
+              </div>
+            )}
           </div>
 
           <div style={{ marginBottom: 12 }}>
