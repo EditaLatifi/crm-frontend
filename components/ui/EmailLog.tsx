@@ -22,7 +22,7 @@ export default function EmailLog({ entityType, entityId }: EmailLogProps) {
   const toast = useToast();
   const [logs, setLogs] = useState<EmailEntry[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ subject: "", body: "", direction: "OUTBOUND" });
+  const [form, setForm] = useState({ subject: "", body: "", direction: "OUTBOUND", recipient: "" });
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -45,9 +45,9 @@ export default function EmailLog({ entityType, entityId }: EmailLogProps) {
       };
       const created: any = await api.post("/email-logs", payload);
       setLogs((prev) => [created, ...prev]);
-      setForm({ subject: "", body: "", direction: "OUTBOUND" });
+      setForm({ subject: "", body: "", direction: "OUTBOUND", recipient: "" });
       setShowForm(false);
-      toast.success("E-Mail protokolliert.");
+      toast.success(form.direction === "OUTBOUND" ? "E-Mail gesendet." : "E-Mail protokolliert.");
     } catch {
       toast.error("E-Mail konnte nicht protokolliert werden.");
     } finally {
@@ -73,12 +73,22 @@ export default function EmailLog({ entityType, entityId }: EmailLogProps) {
           onClick={() => setShowForm((s) => !s)}
           style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, padding: "5px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
         >
-          {showForm ? "Abbrechen" : "+ E-Mail loggen"}
+          {showForm ? "Abbrechen" : "+ E-Mail senden"}
         </button>
       </div>
 
       {showForm && (
         <form onSubmit={handleAdd} style={{ background: "#f8fafc", border: "1px solid #e5e7eb", borderRadius: 9, padding: "14px 16px", marginBottom: 14 }}>
+          {form.direction === "OUTBOUND" && (
+            <div style={{ marginBottom: 10 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 3 }}>An (E-Mail) – leer = Kontakt/Konto-E-Mail</label>
+              <input
+                type="email" value={form.recipient} onChange={(e) => setForm(f => ({ ...f, recipient: e.target.value }))}
+                placeholder="empfaenger@beispiel.ch"
+                style={{ width: "100%", padding: "7px 10px", borderRadius: 6, border: "1.5px solid #d1d5db", fontSize: 13, boxSizing: "border-box" }}
+              />
+            </div>
+          )}
           <div style={{ marginBottom: 10 }}>
             <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 3 }}>Betreff *</label>
             <input
@@ -101,7 +111,7 @@ export default function EmailLog({ entityType, entityId }: EmailLogProps) {
             </select>
             <button type="submit" disabled={saving}
               style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, padding: "7px 16px", fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
-              {saving ? "…" : "Speichern"}
+              {saving ? "…" : form.direction === "OUTBOUND" ? "Senden" : "Speichern"}
             </button>
           </div>
         </form>
