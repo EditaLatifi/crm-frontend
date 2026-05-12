@@ -67,10 +67,14 @@ export default function AccountDetailsPage() {
   return (
     <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
       {/* Breadcrumb */}
-      <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}>
+      <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20, display: "flex", alignItems: "center", gap: 0 }}>
         <Link href="/accounts" style={{ color: "#1a1a1a", textDecoration: "none", fontWeight: 600 }}>Firmen</Link>
         <span style={{ margin: "0 6px" }}>{' › '}</span>
         <span style={{ color: "#1e293b" }}>{account.name}</span>
+        <span style={{ margin: "0 10px", color: "#cbd5e1" }}>·</span>
+        <span style={{ fontSize: 12, color: "#94a3b8" }}>
+          {account.contacts?.length || 0} Kontakte · {account.deals?.length || 0} Deals
+        </span>
       </div>
 
       {/* Header */}
