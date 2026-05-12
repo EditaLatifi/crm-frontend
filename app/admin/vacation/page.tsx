@@ -5,7 +5,8 @@ import { api } from "../../../src/api/client";
 import { useToast } from "../../../components/ui/Toast";
 import { useAuth } from "../../../src/auth/AuthProvider";
 import { IconType } from "react-icons";
-import { FiUmbrella, FiActivity, FiShield, FiDollarSign, FiFileText } from "react-icons/fi";
+import { FiUmbrella, FiActivity, FiShield, FiFileText } from "react-icons/fi";
+import { LuCoins } from "react-icons/lu";
 
 interface VacationRequest {
   id: string;
@@ -48,7 +49,7 @@ const TYPE_ICONS: Record<string, IconType> = {
   VACATION: FiUmbrella,
   SICK: FiActivity,
   MILITARY_SERVICE: FiShield,
-  UNPAID: FiDollarSign,
+  UNPAID: LuCoins,
   OTHER: FiFileText,
 };
 

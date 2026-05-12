@@ -21,9 +21,10 @@ import {
 } from '../../../../components/projects/phaseConfig';
 import {
   FiEdit2, FiTrash2, FiUser, FiCalendar,
-  FiMapPin, FiUsers, FiX, FiLayers, FiFileText, FiDollarSign,
+  FiMapPin, FiUsers, FiX, FiLayers, FiFileText,
   FiFolder, FiTruck, FiLink, FiCheckSquare, FiBriefcase,
 } from 'react-icons/fi';
+import { LuCoins } from 'react-icons/lu';
 import Link from 'next/link';
 import '../projects.css';
 
@@ -36,7 +37,7 @@ const TABS: { id: Tab; label: string; icon: any; roles?: string[] }[] = [
   { id: 'team',           label: 'Team',            icon: FiUsers },
   { id: 'documents',      label: 'Dokumente',       icon: FiFolder },
   { id: 'time',           label: 'Zeiterfassung',   icon: FiCalendar },
-  { id: 'budget',         label: 'Budget',          icon: FiDollarSign, roles: ['ADMIN', 'PROJEKTLEITER'] },
+  { id: 'budget',         label: 'Budget',          icon: LuCoins, roles: ['ADMIN', 'PROJEKTLEITER'] },
   { id: 'permits',        label: 'Baubewilligung',  icon: FiFileText },
 ];
 

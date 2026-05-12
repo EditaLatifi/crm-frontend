@@ -5,7 +5,8 @@ import Link from "next/link";
 import { api, fetchWithAuth } from "../../../../src/api/client";
 import { formatCurrency } from "../../../../src/lib/formatCurrency";
 import { SIA_PHASES as SIA_PHASES_FULL } from "../../../../src/lib/siaPhases";
-import { FiArrowLeft, FiEdit2, FiDollarSign, FiCalendar, FiUser, FiTag, FiPaperclip, FiMessageSquare, FiClock, FiDownload, FiTrash2, FiUpload } from "react-icons/fi";
+import { FiArrowLeft, FiEdit2, FiCalendar, FiUser, FiTag, FiPaperclip, FiMessageSquare, FiClock, FiDownload, FiTrash2, FiUpload } from "react-icons/fi";
+import { LuCoins } from "react-icons/lu";
 import FollowUpBadge from "../../../../components/ui/FollowUpBadge";
 import DealPhaseTree from "../../../../components/deals/DealPhaseTree";
 import { useAuth, canViewFinancials } from "../../../../src/auth/AuthProvider";
@@ -304,7 +305,7 @@ export default function DealDetailPage() {
             {/* Fields grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {[
-                ...(showFinancials ? [{ label: 'Betrag', field: 'amount', icon: <FiDollarSign size={14} />, display: formatCurrency(deal.amount ?? 0, deal.currency || 'CHF'), type: 'number' }] : []),
+                ...(showFinancials ? [{ label: 'Betrag', field: 'amount', icon: <LuCoins size={14} />, display: formatCurrency(deal.amount ?? 0, deal.currency || 'CHF'), type: 'number' }] : []),
                 { label: 'Erw. Abschlussdatum', field: 'expectedCloseDate', icon: <FiCalendar size={14} />, display: deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString('de-CH') : '—', type: 'date' },
               ].map(item => (
                 <div key={item.field} style={{ background: '#FAF9F6', borderRadius: 10, padding: '12px 16px' }}>

@@ -8,8 +8,9 @@ import {
   FiGrid, FiUsers, FiUser, FiBriefcase, FiCheckSquare,
   FiClock, FiBarChart2, FiLogOut, FiX,
   FiCalendar, FiLayers, FiUmbrella,
-  FiDollarSign, FiTrendingUp, FiCopy, FiList,
+  FiTrendingUp, FiCopy, FiList,
 } from "react-icons/fi";
+import { LuCoins } from "react-icons/lu";
 
 // minRole: minimum role level to see item
 // 'all' = everyone, 'internal' = not EXTERN, 'manager' = ADMIN+PROJEKTLEITER, 'admin' = ADMIN only
@@ -37,7 +38,7 @@ const NAV_GROUPS: { label: string | null; minRole?: MinRole; items: { href: stri
     label: "Finanzen",
     minRole: "internal",
     items: [
-      { href: "/projects/budget-overview", label: "Budget-Übersicht", icon: FiDollarSign, countKey: null },
+      { href: "/projects/budget-overview", label: "Budget-Übersicht", icon: LuCoins, countKey: null },
       { href: "/reports", label: "Berichte", icon: FiBarChart2, countKey: null, minRole: "internal" },
     ],
   },

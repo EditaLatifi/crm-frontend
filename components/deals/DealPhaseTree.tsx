@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { api } from '../../src/api/client';
-import { FiPlus, FiTrash2, FiEdit2, FiX, FiCheck, FiDollarSign, FiCalendar, FiUser, FiChevronRight, FiChevronDown } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiEdit2, FiX, FiCheck, FiCalendar, FiUser, FiChevronRight, FiChevronDown } from 'react-icons/fi';
+import { LuCoins } from 'react-icons/lu';
 import { formatCurrency } from '../../src/lib/formatCurrency';
 
 type Payment = {
@@ -153,7 +154,7 @@ function PhaseRow({ phase, currency, onChange, canViewPayments }: { phase: Phase
             <button title="Sub-Phase hinzufügen" onClick={() => setAddingSub(v => !v)} style={btnIcon}><FiPlus size={13} /></button>
             {canViewPayments && (
               <button title="Zahlungsplan" onClick={() => setShowPayments(v => !v)} style={{ ...btnIcon, color: showPayments ? '#7c3aed' : '#64748b' }}>
-                <FiDollarSign size={13} />
+                <LuCoins size={13} />
               </button>
             )}
             <button title="Löschen" onClick={async () => {
