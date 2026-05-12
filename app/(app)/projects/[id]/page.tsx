@@ -20,7 +20,7 @@ import {
   TYPE_LABELS, TYPE_ICONS,
 } from '../../../../components/projects/phaseConfig';
 import {
-  FiArrowLeft, FiEdit2, FiTrash2, FiUser, FiCalendar,
+  FiEdit2, FiTrash2, FiUser, FiCalendar,
   FiMapPin, FiUsers, FiX, FiLayers, FiFileText, FiDollarSign,
   FiFolder, FiTruck, FiLink, FiCheckSquare, FiBriefcase,
 } from 'react-icons/fi';
@@ -141,14 +141,29 @@ export default function ProjectDetailPage() {
     <div className="proj-detail-page">
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
 
+        {/* Breadcrumb */}
+        <div style={{ fontSize: 13, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 0 }}>
+          <Link href={project.account?.id ? `/accounts/${project.account.id}` : '/accounts'} style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>Firmen</Link>
+          <span style={{ color: '#94a3b8', margin: '0 6px' }}>{' › '}</span>
+          {project.account?.id ? (
+            <Link href={`/accounts/${project.account.id}`} style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>{project.account?.name || '—'}</Link>
+          ) : (
+            <span style={{ color: '#1a1a1a', fontWeight: 600 }}>{project.account?.name || '—'}</span>
+          )}
+          {project.deal?.id && (
+            <>
+              <span style={{ color: '#94a3b8', margin: '0 6px' }}>{' › '}</span>
+              <Link href={`/deals/${project.deal.id}`} style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>{project.deal?.name || 'Deal'}</Link>
+            </>
+          )}
+          <span style={{ color: '#94a3b8', margin: '0 6px' }}>{' › '}</span>
+          <Link href="/projects" style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>Projekte</Link>
+          <span style={{ color: '#94a3b8', margin: '0 6px' }}>{' › '}</span>
+          <span style={{ color: '#1e293b' }}>{project.name}</span>
+        </div>
+
         {/* Back + Actions */}
         <div className="proj-detail-topbar">
-          <button
-            onClick={() => router.back()}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#64748b', fontSize: 14, cursor: 'pointer', padding: '4px 0' }}
-          >
-            <FiArrowLeft size={15} /> Zurück
-          </button>
 
           {canEdit && (
             <div className="proj-detail-topbar-actions">
@@ -195,12 +210,31 @@ export default function ProjectDetailPage() {
                   <p style={{ margin: 0, fontSize: 14, color: '#475569', maxWidth: 500 }}>{project.description}</p>
                 )}
               </div>
-              {showFinancials && project.budget && (
-                <div style={{ flexShrink: 0 }}>
-                  <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Budget</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a' }}>
-                    {formatCurrency(project.budget, project.currency || 'CHF')}
-                  </div>
+              {showFinancials && (
+                <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
+                  {project.budget && (
+                    <div style={{ border: '1.5px solid #16a34a', borderRadius: 10, padding: '10px 16px', minWidth: 130 }}>
+                      <div style={{ fontSize: 10, color: '#16a34a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Kunden-Offerte</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>{formatCurrency(project.budget, project.currency || 'CHF')}</div>
+                    </div>
+                  )}
+                  {(() => {
+                    const totalBudgetH = phases.reduce((s: number, ph: any) => s + (ph.budgetHours || 0), 0);
+                    if (!totalBudgetH) return null;
+                    const totalUsedMin = phases.reduce((s: number, ph: any) => s + ((ph.timeEntries || []).reduce((s2: number, te: any) => s2 + (te.durationMinutes || 0), 0)), 0);
+                    const totalUsedH = totalUsedMin / 60;
+                    const pct = Math.round((totalUsedH / totalBudgetH) * 100);
+                    const barColor = pct >= 100 ? '#dc2626' : pct >= 80 ? '#d97706' : '#3b82f6';
+                    return (
+                      <div style={{ border: '1.5px solid #3b82f6', borderRadius: 10, padding: '10px 16px', minWidth: 150 }}>
+                        <div style={{ fontSize: 10, color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Kontingent</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>{totalUsedH.toFixed(1)}h / {totalBudgetH}h</div>
+                        <div style={{ height: 4, background: '#e5e7eb', borderRadius: 4, marginTop: 6, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: barColor, borderRadius: 4 }} />
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>

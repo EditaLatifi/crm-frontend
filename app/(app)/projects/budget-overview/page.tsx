@@ -39,14 +39,45 @@ type Overview = {
   projects: ProjectRow[];
 };
 
+type HoursData = Record<string, { budgetHours: number; usedHours: number }>;
+
 export default function BudgetOverviewPage() {
   const [data, setData] = useState<Overview | null>(null);
+  const [hours, setHours] = useState<HoursData>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/projects/budget-overview')
-      .then((d: any) => setData(d))
-      .finally(() => setLoading(false));
+    Promise.all([
+      api.get('/projects/budget-overview'),
+      api.get('/projects?pageSize=200'),
+      api.get('/time-entries'),
+    ]).then(([budgetData, projRes, timeRes]: any) => {
+      setData(budgetData);
+      const projects = projRes?.data ?? (Array.isArray(projRes) ? projRes : []);
+      const timeEntries = Array.isArray(timeRes) ? timeRes : [];
+
+      // Sum hours per project from time entries
+      const usedByProject: Record<string, number> = {};
+      for (const te of timeEntries) {
+        if (te.projectId) {
+          usedByProject[te.projectId] = (usedByProject[te.projectId] || 0) + (te.durationMinutes || 0);
+        }
+      }
+
+      const h: HoursData = {};
+      let totalBudget = 0, totalUsed = 0;
+      for (const p of projects) {
+        const phases = p.phases || [];
+        const budget = phases.reduce((s: number, ph: any) => s + (ph.budgetHours || 0), 0);
+        const usedMin = usedByProject[p.id] || 0;
+        const usedH = usedMin / 60;
+        h[p.id] = { budgetHours: budget, usedHours: usedH };
+        totalBudget += budget;
+        totalUsed += usedH;
+      }
+      h['__total'] = { budgetHours: totalBudget, usedHours: totalUsed };
+      setHours(h);
+    }).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div style={{ padding: 32 }}>Wird geladen…</div>;
@@ -66,12 +97,21 @@ export default function BudgetOverviewPage() {
       </Link>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>Budget-Übersicht</h1>
 
-      {/* Totals */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 24 }}>
+      {/* Totals CHF */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 14 }}>
         <KpiCard label="Gesamtbudget" value={formatCurrency(data.totals.budget, 'CHF')} color="#1a1a1a" />
         <KpiCard label="Geschätzt (alle Posten)" value={formatCurrency(data.totals.estimated, 'CHF')} color="#3b82f6" />
         <KpiCard label="Tatsächlich" value={formatCurrency(data.totals.actual, 'CHF')} color="#16a34a" />
       </div>
+
+      {/* Totals Hours */}
+      {hours['__total'] && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 24 }}>
+          <KpiCard label="Kontingent (Stunden)" value={`${hours['__total'].budgetHours.toFixed(0)}h`} color="#1a1a1a" />
+          <KpiCard label="Erfasst (Stunden)" value={`${hours['__total'].usedHours.toFixed(0)}h`} color="#3b82f6" />
+          <KpiCard label="Verfügbar (Stunden)" value={`${Math.max(0, hours['__total'].budgetHours - hours['__total'].usedHours).toFixed(0)}h`} color={hours['__total'].usedHours > hours['__total'].budgetHours ? '#dc2626' : '#16a34a'} />
+        </div>
+      )}
 
       {/* By type */}
       <Section title="Nach Projekttyp">
@@ -133,6 +173,9 @@ export default function BudgetOverviewPage() {
               <th style={thR}>Geschätzt</th>
               <th style={thR}>Tatsächlich</th>
               <th style={thR}>Verbleibend</th>
+              <th style={thR}>Kontingent (h)</th>
+              <th style={thR}>Erfasst (h)</th>
+              <th style={thR}>Verfügbar (h)</th>
             </tr>
           </thead>
           <tbody>
@@ -148,6 +191,16 @@ export default function BudgetOverviewPage() {
                 <td style={tdR}>{formatCurrency(p.totalActual, p.currency || 'CHF')}</td>
                 <td style={{ ...tdR, color: p.remaining < 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}>
                   {formatCurrency(p.remaining, p.currency || 'CHF')}
+                </td>
+                <td style={tdR}>
+                  {hours[p.id]?.budgetHours ? `${hours[p.id].budgetHours}h` : '—'}
+                </td>
+                <td style={tdR}>
+                  {hours[p.id]?.usedHours ? `${hours[p.id].usedHours.toFixed(1)}h` : '—'}
+                </td>
+                <td style={{ ...tdR, color: hours[p.id]?.budgetHours && hours[p.id].usedHours > hours[p.id].budgetHours ? '#dc2626' : '#16a34a', fontWeight: 600 }}>
+                  {hours[p.id]?.budgetHours ? `${Math.max(0, hours[p.id].budgetHours - hours[p.id].usedHours).toFixed(1)}h` : '—'}
+                  {hours[p.id]?.budgetHours && hours[p.id].usedHours > hours[p.id].budgetHours && ' ⚠️'}
                 </td>
               </tr>
             ))}

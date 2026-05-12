@@ -85,8 +85,16 @@ export default function ContactDetailsPage() {
     <div style={{ padding: "28px 32px", maxWidth: 900, margin: "0 auto" }}>
       {/* Breadcrumb */}
       <div className="contact-breadcrumb" style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}>
+        <Link href={contact.account?.id ? `/accounts/${contact.account.id}` : '/accounts'} style={{ color: "#1a1a1a", textDecoration: "none", fontWeight: 600 }}>Firmen</Link>
+        <span style={{ margin: "0 6px" }}>{' › '}</span>
+        {contact.account?.id ? (
+          <Link href={`/accounts/${contact.account.id}`} style={{ color: "#1a1a1a", textDecoration: "none", fontWeight: 600 }}>{contact.account?.name || '—'}</Link>
+        ) : (
+          <span style={{ color: "#1a1a1a", fontWeight: 600 }}>{contact.account?.name || '—'}</span>
+        )}
+        <span style={{ margin: "0 6px" }}>{' › '}</span>
         <Link href="/contacts" style={{ color: "#1a1a1a", textDecoration: "none", fontWeight: 600 }}>Kontakte</Link>
-        <span style={{ margin: "0 6px" }}>›</span>
+        <span style={{ margin: "0 6px" }}>{' › '}</span>
         <span style={{ color: "#1e293b" }}>{contact.name}</span>
       </div>
 

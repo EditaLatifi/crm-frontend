@@ -68,8 +68,8 @@ export default function AccountDetailsPage() {
     <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
       {/* Breadcrumb */}
       <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}>
-        <Link href="/accounts" style={{ color: "#2563eb", textDecoration: "none", fontWeight: 600 }}>Konten</Link>
-        <span style={{ margin: "0 6px" }}>›</span>
+        <Link href="/accounts" style={{ color: "#1a1a1a", textDecoration: "none", fontWeight: 600 }}>Firmen</Link>
+        <span style={{ margin: "0 6px" }}>{' › '}</span>
         <span style={{ color: "#1e293b" }}>{account.name}</span>
       </div>
 

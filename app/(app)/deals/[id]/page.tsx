@@ -196,10 +196,18 @@ export default function DealDetailPage() {
 
   return (
     <div style={{ padding: '24px 32px', maxWidth: 1100, margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
-        <Link href="/deals" style={{ display: 'flex', alignItems: 'center', color: '#64748b', textDecoration: 'none', fontSize: 13, gap: 4 }}>
-          <FiArrowLeft size={16} /> Zurück zu Deals
-        </Link>
+      <div style={{ fontSize: 13, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 0 }}>
+        <Link href={deal.account?.id ? `/accounts/${deal.account.id}` : '/accounts'} style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>Firmen</Link>
+        <span style={{ color: '#94a3b8', margin: '0 6px' }}>{' › '}</span>
+        {deal.account?.id ? (
+          <Link href={`/accounts/${deal.account.id}`} style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>{deal.account?.name || '—'}</Link>
+        ) : (
+          <span style={{ color: '#1a1a1a', fontWeight: 600 }}>{deal.account?.name || '—'}</span>
+        )}
+        <span style={{ color: '#94a3b8', margin: '0 6px' }}>{' › '}</span>
+        <Link href="/deals" style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>Deals</Link>
+        <span style={{ color: '#94a3b8', margin: '0 6px' }}>{' › '}</span>
+        <span style={{ color: '#1e293b' }}>{deal.name}</span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24 }}>

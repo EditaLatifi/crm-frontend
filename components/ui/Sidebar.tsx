@@ -17,23 +17,35 @@ type MinRole = 'all' | 'internal' | 'manager' | 'admin';
 
 const NAV_GROUPS: { label: string | null; minRole?: MinRole; items: { href: string; label: string; icon: any; countKey: string | null; minRole?: MinRole; hideForAdmin?: boolean }[] }[] = [
   {
-    label: null,
+    label: "CRM",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: FiGrid, countKey: null },
       { href: "/accounts", label: "Firmen", icon: FiUsers, countKey: "accounts", minRole: "internal" },
       { href: "/contacts", label: "Kontakte", icon: FiUser, countKey: "contacts", minRole: "internal" },
       { href: "/deals", label: "Deals", icon: FiBriefcase, countKey: "deals", minRole: "internal" },
-      { href: "/projects", label: "Projekte", icon: FiLayers, countKey: "projects" },
-      { href: "/tasks", label: "Aufgaben", icon: FiCheckSquare, countKey: "tasks" },
     ],
   },
   {
-    label: "Auswertungen",
+    label: "Projekte",
     items: [
+      { href: "/projects", label: "Projekte", icon: FiLayers, countKey: "projects" },
+      { href: "/tasks", label: "Aufgaben", icon: FiCheckSquare, countKey: "tasks" },
       { href: "/time", label: "Zeiterfassung", icon: FiClock, countKey: null },
+    ],
+  },
+  {
+    label: "Finanzen",
+    minRole: "internal",
+    items: [
+      { href: "/projects/budget-overview", label: "Budget-Übersicht", icon: FiDollarSign, countKey: null },
       { href: "/reports", label: "Berichte", icon: FiBarChart2, countKey: null, minRole: "internal" },
-      { href: "/vacation", label: "Urlaub", icon: FiUmbrella, countKey: null, hideForAdmin: true, minRole: "internal" },
+    ],
+  },
+  {
+    label: "Planung",
+    items: [
       { href: "/calendar", label: "Kalender", icon: FiCalendar, countKey: null },
+      { href: "/vacation", label: "Urlaub", icon: FiUmbrella, countKey: null, hideForAdmin: true, minRole: "internal" },
     ],
   },
   {

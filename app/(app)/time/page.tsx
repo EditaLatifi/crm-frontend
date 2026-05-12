@@ -14,6 +14,7 @@ interface TimeEntry {
   task?: { id: string; title: string };
   projectId?: string;
   project?: { id: string; name: string };
+  projectPhase?: { id: string; name: string; order?: number; budgetHours?: number; timeEntries?: { durationMinutes: number }[] };
   startedAt: string;
   endedAt: string;
   durationMinutes: number;
@@ -39,18 +40,59 @@ function formatDuration(min: number) {
   return `${h}h ${m}min`;
 }
 
+function formatDateDE(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function getWeekBounds(): [Date, Date] {
+  const now = new Date();
+  const day = now.getDay();
+  const diffToMon = day === 0 ? -6 : 1 - day;
+  const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMon);
+  const sun = new Date(mon);
+  sun.setDate(mon.getDate() + 6);
+  sun.setHours(23, 59, 59, 999);
+  return [mon, sun];
+}
+
+function computeKPIs(entries: TimeEntry[]) {
+  const now = new Date();
+  const [weekStart, weekEnd] = getWeekBounds();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+  let weekMin = 0;
+  let monthMin = 0;
+  const projectIds = new Set<string>();
+
+  for (const e of entries) {
+    const d = new Date(e.startedAt);
+    const dur = e.durationMinutes || 0;
+    if (d >= weekStart && d <= weekEnd) weekMin += dur;
+    if (d >= monthStart && d <= monthEnd) monthMin += dur;
+    if (e.projectId || e.project?.id) projectIds.add((e.projectId || e.project?.id)!);
+  }
+
+  return {
+    weekHours: (weekMin / 60).toFixed(1),
+    monthHours: (monthMin / 60).toFixed(1),
+    projectCount: projectIds.size,
+  };
+}
+
 function exportCSV(entries: TimeEntry[], showUser: boolean) {
   const cols = [
     ...(showUser ? ['Benutzer'] : []),
-    'Konto', 'Projekt', 'Task', 'Start', 'Ende', 'Dauer (min)', 'Beschrieb',
+    'Konto', 'Projekt', 'Phase', 'Task', 'Datum', 'Dauer (min)', 'Beschrieb',
   ];
   const rows = entries.map(e => [
     ...(showUser ? [e.user?.name ?? e.userId ?? ''] : []),
     e.account?.name ?? e.accountId ?? '',
     e.project?.name ?? '',
+    e.projectPhase?.name ?? '',
     e.task?.title ?? e.taskId ?? '',
-    e.startedAt ? new Date(e.startedAt).toLocaleString('de-CH') : '',
-    e.endedAt ? new Date(e.endedAt).toLocaleString('de-CH') : '',
+    e.startedAt ? formatDateDE(e.startedAt) : '',
     String(e.durationMinutes ?? 0),
     e.description ?? '',
   ]);
@@ -156,6 +198,37 @@ export default function TimePage() {
         </div>
       </div>
 
+      {/* KPI cards */}
+      {!loading && entries.length > 0 && (() => {
+        const kpi = computeKPIs(entries);
+        const cardStyle: React.CSSProperties = {
+          flex: '1 1 0', background: '#fff', border: '1px solid #E8E4DE',
+          borderRadius: 10, padding: '18px 22px', minWidth: 160,
+        };
+        const numStyle: React.CSSProperties = {
+          fontSize: 26, fontWeight: 700, color: '#0f172a', lineHeight: 1.2,
+        };
+        const labelStyle: React.CSSProperties = {
+          fontSize: 12, color: '#94a3b8', fontWeight: 500, marginTop: 4,
+        };
+        return (
+          <div style={{ display: 'flex', gap: 14, marginBottom: 16, flexWrap: 'wrap' }}>
+            <div style={cardStyle}>
+              <div style={numStyle}>{kpi.weekHours}h</div>
+              <div style={labelStyle}>Diese Woche</div>
+            </div>
+            <div style={cardStyle}>
+              <div style={numStyle}>{kpi.monthHours}h</div>
+              <div style={labelStyle}>Dieser Monat</div>
+            </div>
+            <div style={cardStyle}>
+              <div style={numStyle}>{kpi.projectCount}</div>
+              <div style={labelStyle}>Projekte bebucht</div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Filter bar */}
       <div style={{
         background: '#fff', borderRadius: 10, border: '1px solid #E8E4DE',
@@ -216,10 +289,11 @@ export default function TimePage() {
                     {isManager && <th style={thStyle}>Benutzer</th>}
                     <th style={thStyle}>Konto</th>
                     <th style={thStyle}>Projekt</th>
+                    <th style={thStyle}>Phase</th>
                     <th style={thStyle}>Task</th>
-                    <th style={thStyle}>Start</th>
-                    <th style={thStyle}>Ende</th>
+                    <th style={thStyle}>Datum</th>
                     <th style={thStyle}>Dauer</th>
+                    <th style={thStyle}>Kontingent</th>
                     <th style={thStyle}>Beschrieb</th>
                   </tr>
                 </thead>
@@ -227,7 +301,7 @@ export default function TimePage() {
                   {pageEntries.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={isManager ? 8 : 7}
+                        colSpan={isManager ? 9 : 8}
                         style={{ textAlign: 'center', color: '#94a3b8', padding: 32, fontSize: 14 }}
                       >
                         {hasFilters ? 'Keine Einträge für diese Filter.' : 'Keine Zeiteinträge gefunden.'}
@@ -246,15 +320,38 @@ export default function TimePage() {
                         }
                       </td>
                       <td style={tdStyle}>
+                        {e.projectPhase?.name
+                          ? <span style={{ color: '#1e293b' }}>{e.projectPhase.name}</span>
+                          : <span style={{ color: '#94a3b8' }}>—</span>
+                        }
+                      </td>
+                      <td style={tdStyle}>
                         {e.task
                           ? <Link href={`/tasks/${e.task.id}`} style={{ color: '#1a1a1a', textDecoration: 'none' }}>{e.task.title}</Link>
                           : <span style={{ color: '#94a3b8' }}>—</span>
                         }
                       </td>
-                      <td style={tdStyle}>{e.startedAt ? new Date(e.startedAt).toLocaleString('de-CH') : '—'}</td>
-                      <td style={tdStyle}>{e.endedAt ? new Date(e.endedAt).toLocaleString('de-CH') : '—'}</td>
+                      <td style={tdStyle}>{e.startedAt ? formatDateDE(e.startedAt) : '—'}</td>
                       <td style={{ ...tdStyle, fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap' }}>
                         {typeof e.durationMinutes === 'number' ? formatDuration(e.durationMinutes) : '—'}
+                      </td>
+                      <td style={tdStyle}>
+                        {(() => {
+                          const ph = e.projectPhase;
+                          if (!ph?.budgetHours || !ph.timeEntries) return <span style={{ color: '#94a3b8' }}>—</span>;
+                          const usedMin = ph.timeEntries.reduce((s, t) => s + t.durationMinutes, 0);
+                          const usedH = usedMin / 60;
+                          const pct = Math.round((usedH / ph.budgetHours) * 100);
+                          const barColor = pct >= 100 ? '#dc2626' : pct >= 80 ? '#d97706' : '#16a34a';
+                          return (
+                            <div style={{ minWidth: 90 }}>
+                              <div style={{ fontSize: 11, color: '#475569', marginBottom: 3 }}>{usedH.toFixed(1)}h / {ph.budgetHours}h</div>
+                              <div style={{ height: 4, background: '#e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: barColor, borderRadius: 4 }} />
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td style={{ ...tdStyle, color: '#64748b' }}>{e.description || '—'}</td>
                     </tr>
