@@ -5,7 +5,7 @@ import Link from "next/link";
 import { api } from "../../src/api/client";
 import { formatCHF, formatCurrency } from "../../src/lib/formatCurrency";
 import { useToast } from "../ui/Toast";
-import { FiEdit2, FiTrash2, FiCalendar } from "react-icons/fi";
+import { FiEdit2, FiCalendar } from "react-icons/fi";
 import { LuCoins } from "react-icons/lu";
 
 interface Stage { id: string; name: string; order: number; isWon: boolean; isLost: boolean; }
@@ -60,18 +60,6 @@ export default function DealsKanbanBoard({ onEdit, onRefresh }: { onEdit?: (deal
     } catch {
       toast.error("Phase konnte nicht geändert werden.");
       fetchAll();
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Diesen Deal wirklich löschen?")) return;
-    try {
-      await api.delete(`/deals/${id}`);
-      setDeals((prev) => prev.filter((d) => d.id !== id));
-      toast.success("Deal gelöscht.");
-      onRefresh?.();
-    } catch {
-      toast.error("Deal konnte nicht gelöscht werden.");
     }
   };
 
@@ -200,22 +188,16 @@ export default function DealsKanbanBoard({ onEdit, onRefresh }: { onEdit?: (deal
                                   ))}
                                 </div>
                               )}
-                              <div style={{ display: "flex", gap: 6, marginTop: 8, justifyContent: "flex-end" }}>
-                                {onEdit && (
+                              {onEdit && (
+                                <div style={{ display: "flex", gap: 6, marginTop: 8, justifyContent: "flex-end" }}>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); onEdit(deal); }}
                                     style={{ background: "#eff6ff", border: "none", borderRadius: 6, padding: "4px 9px", cursor: "pointer", color: "#2563eb", display: "flex", alignItems: "center" }}
                                   >
                                     <FiEdit2 size={13} />
                                   </button>
-                                )}
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleDelete(deal.id); }}
-                                  style={{ background: "#fef2f2", border: "none", borderRadius: 6, padding: "4px 9px", cursor: "pointer", color: "#dc2626", display: "flex", alignItems: "center" }}
-                                >
-                                  <FiTrash2 size={13} />
-                                </button>
-                              </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </Draggable>

@@ -9,6 +9,8 @@ import { FiArrowLeft, FiEdit2, FiCalendar, FiUser, FiTag, FiPaperclip, FiMessage
 import { LuCoins } from "react-icons/lu";
 import FollowUpBadge from "../../../../components/ui/FollowUpBadge";
 import DealPhaseTree from "../../../../components/deals/DealPhaseTree";
+import ConfirmDialog from "../../../../components/ui/ConfirmDialog";
+import { useToast } from "../../../../components/ui/Toast";
 import { useAuth, canViewFinancials } from "../../../../src/auth/AuthProvider";
 
 /* ─── SIA Leistungsphasen (from central siaPhases.ts) ─── */
@@ -65,6 +67,10 @@ export default function DealDetailPage() {
   const [editVal, setEditVal] = useState<any>("");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'comments' | 'attachments' | 'phases'>('comments');
+  const [editMode, setEditMode] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const toast = useToast();
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -164,6 +170,19 @@ export default function DealDetailPage() {
     }
   }
 
+  async function handleDeleteDeal() {
+    setDeleting(true);
+    try {
+      await api.delete(`/deals/${params.id}`);
+      toast.success('Deal gelöscht.');
+      router.push('/deals');
+    } catch {
+      toast.error('Deal konnte nicht gelöscht werden.');
+      setDeleting(false);
+      setConfirmDeleteOpen(false);
+    }
+  }
+
   async function deleteAttachment(id: string) {
     if (!confirm('Anhang wirklich löschen?')) return;
     try {
@@ -234,6 +253,20 @@ export default function DealDetailPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <span style={{ ...stageBadge, borderRadius: 8, padding: '5px 14px', fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap' }}>{currentStage?.name || deal.stageId}</span>
                 <FollowUpBadge entityType="deal" entityId={params.id} followUpDate={deal.followUpDate} onUpdated={fetchAll} />
+                <button
+                  onClick={() => setEditMode(m => !m)}
+                  style={{
+                    background: editMode ? '#1a1a1a' : '#fff',
+                    color: editMode ? '#fff' : '#1a1a1a',
+                    border: '1.5px solid #1a1a1a',
+                    borderRadius: 8, padding: '5px 14px',
+                    fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}
+                  title={editMode ? 'Bearbeitungsmodus beenden' : 'Bearbeitungsmodus aktivieren'}
+                >
+                  <FiEdit2 size={13} /> {editMode ? 'Fertig' : 'Bearbeiten'}
+                </button>
               </div>
             </div>
 
@@ -478,7 +511,7 @@ export default function DealDetailPage() {
 
                   {/* Phase budget overview */}
                   {/* Phase budget overview — uses deal.phaseBudgets (phase-level) + task actual hours */}
-                  {selectedPhases.length > 0 && <PhaseOverview deal={deal} tasks={dealTasks} selectedPhases={selectedPhases} onBudgetSave={async (budgets: any) => {
+                  {selectedPhases.length > 0 && <PhaseOverview deal={deal} tasks={dealTasks} selectedPhases={selectedPhases} editMode={editMode} onBudgetSave={async (budgets: any) => {
                     await api.patch(`/deals/${params.id}`, { phaseBudgets: budgets });
                     setDeal((d: any) => ({ ...d, phaseBudgets: budgets }));
                   }} />}
@@ -530,6 +563,39 @@ export default function DealDetailPage() {
           )}
         </div>
       </div>
+
+      {/* ─── Danger zone (only in edit mode) ─── */}
+      {editMode && (
+        <div style={{ marginTop: 32, padding: '20px 24px', background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 14 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#991b1b', marginBottom: 8 }}>Deal löschen</div>
+          <div style={{ fontSize: 13, color: '#7f1d1d', marginBottom: 14, lineHeight: 1.5 }}>
+            Wenn dieser Deal gelöscht wird, gehen alle verknüpften Daten (Kommentare, Anhänge, Leistungsphasen, Zahlungsplan) unwiderruflich verloren.
+          </div>
+          <button
+            onClick={() => setConfirmDeleteOpen(true)}
+            style={{
+              background: '#dc2626', color: '#fff', border: 'none',
+              borderRadius: 8, padding: '9px 18px', fontWeight: 700, fontSize: 13,
+              cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8,
+            }}
+          >
+            <FiTrash2 size={14} /> Deal löschen
+          </button>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Deal löschen"
+        message={
+          <>Sind Sie sicher? Deal <strong>„{deal.name}"</strong> und alle verknüpften Daten werden gelöscht.</>
+        }
+        confirmLabel="Endgültig löschen"
+        confirmTone="danger"
+        busy={deleting}
+        onConfirm={handleDeleteDeal}
+        onCancel={() => { if (!deleting) setConfirmDeleteOpen(false); }}
+      />
     </div>
   );
 }
@@ -552,8 +618,8 @@ function getPhaseStatus(phaseTasks: any[]): string {
   return hasTime || phaseTasks.some((t: any) => t.status === 'IN_PROGRESS') ? 'in_progress' : 'pending';
 }
 
-function PhaseOverview({ deal, tasks, selectedPhases, onBudgetSave }: {
-  deal: any; tasks: any[]; selectedPhases: number[];
+function PhaseOverview({ deal, tasks, selectedPhases, editMode, onBudgetSave }: {
+  deal: any; tasks: any[]; selectedPhases: number[]; editMode: boolean;
   onBudgetSave: (budgets: any) => Promise<void>;
 }) {
   const budgets: Record<string, number> = deal.phaseBudgets && typeof deal.phaseBudgets === 'object' ? deal.phaseBudgets : {};
@@ -657,17 +723,23 @@ function PhaseOverview({ deal, tasks, selectedPhases, onBudgetSave }: {
                       </div>
                     </td>
                     <td style={tdS}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <input type="number" min="0" step="0.5" value={drafts[row.code] ?? ''} placeholder="—"
-                          onChange={e => { e.stopPropagation(); setDrafts(d => ({ ...d, [row.code]: e.target.value })); }}
-                          onClick={e => e.stopPropagation()}
-                          style={{ width: 50, padding: '2px 4px', borderRadius: 4, border: '1px solid #d1d5db', fontSize: 11, textAlign: 'center' }} />
-                        <button onClick={e => { e.stopPropagation(); saveBudget(row.code); }}
-                          disabled={savingPhase === row.code}
-                          style={{ padding: '1px 6px', borderRadius: 3, border: 'none', background: '#1a1a1a', color: '#fff', fontSize: 10, cursor: 'pointer' }}>
-                          {savingPhase === row.code ? '…' : '✓'}
-                        </button>
-                      </div>
+                      {editMode ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <input type="number" min="0" step="0.5" value={drafts[row.code] ?? ''} placeholder="—"
+                            onChange={e => { e.stopPropagation(); setDrafts(d => ({ ...d, [row.code]: e.target.value })); }}
+                            onClick={e => e.stopPropagation()}
+                            style={{ width: 50, padding: '2px 4px', borderRadius: 4, border: '1px solid #d1d5db', fontSize: 11, textAlign: 'center' }} />
+                          <button onClick={e => { e.stopPropagation(); saveBudget(row.code); }}
+                            disabled={savingPhase === row.code}
+                            style={{ padding: '1px 6px', borderRadius: 3, border: 'none', background: '#1a1a1a', color: '#fff', fontSize: 10, cursor: 'pointer' }}>
+                            {savingPhase === row.code ? '…' : '✓'}
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ fontWeight: 600, color: '#1e293b' }}>
+                          {budget > 0 ? budget.toFixed(1) : '—'}
+                        </span>
+                      )}
                     </td>
                     <td style={{ ...tdS, fontWeight: 600, color: over ? '#dc2626' : '#1e293b' }}>{used.toFixed(1)}</td>
                     <td style={{ ...tdS, fontWeight: 600, color: over ? '#dc2626' : remaining > 0 ? '#16a34a' : '#64748b' }}>

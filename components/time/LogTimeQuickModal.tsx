@@ -25,6 +25,7 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [description, setDescription] = useState('');
   const [employeeUserId, setEmployeeUserId] = useState('');
+  const [overBudgetReason, setOverBudgetReason] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
     if (isAdmin) {
       api.get('/users').then((d: any) => setEmployees(Array.isArray(d) ? d : [])).catch(() => {});
     }
-    setProjectId(''); setProjectPhaseId(''); setTaskId(''); setHours(''); setDescription(''); setEmployeeUserId('');
+    setProjectId(''); setProjectPhaseId(''); setTaskId(''); setHours(''); setDescription(''); setEmployeeUserId(''); setOverBudgetReason('');
     setDate(new Date().toISOString().slice(0, 10));
   }, [open, isAdmin]);
 
@@ -55,6 +56,14 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
     }).catch(() => setTasks([]));
   }, [projectId]);
 
+  const hoursNum = Number(hours) || 0;
+  const isOverBudget = !!(
+    phaseKontingent &&
+    phaseKontingent.budgetHours > 0 &&
+    phaseKontingent.usedHours + hoursNum > phaseKontingent.budgetHours
+  );
+  const reasonMissing = isOverBudget && !overBudgetReason.trim();
+
   if (!open) return null;
 
   const submit = async (e: FormEvent) => {
@@ -63,6 +72,7 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
     if (!hours || Number(hours) <= 0) { toast.error('Stunden sind erforderlich.'); return; }
     if (Number(hours) > 14) { toast.error('Maximale Erfassung: 14 Stunden pro Eintrag.'); return; }
     if (Number(hours) > 10) { toast.warning('Hinweis: Mehr als 10 Stunden erfasst.'); }
+    if (reasonMissing) { toast.error('Begründung für Budgetüberschreitung erforderlich.'); return; }
     setSaving(true);
     try {
       const result = await api.post('/time-entries', {
@@ -73,8 +83,11 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
         date,
         description: description.trim() || undefined,
         employeeUserId: employeeUserId || undefined,
+        overBudgetReason: isOverBudget ? overBudgetReason.trim() : undefined,
       });
-      if (result?.kontingentWarning) {
+      if (result?.overBudget) {
+        toast.warning('Erfasst — Budget überschritten.');
+      } else if (result?.kontingentWarning) {
         toast.warning(result.kontingentWarning);
       } else {
         toast.success('Zeit erfasst.');
@@ -129,6 +142,21 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
                 Kontingent: {phaseKontingent.usedHours}h / {phaseKontingent.budgetHours}h verbraucht — {phaseKontingent.remaining > 0 ? `${phaseKontingent.remaining}h ubrig` : `${Math.abs(phaseKontingent.remaining)}h uber Budget`}
               </div>
             )}
+            {isOverBudget && (
+              <div style={{ marginTop: 8, padding: '10px 12px', borderRadius: 8, background: '#fef2f2', border: '1.5px solid #fecaca' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#991b1b', marginBottom: 6 }}>
+                  ⚠ Budget überschritten — Begründung erforderlich
+                </div>
+                <textarea
+                  value={overBudgetReason}
+                  onChange={e => setOverBudgetReason(e.target.value)}
+                  placeholder="z.B. Planänderung durch Kunden"
+                  rows={2}
+                  style={{ ...inp, resize: 'vertical', borderColor: reasonMissing ? '#dc2626' : '#fecaca', background: '#fff' }}
+                  required
+                />
+              </div>
+            )}
           </div>
 
           <div style={{ marginBottom: 12 }}>
@@ -173,7 +201,7 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
 
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
             <button type="button" onClick={onClose} style={btnSecondary}>Abbrechen</button>
-            <button type="submit" disabled={saving} style={btnPrimary}>
+            <button type="submit" disabled={saving || reasonMissing} style={{ ...btnPrimary, opacity: (saving || reasonMissing) ? 0.6 : 1, cursor: (saving || reasonMissing) ? 'not-allowed' : 'pointer' }}>
               {saving ? 'Speichern…' : 'Speichern'}
             </button>
           </div>

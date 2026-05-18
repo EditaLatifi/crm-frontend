@@ -7,10 +7,8 @@ import { api } from "../../../../src/api/client";
 import { formatCurrency } from "../../../../src/lib/formatCurrency";
 import Modal from "../../../../components/ui/Modal";
 import { useToast } from "../../../../components/ui/Toast";
-import ContactTimeline from "../../../../components/ui/ContactTimeline";
-import QuickNotes from "../../../../components/ui/QuickNotes";
+import ActivityTimeline from "../../../../components/contacts/ActivityTimeline";
 import FollowUpBadge from "../../../../components/ui/FollowUpBadge";
-import EmailLog from "../../../../components/ui/EmailLog";
 
 export default function ContactDetailsPage() {
   const params = useParams();
@@ -149,12 +147,6 @@ export default function ContactDetailsPage() {
         </div>
       </div>
 
-      {/* Notes */}
-      <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e5e7eb", padding: "18px 24px", marginBottom: 24 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 12 }}>Notizen</div>
-        <QuickNotes entityType="contact" entityId={id} initialNotes={contact.notes || ""} />
-      </div>
-
       {/* Verknüpfte Deals */}
       {contact.accountId && linkedDeals.length > 0 && (
         <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e5e7eb", padding: "18px 24px", marginBottom: 24 }}>
@@ -181,15 +173,10 @@ export default function ContactDetailsPage() {
         </div>
       )}
 
-      {/* Email Log */}
+      {/* Unified Timeline (Notes + Activities + E-Mails) */}
       <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e5e7eb", padding: "18px 24px", marginBottom: 24 }}>
-        <EmailLog entityType="contact" entityId={id} />
-      </div>
-
-      {/* Timeline */}
-      <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e5e7eb", padding: "18px 24px", marginBottom: 24 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>Aktivitäten</div>
-        <ContactTimeline contactId={id} accountId={contact.accountId} />
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>Verlauf</div>
+        <ActivityTimeline contactId={id} accountId={contact.accountId} />
       </div>
 
       {/* Edit Modal */}

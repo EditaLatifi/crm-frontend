@@ -101,6 +101,155 @@ export default function DealPhaseTree({ dealId, currency, canViewPayments = true
       {phases.map(p => (
         <PhaseRow key={p.id} phase={p} currency={currency} onChange={reload} canViewPayments={canViewPayments} />
       ))}
+
+      {phases.length > 0 && (
+        <BulkBudgetEditor dealId={dealId} phases={phases} onSaved={reload} />
+      )}
+    </div>
+  );
+}
+
+function useDealSiaTotal(dealId: string): number | null {
+  const [total, setTotal] = useState<number | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    api.get(`/deals/${dealId}`).then((d: any) => {
+      if (cancelled) return;
+      const pb = (d?.phaseBudgets && typeof d.phaseBudgets === 'object' && !Array.isArray(d.phaseBudgets)) ? d.phaseBudgets as Record<string, any> : {};
+      const sum = Object.values(pb).reduce((s: number, v: any) => {
+        const n = Number(v);
+        return s + (Number.isFinite(n) ? n : 0);
+      }, 0);
+      setTotal(sum);
+    }).catch(() => { if (!cancelled) setTotal(0); });
+    return () => { cancelled = true; };
+  }, [dealId]);
+  return total;
+}
+
+function flattenPhases(phases: Phase[]): { id: string; code: string; name: string; depth: number; hourBudget: number | null }[] {
+  const out: { id: string; code: string; name: string; depth: number; hourBudget: number | null }[] = [];
+  const walk = (list: Phase[], depth: number) => {
+    for (const p of list) {
+      out.push({ id: p.id, code: p.code, name: p.name, depth, hourBudget: p.hourBudget ?? null });
+      if (p.children && p.children.length) walk(p.children, depth + 1);
+    }
+  };
+  walk(phases, 0);
+  return out;
+}
+
+function BulkBudgetEditor({ dealId, phases, onSaved }: { dealId: string; phases: Phase[]; onSaved: () => void }) {
+  const flat = flattenPhases(phases);
+  const siaTotal = useDealSiaTotal(dealId);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const init: Record<string, string> = {};
+    for (const row of flat) init[row.id] = row.hourBudget != null ? String(row.hourBudget) : '';
+    setDrafts(init);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(flat.map(r => [r.id, r.hourBudget]))]);
+
+  const dirty = flat.some(row => {
+    const draft = (drafts[row.id] ?? '').trim();
+    const server = row.hourBudget != null ? String(row.hourBudget) : '';
+    return draft !== server;
+  });
+
+  const total = flat.reduce((s, row) => {
+    const v = parseFloat(drafts[row.id] ?? '');
+    return s + (isNaN(v) ? 0 : v);
+  }, 0);
+  const capActive = (siaTotal ?? 0) > 0;
+  const overCap = capActive && Math.round(total * 100) > Math.round((siaTotal ?? 0) * 100);
+
+  const saveAll = async () => {
+    setError(null);
+    const updates: { phaseId: string; hourBudget: number | null }[] = [];
+    for (const row of flat) {
+      const raw = (drafts[row.id] ?? '').trim();
+      let next: number | null;
+      if (raw === '') {
+        next = null;
+      } else {
+        const parsed = parseFloat(raw);
+        if (isNaN(parsed) || parsed < 0) { setError(`Ungültiger Wert für „${row.name}".`); return; }
+        next = parsed;
+      }
+      const server = row.hourBudget ?? null;
+      if (next !== server) updates.push({ phaseId: row.id, hourBudget: next });
+    }
+    if (updates.length === 0) return;
+    setSaving(true);
+    try {
+      await api.patch(`/deals/${dealId}/phases/budget-hours`, { updates });
+      onSaved();
+    } catch (err: any) {
+      setError(err?.message || 'Speichern fehlgeschlagen.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 20, paddingTop: 18, borderTop: '1px solid #e5e7eb' }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 10 }}>
+        Stundenbudget pro Phase
+      </div>
+      <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
+        {flat.map(row => (
+          <div
+            key={row.id}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '8px 12px',
+              paddingLeft: 12 + row.depth * 18,
+              borderBottom: '1px solid #f1f5f9',
+              background: row.depth > 0 ? '#fafafa' : '#fff',
+            }}
+          >
+            {row.code && <span style={codeBadge}>{row.code}</span>}
+            <span style={{ fontSize: 13, color: '#1e293b', flex: 1 }}>{row.name}</span>
+            <input
+              type="number" min="0" step="0.5"
+              value={drafts[row.id] ?? ''}
+              onChange={e => setDrafts(d => ({ ...d, [row.id]: e.target.value }))}
+              placeholder="0"
+              style={{ ...inputS, width: 110 }}
+            />
+            <span style={{ fontSize: 11, color: '#94a3b8', width: 12 }}>h</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 12, color: overCap ? '#dc2626' : '#64748b' }}>
+          Summe: <strong style={{ color: overCap ? '#dc2626' : '#1e293b' }}>{total.toLocaleString('de-CH')}h</strong>
+          {capActive && (
+            <span style={{ marginLeft: 6 }}>
+              / {(siaTotal ?? 0).toLocaleString('de-CH')}h SIA-Kontingent
+              {overCap && <span style={{ marginLeft: 6, fontWeight: 700 }}>— überschritten</span>}
+            </span>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {error && <span style={{ fontSize: 12, color: '#dc2626' }}>{error}</span>}
+          <button
+            onClick={saveAll}
+            disabled={!dirty || saving || overCap}
+            style={{
+              ...btnPrimary,
+              opacity: (!dirty || saving || overCap) ? 0.5 : 1,
+              cursor: (!dirty || saving || overCap) ? 'not-allowed' : 'pointer',
+            }}
+            title={overCap ? 'Summe übersteigt SIA-Kontingent' : undefined}
+          >
+            <FiCheck size={13} /> {saving ? 'Speichern…' : 'Alle speichern'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
