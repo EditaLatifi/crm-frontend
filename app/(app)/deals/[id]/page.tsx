@@ -8,7 +8,11 @@ import { SIA_PHASES as SIA_PHASES_FULL } from "../../../../src/lib/siaPhases";
 import { FiArrowLeft, FiEdit2, FiCalendar, FiUser, FiTag, FiPaperclip, FiMessageSquare, FiClock, FiDownload, FiTrash2, FiUpload } from "react-icons/fi";
 import { LuCoins } from "react-icons/lu";
 import FollowUpBadge from "../../../../components/ui/FollowUpBadge";
+import FollowUpSection from "../../../../components/followups/FollowUpSection";
 import DealPhaseTree from "../../../../components/deals/DealPhaseTree";
+import EmailDialog from "../../../../components/ui/EmailDialog";
+import ProjektErstellenButton from "../../../../components/deals/ProjektErstellenButton";
+import { FiMail } from "react-icons/fi";
 import ConfirmDialog from "../../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../../components/ui/Toast";
 import { useAuth, canViewFinancials } from "../../../../src/auth/AuthProvider";
@@ -56,6 +60,7 @@ export default function DealDetailPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
   const showFinancials = canViewFinancials(user?.role);
+  const canViewContingent = !!user?.role && user.role !== 'EXTERN';
   const [deal, setDeal] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [attachments, setAttachments] = useState<any[]>([]);
@@ -76,6 +81,32 @@ export default function DealDetailPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dealTasks, setDealTasks] = useState<any[]>([]);
   const [linkedProject, setLinkedProject] = useState<any>(null);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [creatingTask, setCreatingTask] = useState(false);
+
+  async function quickCreateTask() {
+    const title = newTaskTitle.trim();
+    if (!title) return;
+    setCreatingTask(true);
+    try {
+      await api.post('/tasks', {
+        title,
+        status: 'OPEN',
+        priority: 'MEDIUM',
+        dealId: params.id,
+        projectId: linkedProject?.id ?? undefined,
+        accountId: deal?.accountId ?? undefined,
+      });
+      setNewTaskTitle('');
+      toast.success('Aufgabe erstellt.');
+      await fetchAll();
+    } catch (err: any) {
+      toast.error(err?.message || 'Aufgabe konnte nicht erstellt werden.');
+    } finally {
+      setCreatingTask(false);
+    }
+  }
 
   const fetchAll = useCallback(async () => {
     setLoadError(null);
@@ -135,7 +166,16 @@ export default function DealDetailPage() {
 
   async function saveField(field: string, value: any) {
     setSaving(true);
-    try { await api.patch(`/deals/${params.id}`, { [field]: value }); await fetchAll(); } catch {}
+    const numericFields = ['amount'];
+    const payload = numericFields.includes(field) && value !== '' && value != null
+      ? { [field]: Number(value) }
+      : { [field]: value };
+    try {
+      await api.patch(`/deals/${params.id}`, payload);
+      await fetchAll();
+    } catch (err: any) {
+      toast.error(err?.message || 'Speichern fehlgeschlagen');
+    }
     setEditingField(null); setSaving(false);
   }
 
@@ -252,7 +292,20 @@ export default function DealDetailPage() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <span style={{ ...stageBadge, borderRadius: 8, padding: '5px 14px', fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap' }}>{currentStage?.name || deal.stageId}</span>
-                <FollowUpBadge entityType="deal" entityId={params.id} followUpDate={deal.followUpDate} onUpdated={fetchAll} />
+                {deal.account?.email && (
+                  <button
+                    onClick={() => setEmailOpen(true)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff', color: '#1a1a1a', border: '1.5px solid #1a1a1a', borderRadius: 8, padding: '6px 14px', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}
+                  >
+                    <FiMail size={12} /> E-Mail
+                  </button>
+                )}
+                <ProjektErstellenButton
+                  dealId={params.id}
+                  dealName={deal.name}
+                  alreadyHasProject={!!linkedProject}
+                  existingProjectId={linkedProject?.id}
+                />
                 <button
                   onClick={() => setEditMode(m => !m)}
                   style={{
@@ -314,31 +367,53 @@ export default function DealDetailPage() {
               );
             })()}
 
-            {/* Two-Budget Display */}
-            {showFinancials && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-                <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 12, padding: '16px 20px' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Kunden-Offerte</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>{formatCurrency(deal.amount ?? 0, deal.currency || 'CHF')}</div>
-                </div>
-                <div style={{ background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: 12, padding: '16px 20px' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Internes Kontingent</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>
+            {/* Two-Budget Display — Kunden-Offerte ADMIN-only, Internes Kontingent for all internal users */}
+            {(isAdmin || canViewContingent) && (
+              <div style={{ display: 'grid', gridTemplateColumns: isAdmin ? '1fr 1fr' : '1fr', gap: 16, marginBottom: 16 }}>
+                {isAdmin && (
+                  <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 12, padding: '16px 20px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Kunden-Offerte</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>{formatCurrency(deal.amount ?? 0, deal.currency || 'CHF')}</div>
+                  </div>
+                )}
+                {canViewContingent && (
+                  <div style={{ background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: 12, padding: '16px 20px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Internes Kontingent</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>
+                      {(() => {
+                        const fromBudgets = (deal.phaseBudgets && typeof deal.phaseBudgets === 'object')
+                          ? Object.values(deal.phaseBudgets as Record<string, number>).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
+                          : 0;
+                        const fromDealPhases = Array.isArray(deal.dealPhases)
+                          ? deal.dealPhases.reduce((s: number, p: any) => s + (Number(p.hourBudget) || 0), 0)
+                          : 0;
+                        const totalHours = fromBudgets + fromDealPhases;
+                        return totalHours > 0 ? `${totalHours.toLocaleString('de-CH')}h` : '—';
+                      })()}
+                    </div>
                     {(() => {
-                      const totalHours = (deal.phaseBudgets && typeof deal.phaseBudgets === 'object')
+                      const fromBudgets = (deal.phaseBudgets && typeof deal.phaseBudgets === 'object')
                         ? Object.values(deal.phaseBudgets as Record<string, number>).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
                         : 0;
-                      return totalHours > 0 ? `${totalHours.toLocaleString('de-CH')}h` : '—';
+                      const fromDealPhases = Array.isArray(deal.dealPhases)
+                        ? deal.dealPhases.reduce((s: number, p: any) => s + (Number(p.hourBudget) || 0), 0)
+                        : 0;
+                      if (fromBudgets + fromDealPhases > 0) return null;
+                      return (
+                        <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>
+                          Wähle eine Leistungsphase unten und trage Stunden ein →
+                        </div>
+                      );
                     })()}
                   </div>
-                </div>
+                )}
               </div>
             )}
 
             {/* Fields grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {[
-                ...(showFinancials ? [{ label: 'Betrag', field: 'amount', icon: <LuCoins size={14} />, display: formatCurrency(deal.amount ?? 0, deal.currency || 'CHF'), type: 'number' }] : []),
+                ...(isAdmin ? [{ label: 'Betrag', field: 'amount', icon: <LuCoins size={14} />, display: formatCurrency(deal.amount ?? 0, deal.currency || 'CHF'), type: 'number' }] : []),
                 { label: 'Erw. Abschlussdatum', field: 'expectedCloseDate', icon: <FiCalendar size={14} />, display: deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString('de-CH') : '—', type: 'date' },
               ].map(item => (
                 <div key={item.field} style={{ background: '#FAF9F6', borderRadius: 10, padding: '12px 16px' }}>
@@ -509,9 +584,27 @@ export default function DealDetailPage() {
                     </div>
                   ))}
 
+                  {/* Quick Task creator — pre-fills dealId + projectId */}
+                  <div style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input
+                      placeholder={linkedProject ? `Neue Aufgabe (verknüpft mit Deal + ${linkedProject.name})` : 'Neue Aufgabe (verknüpft mit Deal)'}
+                      value={newTaskTitle}
+                      onChange={e => setNewTaskTitle(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') quickCreateTask(); }}
+                      style={{ flex: 1, padding: '8px 12px', borderRadius: 7, border: '1px solid #d1d5db', fontSize: 13 }}
+                    />
+                    <button
+                      onClick={quickCreateTask}
+                      disabled={creatingTask || !newTaskTitle.trim()}
+                      style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 14px', fontWeight: 600, fontSize: 12, cursor: creatingTask || !newTaskTitle.trim() ? 'not-allowed' : 'pointer', opacity: creatingTask || !newTaskTitle.trim() ? 0.6 : 1 }}
+                    >
+                      {creatingTask ? '…' : '+ Aufgabe'}
+                    </button>
+                  </div>
+
                   {/* Phase budget overview */}
                   {/* Phase budget overview — uses deal.phaseBudgets (phase-level) + task actual hours */}
-                  {selectedPhases.length > 0 && <PhaseOverview deal={deal} tasks={dealTasks} selectedPhases={selectedPhases} editMode={editMode} onBudgetSave={async (budgets: any) => {
+                  {selectedPhases.length > 0 && <PhaseOverview deal={deal} tasks={dealTasks} selectedPhases={selectedPhases} editMode={editMode} onTaskUpdated={fetchAll} dealId={params.id as string} linkedProjectId={linkedProject?.id} onBudgetSave={async (budgets: any) => {
                     await api.patch(`/deals/${params.id}`, { phaseBudgets: budgets });
                     setDeal((d: any) => ({ ...d, phaseBudgets: budgets }));
                   }} />}
@@ -561,6 +654,8 @@ export default function DealDetailPage() {
               <Link href="/accounts" style={{ fontSize: 12, color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>Konto anzeigen →</Link>
             </div>
           )}
+
+          <FollowUpSection entityType="Deal" entityId={params.id} />
         </div>
       </div>
 
@@ -583,6 +678,16 @@ export default function DealDetailPage() {
           </button>
         </div>
       )}
+
+      <EmailDialog
+        open={emailOpen}
+        onClose={() => setEmailOpen(false)}
+        defaultTo={deal.account?.email || ""}
+        defaultSubject={`Deal: ${deal.name}`}
+        entityType="Deal"
+        entityId={params.id}
+        accountId={deal.accountId || undefined}
+      />
 
       <ConfirmDialog
         open={confirmDeleteOpen}
@@ -618,10 +723,40 @@ function getPhaseStatus(phaseTasks: any[]): string {
   return hasTime || phaseTasks.some((t: any) => t.status === 'IN_PROGRESS') ? 'in_progress' : 'pending';
 }
 
-function PhaseOverview({ deal, tasks, selectedPhases, editMode, onBudgetSave }: {
+function PhaseOverview({ deal, tasks, selectedPhases, editMode, onBudgetSave, onTaskUpdated, dealId, linkedProjectId }: {
   deal: any; tasks: any[]; selectedPhases: number[]; editMode: boolean;
   onBudgetSave: (budgets: any) => Promise<void>;
+  onTaskUpdated?: () => void;
+  dealId: string;
+  linkedProjectId?: string | null;
 }) {
+  const [addingForPhase, setAddingForPhase] = useState<string | null>(null);
+  const [phaseTaskTitle, setPhaseTaskTitle] = useState('');
+  const [creatingPhaseTask, setCreatingPhaseTask] = useState(false);
+
+  async function createPhaseTask(phaseCode: string) {
+    const title = phaseTaskTitle.trim();
+    if (!title) return;
+    setCreatingPhaseTask(true);
+    try {
+      await api.post('/tasks', {
+        title,
+        status: 'OPEN',
+        priority: 'MEDIUM',
+        dealId,
+        projectId: linkedProjectId ?? undefined,
+        accountId: deal?.accountId ?? undefined,
+        phase: phaseCode,
+      });
+      setPhaseTaskTitle('');
+      setAddingForPhase(null);
+      onTaskUpdated?.();
+    } catch {
+      // silent — toast handled elsewhere
+    } finally {
+      setCreatingPhaseTask(false);
+    }
+  }
   const budgets: Record<string, number> = deal.phaseBudgets && typeof deal.phaseBudgets === 'object' ? deal.phaseBudgets : {};
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [savingPhase, setSavingPhase] = useState<string | null>(null);
@@ -758,8 +893,31 @@ function PhaseOverview({ deal, tasks, selectedPhases, editMode, onBudgetSave }: 
                         <td style={{ ...tdS, paddingLeft: row.isSub ? 44 : 32, fontSize: 12 }} colSpan={2}>
                           <Link href={`/tasks/${t.id}`} style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>{t.title}</Link>
                           <span style={{ fontSize: 10, color: '#94a3b8', marginLeft: 8 }}>{t.assignee?.name || ''}</span>
+                          {t.project && (
+                            <Link href={`/projects/${t.project.id}`} onClick={e => e.stopPropagation()} style={{ display: 'inline-block', marginLeft: 8, fontSize: 9, fontWeight: 600, color: '#15803d', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '1px 6px', textDecoration: 'none' }}>
+                              Projekt: {t.project.name}
+                            </Link>
+                          )}
                         </td>
-                        <td style={{ ...tdS, fontSize: 11 }}>{t.budgetHours ?? '—'}</td>
+                        <td style={{ ...tdS, fontSize: 11 }}>
+                          {editMode ? (
+                            <input
+                              type="number" min="0" step="0.5"
+                              defaultValue={t.budgetHours ?? ''}
+                              placeholder="—"
+                              onBlur={async (e) => {
+                                const v = e.target.value === '' ? null : Number(e.target.value);
+                                if (v !== (t.budgetHours ?? null)) {
+                                  try { await api.patch(`/tasks/${t.id}`, { budgetHours: v }); onTaskUpdated?.(); } catch {}
+                                }
+                              }}
+                              onClick={e => e.stopPropagation()}
+                              style={{ width: 52, padding: '2px 4px', borderRadius: 4, border: '1px solid #d1d5db', fontSize: 11, textAlign: 'center' }}
+                            />
+                          ) : (
+                            t.budgetHours ?? '—'
+                          )}
+                        </td>
                         <td style={{ ...tdS, fontSize: 11, fontWeight: 600 }}>{tUsed.toFixed(1)}</td>
                         <td style={{ ...tdS, fontSize: 11 }}>{t.budgetHours ? (t.budgetHours - tUsed).toFixed(1) : '—'}</td>
                         <td style={tdS}>
@@ -770,9 +928,70 @@ function PhaseOverview({ deal, tasks, selectedPhases, editMode, onBudgetSave }: 
                       </tr>
                     );
                   })}
+                  {isExpanded && pt.length > 0 && addingForPhase === row.code && (
+                    <tr style={{ background: '#f0f7ff' }}>
+                      <td colSpan={6} style={{ ...tdS, paddingLeft: 32 }}>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }} onClick={e => e.stopPropagation()}>
+                          <input
+                            autoFocus
+                            placeholder={`Aufgabe für Phase ${row.code}`}
+                            value={phaseTaskTitle}
+                            onChange={e => setPhaseTaskTitle(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') createPhaseTask(row.code); if (e.key === 'Escape') { setAddingForPhase(null); setPhaseTaskTitle(''); } }}
+                            style={{ flex: 1, padding: '4px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 11 }}
+                          />
+                          <button onClick={(e) => { e.stopPropagation(); createPhaseTask(row.code); }} disabled={creatingPhaseTask || !phaseTaskTitle.trim()} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 10, fontWeight: 600, cursor: 'pointer', opacity: !phaseTaskTitle.trim() ? 0.5 : 1 }}>{creatingPhaseTask ? '…' : '✓'}</button>
+                          <button onClick={(e) => { e.stopPropagation(); setAddingForPhase(null); setPhaseTaskTitle(''); }} style={{ background: '#E8E4DE', color: '#64748b', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 10, cursor: 'pointer' }}>✕</button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  {isExpanded && pt.length > 0 && addingForPhase !== row.code && (
+                    <tr style={{ background: '#f0f7ff' }}>
+                      <td colSpan={6} style={{ ...tdS, paddingLeft: 32, textAlign: 'right' }}>
+                        <button onClick={(e) => { e.stopPropagation(); setAddingForPhase(row.code); }} style={{ background: '#fff', color: '#1a1a1a', border: '1px dashed #cbd5e1', borderRadius: 6, padding: '3px 10px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>+ Aufgabe für Phase {row.code}</button>
+                      </td>
+                    </tr>
+                  )}
                   {isExpanded && pt.length === 0 && (
                     <tr style={{ background: '#f0f7ff' }}>
-                      <td colSpan={6} style={{ ...tdS, textAlign: 'center', color: '#94a3b8', fontSize: 11, paddingLeft: 32 }}>Keine Tasks für diese Phase</td>
+                      <td colSpan={6} style={{ ...tdS, paddingLeft: 32 }}>
+                        {addingForPhase === row.code ? (
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }} onClick={e => e.stopPropagation()}>
+                            <input
+                              autoFocus
+                              placeholder={`Aufgabe für Phase ${row.code}`}
+                              value={phaseTaskTitle}
+                              onChange={e => setPhaseTaskTitle(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') createPhaseTask(row.code); if (e.key === 'Escape') { setAddingForPhase(null); setPhaseTaskTitle(''); } }}
+                              style={{ flex: 1, padding: '4px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 11 }}
+                            />
+                            <button
+                              onClick={(e) => { e.stopPropagation(); createPhaseTask(row.code); }}
+                              disabled={creatingPhaseTask || !phaseTaskTitle.trim()}
+                              style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 10, fontWeight: 600, cursor: 'pointer', opacity: !phaseTaskTitle.trim() ? 0.5 : 1 }}
+                            >
+                              {creatingPhaseTask ? '…' : '✓'}
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setAddingForPhase(null); setPhaseTaskTitle(''); }}
+                              style={{ background: '#E8E4DE', color: '#64748b', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 10, cursor: 'pointer' }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#94a3b8', fontSize: 11 }}>Keine Tasks für diese Phase</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setAddingForPhase(row.code); }}
+                              style={{ background: '#fff', color: '#1a1a1a', border: '1px dashed #cbd5e1', borderRadius: 6, padding: '3px 10px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}
+                            >
+                              + Aufgabe
+                            </button>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   )}
                 </React.Fragment>

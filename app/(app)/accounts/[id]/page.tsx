@@ -11,6 +11,9 @@ import { useToast } from "../../../../components/ui/Toast";
 import QuickNotes from "../../../../components/ui/QuickNotes";
 import EmailLog from "../../../../components/ui/EmailLog";
 import MapsLink from "../../../../components/ui/MapsLink";
+import FollowUpSection from "../../../../components/followups/FollowUpSection";
+import EmailDialog from "../../../../components/ui/EmailDialog";
+import { FiMail } from "react-icons/fi";
 
 export default function AccountDetailsPage() {
   const params = useParams();
@@ -22,6 +25,7 @@ export default function AccountDetailsPage() {
   const [projects, setProjects] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'contacts' | 'deals' | 'projects' | 'tasks'>('contacts');
+  const [emailOpen, setEmailOpen] = useState(false);
 
   const fetchAccount = () => {
     api.get(`/accounts/${id}`)
@@ -90,10 +94,30 @@ export default function AccountDetailsPage() {
             <div style={{ fontSize: 13, color: "#64748b" }}>Verantwortlich: <b>{account.owner.name}</b></div>
           )}
         </div>
-        <button onClick={() => setEditOpen(true)} style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, padding: "9px 20px", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
-          Bearbeiten
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {(account.email || (account.contacts && account.contacts[0]?.email)) && (
+            <button
+              onClick={() => setEmailOpen(true)}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fff", color: "#1a1a1a", border: "1.5px solid #1a1a1a", borderRadius: 8, padding: "8px 16px", fontWeight: 600, fontSize: 13, cursor: "pointer" }}
+            >
+              <FiMail size={13} /> Konto angehen
+            </button>
+          )}
+          <button onClick={() => setEditOpen(true)} style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, padding: "9px 20px", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+            Bearbeiten
+          </button>
+        </div>
       </div>
+
+      <EmailDialog
+        open={emailOpen}
+        onClose={() => setEmailOpen(false)}
+        defaultTo={account.email || account.contacts?.[0]?.email || ""}
+        defaultSubject={`Re: ${account.name}`}
+        entityType="Account"
+        entityId={id}
+        accountId={id}
+      />
 
       {/* Main layout */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 24 }}>
@@ -260,6 +284,9 @@ export default function AccountDetailsPage() {
               )}
             </div>
           )}
+
+          {/* Follow-ups */}
+          <FollowUpSection entityType="Account" entityId={id} />
 
           {/* Email Log */}
           <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e5e7eb", padding: "18px 20px" }}>

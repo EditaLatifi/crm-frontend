@@ -13,7 +13,7 @@ export const PHASE_BG: Record<string, string> = {
 };
 
 export const PHASE_LABELS: Record<string, string> = {
-  PENDING: 'Ausstehend',
+  PENDING: 'Nicht gestartet',
   IN_PROGRESS: 'In Bearbeitung',
   COMPLETED: 'Abgeschlossen',
   SKIPPED: 'Übersprungen',

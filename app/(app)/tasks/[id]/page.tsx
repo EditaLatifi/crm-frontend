@@ -286,6 +286,23 @@ export default function TaskDetailsPage() {
           </span>
         </div>
 
+        {/* Verknüpfungen (Deal + Projekt) */}
+        {(task.deal || task.project) && (
+          <div style={{ background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '10px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verknüpft mit</span>
+            {task.deal && (
+              <a href={`/deals/${task.deal.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: '#7c3aed', background: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: 7, padding: '4px 10px', textDecoration: 'none' }}>
+                Deal: {task.deal.name} ↗
+              </a>
+            )}
+            {task.project && (
+              <a href={`/projects/${task.project.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: '#15803d', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 7, padding: '4px 10px', textDecoration: 'none' }}>
+                Projekt: {task.project.name} ↗
+              </a>
+            )}
+          </div>
+        )}
+
         {/* Linked phase badge */}
         {task.linkedFromPhase && (
           <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>

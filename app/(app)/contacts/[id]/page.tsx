@@ -9,6 +9,9 @@ import Modal from "../../../../components/ui/Modal";
 import { useToast } from "../../../../components/ui/Toast";
 import ActivityTimeline from "../../../../components/contacts/ActivityTimeline";
 import FollowUpBadge from "../../../../components/ui/FollowUpBadge";
+import FollowUpSection from "../../../../components/followups/FollowUpSection";
+import EmailDialog from "../../../../components/ui/EmailDialog";
+import { FiMail } from "react-icons/fi";
 
 export default function ContactDetailsPage() {
   const params = useParams();
@@ -20,6 +23,7 @@ export default function ContactDetailsPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [linkedDeals, setLinkedDeals] = useState<any[]>([]);
+  const [emailOpen, setEmailOpen] = useState(false);
   const toast = useToast();
 
   const fetchContact = () => {
@@ -108,12 +112,30 @@ export default function ContactDetailsPage() {
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <FollowUpBadge entityType="contact" entityId={id} followUpDate={contact.followUpDate} onUpdated={fetchContact} />
+          {contact.email && (
+            <button
+              onClick={() => setEmailOpen(true)}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fff", color: "#1a1a1a", border: "1.5px solid #1a1a1a", borderRadius: 8, padding: "8px 16px", fontWeight: 600, fontSize: 13, cursor: "pointer" }}
+            >
+              <FiMail size={13} /> E-Mail
+            </button>
+          )}
           <button onClick={openEdit} style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, padding: "9px 20px", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
             Bearbeiten
           </button>
         </div>
       </div>
+
+      <EmailDialog
+        open={emailOpen}
+        onClose={() => setEmailOpen(false)}
+        defaultTo={contact.email || ""}
+        defaultSubject={`Re: ${contact.name}`}
+        entityType="Contact"
+        entityId={id}
+        accountId={contact.accountId || undefined}
+        contactId={id}
+      />
 
       {/* Info card */}
       <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e5e7eb", padding: "20px 24px", marginBottom: 24 }}>
@@ -173,10 +195,13 @@ export default function ContactDetailsPage() {
         </div>
       )}
 
-      {/* Unified Timeline (Notes + Activities + E-Mails) */}
+      {/* Follow-ups */}
+      <FollowUpSection entityType="Contact" entityId={id} />
+
+      {/* Unified Timeline (Notes + E-Mails — Aktivitäten ausgeblendet) */}
       <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e5e7eb", padding: "18px 24px", marginBottom: 24 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>Verlauf</div>
-        <ActivityTimeline contactId={id} accountId={contact.accountId} />
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>Notizen & E-Mails</div>
+        <ActivityTimeline contactId={id} accountId={contact.accountId} hideActivity />
       </div>
 
       {/* Edit Modal */}

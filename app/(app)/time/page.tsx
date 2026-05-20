@@ -91,7 +91,7 @@ function exportCSV(entries: TimeEntry[], showUser: boolean) {
     e.account?.name ?? e.accountId ?? '',
     e.project?.name ?? '',
     e.projectPhase?.name ?? '',
-    e.task?.title ?? e.taskId ?? '',
+    e.task?.title ?? '',
     e.startedAt ? formatDateDE(e.startedAt) : '',
     String(e.durationMinutes ?? 0),
     e.description ?? '',

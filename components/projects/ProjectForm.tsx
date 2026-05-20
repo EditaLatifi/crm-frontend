@@ -54,16 +54,28 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
   const [accounts, setAccounts] = useState<any[]>([]);
   const [users,    setUsers]    = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
 
+  const fetchTemplates = () => {
+    setTemplatesLoading(true);
+    setTemplatesError(null);
+    api.get('/projects/templates')
+      .then((d: any) => {
+        const arr = d?.data ?? (Array.isArray(d) ? d : []);
+        setTemplates(arr);
+      })
+      .catch((err: any) => setTemplatesError(err?.message || 'Projektvorlagen konnten nicht geladen werden.'))
+      .finally(() => setTemplatesLoading(false));
+  };
+
   useEffect(() => {
-    api.get('/accounts').then((d: any) => setAccounts(Array.isArray(d) ? d : [])).catch(() => {});
-    api.get('/users').then((d: any) => setUsers(Array.isArray(d) ? d : [])).catch(() => {});
-    if (!initialData) {
-      api.get('/projects/templates').then((d: any) => setTemplates(Array.isArray(d) ? d : [])).catch(() => {});
-    }
-  }, []);
+    api.get('/accounts').then((d: any) => setAccounts(Array.isArray(d) ? d : (d?.data ?? []))).catch(() => {});
+    api.get('/users').then((d: any) => setUsers(Array.isArray(d) ? d : (d?.data ?? []))).catch(() => {});
+    if (!initialData) fetchTemplates();
+  }, [initialData]);
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
@@ -179,13 +191,34 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
         </div>
       </div>
 
-      {!initialData && templates.length > 0 && (
+      {!initialData && (
         <div style={{ marginBottom: 14 }}>
-          <label style={label}><FiLayers size={11} style={{ marginRight: 4 }} /> Vorlage (optional)</label>
-          <select style={input} value={form.templateId} onChange={e => set('templateId', e.target.value)} onFocus={onFocus} onBlur={onBlur}>
-            <option value="">— Keine Vorlage —</option>
+          <label style={label}>
+            <FiLayers size={11} style={{ marginRight: 4 }} /> Projektvorlage (optional)
+            {templatesLoading && <span style={{ marginLeft: 8, fontSize: 11, color: '#94a3b8', fontWeight: 400 }}>wird geladen…</span>}
+            {templatesError && (
+              <button type="button" onClick={fetchTemplates} style={{ marginLeft: 8, fontSize: 11, color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                Erneut versuchen
+              </button>
+            )}
+          </label>
+          <select
+            style={input}
+            value={form.templateId}
+            onChange={e => set('templateId', e.target.value)}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            disabled={templatesLoading}
+          >
+            <option value="">
+              {templatesLoading ? '— Lädt Projektvorlagen… —' :
+               templatesError ? '— Fehler beim Laden —' :
+               templates.length === 0 ? '— Keine Projektvorlagen vorhanden —' :
+               '— Keine Projektvorlage —'}
+            </option>
             {templates.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
+          {templatesError && <div style={{ fontSize: 11, color: '#dc2626', marginTop: 4 }}>{templatesError}</div>}
         </div>
       )}
 

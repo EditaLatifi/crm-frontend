@@ -18,6 +18,8 @@ interface EmailLogProps {
   entityId: string;
 }
 
+const PAGE_SIZE = 5;
+
 export default function EmailLog({ entityType, entityId }: EmailLogProps) {
   const toast = useToast();
   const [logs, setLogs] = useState<EmailEntry[]>([]);
@@ -25,6 +27,7 @@ export default function EmailLog({ entityType, entityId }: EmailLogProps) {
   const [form, setForm] = useState({ subject: "", body: "", direction: "OUTBOUND", recipient: "" });
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const fetchLogs = () => {
     api.get(`/email-logs?entityType=${entityType}&entityId=${entityId}`)
@@ -33,6 +36,7 @@ export default function EmailLog({ entityType, entityId }: EmailLogProps) {
   };
 
   useEffect(() => { fetchLogs(); }, [entityId]);
+  useEffect(() => { setPage(1); }, [logs.length]);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -124,7 +128,7 @@ export default function EmailLog({ entityType, entityId }: EmailLogProps) {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {logs.map((log) => (
+          {logs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((log) => (
             <div key={log.id} style={{ border: "1px solid #e5e7eb", borderRadius: 8, overflow: "hidden" }}>
               <div
                 style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", cursor: log.body ? "pointer" : "default", background: "#fff" }}
@@ -157,6 +161,18 @@ export default function EmailLog({ entityType, entityId }: EmailLogProps) {
               )}
             </div>
           ))}
+          {logs.length > PAGE_SIZE && (() => {
+            const totalPages = Math.ceil(logs.length / PAGE_SIZE);
+            const btn: React.CSSProperties = { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' };
+            const btnDis: React.CSSProperties = { ...btn, background: '#f1f5f9', color: '#94a3b8', cursor: 'not-allowed' };
+            return (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, paddingTop: 10, borderTop: '1px solid #e5e7eb' }}>
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={page === 1 ? btnDis : btn}>← Zurück</button>
+                <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>Seite {page} von {totalPages}</span>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={page === totalPages ? btnDis : btn}>Weiter →</button>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

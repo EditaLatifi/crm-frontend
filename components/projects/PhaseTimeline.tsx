@@ -123,8 +123,34 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
           }} />
         </div>
         {currentPhase && progress < 100 && (
-          <div style={{ marginTop: 6, fontSize: 12, color: '#64748b' }}>
-            Aktuelle Phase: <strong style={{ color: '#1e40af' }}>{currentPhase.name}</strong>
+          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, color: '#64748b' }}>Aktuelle Phase:</span>
+            <strong style={{ fontSize: 13, color: '#1e40af' }}>{currentPhase.name}</strong>
+            <span style={{
+              fontSize: 11, fontWeight: 700,
+              color: PHASE_COLORS[currentPhase.status] || '#475569',
+              background: PHASE_BG[currentPhase.status] || '#f1f5f9',
+              border: `1px solid ${PHASE_COLORS[currentPhase.status] || '#cbd5e1'}33`,
+              borderRadius: 10, padding: '2px 10px',
+            }}>
+              {PHASE_LABELS[currentPhase.status] || currentPhase.status}
+            </span>
+            {canEdit && currentPhase.status === 'PENDING' && (
+              <button
+                onClick={() => handleStatusChange(currentPhase as any, 'IN_PROGRESS')}
+                style={{ fontSize: 11, fontWeight: 600, padding: '3px 12px', borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', cursor: 'pointer' }}
+              >
+                ▶ Starten
+              </button>
+            )}
+            {canEdit && currentPhase.status === 'IN_PROGRESS' && (
+              <button
+                onClick={() => handleStatusChange(currentPhase as any, 'COMPLETED')}
+                style={{ fontSize: 11, fontWeight: 600, padding: '3px 12px', borderRadius: 8, border: 'none', background: '#16a34a', color: '#fff', cursor: 'pointer' }}
+              >
+                ✓ Abschliessen
+              </button>
+            )}
           </div>
         )}
       </div>

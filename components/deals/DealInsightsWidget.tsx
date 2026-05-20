@@ -144,9 +144,12 @@ function getEnhancedRecommendation(insight: DealInsight): React.ReactNode {
    Main Component
 ================================ */
 
+const PAGE_SIZE = 5;
+
 export default function DealInsightsWidget() {
   const [insights, setInsights] = useState<DealInsight[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     async function fetchInsights() {
@@ -163,6 +166,20 @@ export default function DealInsightsWidget() {
     fetchInsights();
   }, []);
 
+  useEffect(() => { setPage(1); }, [insights.length]);
+
+  const totalPages = Math.max(1, Math.ceil(insights.length / PAGE_SIZE));
+  const pageItems = insights.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const showPagination = insights.length > PAGE_SIZE;
+
+  const pageBtn: React.CSSProperties = {
+    background: '#1a1a1a', color: '#fff', border: 'none',
+    borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+  };
+  const pageBtnDisabled: React.CSSProperties = {
+    ...pageBtn, background: '#f1f5f9', color: '#94a3b8', cursor: 'not-allowed',
+  };
+
   return (
     <div>
       <h3 style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a', margin: '0 0 16px' }}>
@@ -176,34 +193,58 @@ export default function DealInsightsWidget() {
       )}
 
       {!loading && insights.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {insights.map(insight => (
-            <div
-              key={insight.id}
-              style={{
-                padding: '16px 18px',
-                background: '#FAF9F6',
-                borderRadius: 10,
-                border: '1px solid #E8E4DE',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span style={{ fontWeight: 700, fontSize: 14, color: '#1a1a1a' }}>{insight.name}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: insight.attention ? '#dc2626' : '#16a34a', background: insight.attention ? '#fef2f2' : '#f0fdf4', borderRadius: 12, padding: '2px 10px' }}>
-                  {insight.attention ? 'Handlungsbedarf' : 'OK'}
-                </span>
+        <>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {pageItems.map(insight => (
+              <div
+                key={insight.id}
+                style={{
+                  padding: '16px 18px',
+                  background: '#FAF9F6',
+                  borderRadius: 10,
+                  border: '1px solid #E8E4DE',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontWeight: 700, fontSize: 14, color: '#1a1a1a' }}>{insight.name}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: insight.attention ? '#dc2626' : '#16a34a', background: insight.attention ? '#fef2f2' : '#f0fdf4', borderRadius: 12, padding: '2px 10px' }}>
+                    {insight.attention ? 'Handlungsbedarf' : 'OK'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#666', flexWrap: 'wrap' }}>
+                  <span>{formatCHF(insight.amount ?? 0)}</span>
+                  <span>{insight.daysSinceUpdate}d seit Update</span>
+                  <span style={{ color: '#e8a838', fontWeight: 600 }}>{(insight.closeProbability * 100).toFixed(0)}% Abschluss</span>
+                </div>
+                <div style={{ marginTop: 8, fontSize: 12, color: '#555', lineHeight: 1.5 }}>
+                  {getEnhancedRecommendation(insight)}
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#666', flexWrap: 'wrap' }}>
-                <span>{formatCHF(insight.amount ?? 0)}</span>
-                <span>{insight.daysSinceUpdate}d seit Update</span>
-                <span style={{ color: '#e8a838', fontWeight: 600 }}>{(insight.closeProbability * 100).toFixed(0)}% Abschluss</span>
-              </div>
-              <div style={{ marginTop: 8, fontSize: 12, color: '#555', lineHeight: 1.5 }}>
-                {getEnhancedRecommendation(insight)}
-              </div>
+            ))}
+          </div>
+
+          {showPagination && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, paddingTop: 12, borderTop: '1px solid #E8E4DE' }}>
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                style={page === 1 ? pageBtnDisabled : pageBtn}
+              >
+                ← Zurück
+              </button>
+              <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>
+                Seite {page} von {totalPages}
+              </span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                style={page === totalPages ? pageBtnDisabled : pageBtn}
+              >
+                Weiter →
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

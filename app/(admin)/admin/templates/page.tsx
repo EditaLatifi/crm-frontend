@@ -61,7 +61,7 @@ export default function AdminTemplatesPage() {
   useEffect(() => { if (user?.role === 'ADMIN') load(); }, [user]);
 
   const remove = async (id: string) => {
-    if (!confirm('Vorlage deaktivieren?')) return;
+    if (!confirm('Projektvorlage deaktivieren?')) return;
     await api.delete(`/projects/templates/${id}`);
     toast.success('Deaktiviert.');
     load();
@@ -77,11 +77,11 @@ export default function AdminTemplatesPage() {
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Projektvorlagen</h1>
           <div style={{ color: '#64748b', fontSize: 13 }}>
-            Vorlagen mit Standard-Phasen und -Bauschritten für neue Projekte.
+            Projektvorlagen mit Standard-Phasen und -Bauschritten für neue Projekte.
           </div>
         </div>
         <button onClick={() => setCreating(true)} style={btnPrimary}>
-          <FiPlus size={13} /> Neue Vorlage
+          <FiPlus size={13} /> Neue Projektvorlage
         </button>
       </div>
 
@@ -89,7 +89,7 @@ export default function AdminTemplatesPage() {
 
       {!loading && templates.length === 0 && !creating && (
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 40, textAlign: 'center', color: '#94a3b8' }}>
-          Noch keine Vorlagen erstellt.
+          Noch keine Projektvorlagen erstellt.
         </div>
       )}
 
@@ -201,7 +201,7 @@ function TemplateModal({
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 24, overflowY: 'auto' }}>
       <div style={{ background: '#fff', borderRadius: 14, padding: 24, maxWidth: 720, width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <div style={{ fontSize: 18, fontWeight: 700 }}>{initial ? 'Vorlage bearbeiten' : 'Neue Vorlage'}</div>
+          <div style={{ fontSize: 18, fontWeight: 700 }}>{initial ? 'Projektvorlage bearbeiten' : 'Neue Projektvorlage'}</div>
           <button onClick={onClose} style={btnIcon}><FiX size={14} /></button>
         </div>
 

@@ -10,7 +10,7 @@ type Phase = { id: string; name: string; order: number; budgetHours?: number; us
 type Employee = { id: string; name: string };
 type TaskOpt = { id: string; title: string; projectId?: string };
 
-export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved?: () => void }) {
+export default function LogTimeQuickModal({ open, onClose, onSaved, defaultProjectId, defaultTaskId }: { open: boolean; onClose: () => void; onSaved?: () => void; defaultProjectId?: string; defaultTaskId?: string }) {
   const toast = useToast();
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
@@ -34,9 +34,9 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
     if (isAdmin) {
       api.get('/users').then((d: any) => setEmployees(Array.isArray(d) ? d : [])).catch(() => {});
     }
-    setProjectId(''); setProjectPhaseId(''); setTaskId(''); setHours(''); setDescription(''); setEmployeeUserId(''); setOverBudgetReason('');
+    setProjectId(defaultProjectId || ''); setProjectPhaseId(''); setTaskId(defaultTaskId || ''); setHours(''); setDescription(''); setEmployeeUserId(''); setOverBudgetReason('');
     setDate(new Date().toISOString().slice(0, 10));
-  }, [open, isAdmin]);
+  }, [open, isAdmin, defaultProjectId, defaultTaskId]);
 
   const [phaseKontingent, setPhaseKontingent] = useState<{ budgetHours: number; usedHours: number; remaining: number } | null>(null);
 
@@ -51,7 +51,7 @@ export default function LogTimeQuickModal({ open, onClose, onSaved }: { open: bo
       })));
     }).catch(() => setPhases([]));
     api.get(`/tasks`).then((d: any) => {
-      const list = Array.isArray(d) ? d : [];
+      const list = d?.data ?? (Array.isArray(d) ? d : []);
       setTasks(list.filter((t: any) => t.projectId === projectId).map((t: any) => ({ id: t.id, title: t.title, projectId: t.projectId })));
     }).catch(() => setTasks([]));
   }, [projectId]);

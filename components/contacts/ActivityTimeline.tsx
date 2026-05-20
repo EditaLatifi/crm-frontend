@@ -46,7 +46,7 @@ const FILTER_OPTIONS: { key: FilterKind; label: string }[] = [
   { key: "email",    label: "E-Mails" },
 ];
 
-export default function ActivityTimeline({ contactId, accountId }: { contactId: string; accountId?: string }) {
+export default function ActivityTimeline({ contactId, accountId, hideActivity = false }: { contactId: string; accountId?: string; hideActivity?: boolean }) {
   const toast = useToast();
   const [items, setItems] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +59,9 @@ export default function ActivityTimeline({ contactId, accountId }: { contactId: 
     try {
       const [notesData, activityData, emailsData, tasksData] = await Promise.all([
         api.get(`/contacts/${contactId}/notes`).catch(() => []),
-        api.get(`/activity?entityType=Contact&entityId=${contactId}`).catch(() => []),
+        hideActivity
+          ? Promise.resolve([] as any[])
+          : api.get(`/activity?entityType=Contact&entityId=${contactId}`).catch(() => []),
         api.get(`/email-logs?entityType=contact&entityId=${contactId}`).catch(() => []),
         api.get(`/tasks`).catch(() => []),
       ]);
@@ -185,7 +187,7 @@ export default function ActivityTimeline({ contactId, accountId }: { contactId: 
 
       {/* Filter chips */}
       <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
-        {FILTER_OPTIONS.map((f) => {
+        {FILTER_OPTIONS.filter(f => !hideActivity || f.key !== "activity").map((f) => {
           const active = filter === f.key;
           return (
             <button

@@ -6,6 +6,9 @@ import { ROLE_LABELS } from '../../../../src/lib/labels';
 import { formatCurrency } from '../../../../src/lib/formatCurrency';
 import { useAuth, canViewFinancials } from '../../../../src/auth/AuthProvider';
 import PhaseTimeline from '../../../../components/projects/PhaseTimeline';
+import EffektivView from '../../../../components/projects/EffektivView';
+import LogTimeQuickModal from '../../../../components/time/LogTimeQuickModal';
+import { FiClock } from 'react-icons/fi';
 import BauforschrittPanel from '../../../../components/projects/BauforschrittPanel';
 import ProjectForm from '../../../../components/projects/ProjectForm';
 import Modal from '../../../../components/ui/Modal';
@@ -58,6 +61,7 @@ export default function ProjectDetailPage() {
   const [memberLoading,   setMemberLoading]   = useState(false);
   const [activeTab,       setActiveTab]       = useState<Tab>('overview');
   const [projectTasks,    setProjectTasks]    = useState<any[]>([]);
+  const [logTimeOpen,     setLogTimeOpen]     = useState(false);
 
   const isAdmin  = user?.role === 'ADMIN';
   const isOwner  = project?.ownerUserId === user?.id || project?.owner?.id === user?.id;
@@ -211,16 +215,18 @@ export default function ProjectDetailPage() {
                   <p style={{ margin: 0, fontSize: 14, color: '#475569', maxWidth: 500 }}>{project.description}</p>
                 )}
               </div>
-              {showFinancials && (
+              {(isAdmin || (user?.role && user.role !== 'EXTERN')) && (
                 <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
-                  {project.budget && (
+                  {isAdmin && project.budget && (
                     <div style={{ border: '1.5px solid #16a34a', borderRadius: 10, padding: '10px 16px', minWidth: 130 }}>
                       <div style={{ fontSize: 10, color: '#16a34a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Kunden-Offerte</div>
                       <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>{formatCurrency(project.budget, project.currency || 'CHF')}</div>
                     </div>
                   )}
                   {(() => {
-                    const totalBudgetH = phases.reduce((s: number, ph: any) => s + (ph.budgetHours || 0), 0);
+                    // Prefer project-level budgetHours; fallback to sum of phase budgets
+                    const phaseBudgetH = phases.reduce((s: number, ph: any) => s + (ph.budgetHours || 0), 0);
+                    const totalBudgetH = project.budgetHours ?? phaseBudgetH;
                     if (!totalBudgetH) return null;
                     const totalUsedMin = phases.reduce((s: number, ph: any) => s + ((ph.timeEntries || []).reduce((s2: number, te: any) => s2 + (te.durationMinutes || 0), 0)), 0);
                     const totalUsedH = totalUsedMin / 60;
@@ -306,6 +312,46 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
+        {/* Verknüpfungen prominent (Deal + Aufgaben Anzahl) */}
+        {(project.deal || projectTasks.length > 0) && (
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+            {project.deal && (
+              <Link
+                href={`/deals/${project.deal.id}`}
+                style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, background: '#f5f3ff', border: '1.5px solid #ddd6fe', borderRadius: 12, padding: '12px 18px', minWidth: 220 }}
+              >
+                <FiBriefcase size={16} color="#7c3aed" />
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verknüpfter Deal</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginTop: 2 }}>{project.deal.name}</div>
+                  {project.deal.amount != null && (
+                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+                      {formatCurrency(project.deal.amount, project.deal.currency || 'CHF')}
+                    </div>
+                  )}
+                </div>
+              </Link>
+            )}
+            {projectTasks.length > 0 && (
+              <button
+                onClick={() => setActiveTab('tasks')}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 12, padding: '12px 18px', minWidth: 220, cursor: 'pointer', textAlign: 'left' }}
+              >
+                <FiCheckSquare size={16} color="#15803d" />
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verknüpfte Aufgaben</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginTop: 2 }}>
+                    {projectTasks.length} {projectTasks.length === 1 ? 'Aufgabe' : 'Aufgaben'}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#16a34a', marginTop: 2 }}>
+                    {projectTasks.filter((t: any) => t.status !== 'DONE').length} offen → ansehen
+                  </div>
+                </div>
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Tab content */}
         <div>
 
@@ -325,7 +371,7 @@ export default function ProjectDetailPage() {
                   const count = phases.filter((p: any) => p.status === s).length;
                   if (count === 0) return null;
                   const colors: Record<string,string> = { PENDING:'#94a3b8', IN_PROGRESS:'#3b82f6', COMPLETED:'#22c55e', SKIPPED:'#e2e8f0' };
-                  const labels: Record<string,string> = { PENDING:'Ausstehend', IN_PROGRESS:'In Bearbeitung', COMPLETED:'Abgeschlossen', SKIPPED:'Übersprungen' };
+                  const labels: Record<string,string> = { PENDING:'Nicht gestartet', IN_PROGRESS:'In Bearbeitung', COMPLETED:'Abgeschlossen', SKIPPED:'Übersprungen' };
                   return (
                     <div key={s} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -518,7 +564,7 @@ export default function ProjectDetailPage() {
                               const status = allDone ? 'done' : hasProgress ? 'in_progress' : 'pending';
                               const over = data.budget > 0 && data.used > data.budget;
                               const statusCfg: Record<string, { label: string; color: string; bg: string }> = {
-                                pending: { label: 'Ausstehend', color: '#64748b', bg: '#f1f5f9' },
+                                pending: { label: 'Nicht gestartet', color: '#64748b', bg: '#f1f5f9' },
                                 in_progress: { label: 'In Bearbeitung', color: '#d97706', bg: '#fef3c7' },
                                 done: { label: 'Abgeschlossen', color: '#16a34a', bg: '#dcfce7' },
                               };
@@ -577,10 +623,15 @@ export default function ProjectDetailPage() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e5e7eb' }}>
                             <div style={{ flex: 1 }}>
                               <div style={{ fontWeight: 600, fontSize: 13, color: '#1e293b' }}>{t.title}</div>
-                              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2, display: 'flex', gap: 8 }}>
+                              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                                 {t.phase && <span style={{ color: '#7c3aed', fontWeight: 600 }}>Phase {t.phase}</span>}
                                 {t.assignee?.name && <span>{t.assignee.name}</span>}
                                 {usedMin > 0 && <span>{(usedMin / 60).toFixed(1)}h erfasst</span>}
+                                {t.deal && (
+                                  <Link href={`/deals/${t.deal.id}`} onClick={e => e.stopPropagation()} style={{ fontSize: 10, fontWeight: 600, color: '#7c3aed', background: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: 6, padding: '1px 6px', textDecoration: 'none' }}>
+                                    Deal: {t.deal.name}
+                                  </Link>
+                                )}
                               </div>
                             </div>
                             <span style={{ fontSize: 10, fontWeight: 700, color: sc.color, background: sc.bg, borderRadius: 10, padding: '2px 8px', whiteSpace: 'nowrap' }}>{sc.label}</span>
@@ -618,6 +669,27 @@ export default function ProjectDetailPage() {
           {/* ZEITERFASSUNG TAB */}
           {activeTab === 'time' && (
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px 28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                <button
+                  onClick={() => setLogTimeOpen(true)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
+                >
+                  <FiClock size={13} /> Zeit erfassen
+                </button>
+              </div>
+              {(() => {
+                const phaseBudget = phases.reduce((s: number, p: any) => s + (p.budgetHours || 0), 0);
+                const totalBudget = project.budgetHours ?? phaseBudget;
+                const totalUsedAll = phases.reduce(
+                  (s: number, p: any) => s + (p.timeEntries || []).reduce((s2: number, e: any) => s2 + (e.durationMinutes || 0), 0),
+                  0,
+                ) / 60;
+                return (
+                  <div style={{ marginBottom: 20 }}>
+                    <EffektivView budgetHours={totalBudget} usedHours={totalUsedAll} title="Effektiv (Projekt)" />
+                  </div>
+                );
+              })()}
               <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Zeiterfassung pro SIA-Phase</h2>
               {(() => {
                 // Calculate used hours directly from phase timeEntries (loaded from backend)
@@ -715,6 +787,13 @@ export default function ProjectDetailPage() {
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Projekt bearbeiten" width={640}>
         <ProjectForm initialData={project} onSubmit={handleEditSubmit} onCancel={() => setEditOpen(false)} />
       </Modal>
+
+      <LogTimeQuickModal
+        open={logTimeOpen}
+        onClose={() => setLogTimeOpen(false)}
+        onSaved={() => { load(); }}
+        defaultProjectId={id}
+      />
     </div>
   );
 }
