@@ -165,9 +165,14 @@ export default function TasksTable() {
                                   <Text fontWeight="bold" fontSize="md">{t.title}</Text>
                                   <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: pc.bg, color: pc.color }}>{PRIORITY_LABELS[t.priority || 'LOW']}</span>
                                 </Flex>
-                                {(t as any).phase && (
-                                  <div style={{ marginBottom: 4 }}>
-                                    <span style={{ fontSize: 10, fontWeight: 700, color: '#7c3aed', background: '#f3e8ff', borderRadius: 4, padding: '1px 6px' }}>Phase {(t as any).phase}</span>
+                                {((t as any).phase || (t as any).isPaymentReminder) && (
+                                  <div style={{ marginBottom: 4, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                    {(t as any).phase && (
+                                      <span style={{ fontSize: 10, fontWeight: 700, color: '#7c3aed', background: '#f3e8ff', borderRadius: 4, padding: '1px 6px' }}>Phase {(t as any).phase}</span>
+                                    )}
+                                    {(t as any).isPaymentReminder && (
+                                      <span style={{ fontSize: 10, fontWeight: 700, color: '#b45309', background: '#fef3c7', borderRadius: 4, padding: '1px 6px' }}>💰 Zahlung</span>
+                                    )}
                                   </div>
                                 )}
                                 <Flex align="center" gap={2} fontSize="sm" color="gray.600">

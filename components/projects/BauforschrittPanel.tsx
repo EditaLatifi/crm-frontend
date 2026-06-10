@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../src/api/client';
-import { FiCheck, FiEdit3, FiSave, FiX, FiSettings } from 'react-icons/fi';
+import { FiCheck, FiEdit3, FiSave, FiX, FiSettings, FiPlus, FiTrash2 } from 'react-icons/fi';
 
 type Master = {
   id: string;
@@ -13,13 +13,15 @@ type Master = {
 
 type ProjMilestone = {
   id: string;
-  milestoneId: string;
+  milestoneId?: string | null;
+  name?: string | null;
+  dueDate?: string | null;
   order: number;
   completed: boolean;
   completedAt?: string | null;
   completedByUserId?: string | null;
   comment?: string | null;
-  milestone: Master;
+  milestone?: Master | null;
 };
 
 export default function BauforschrittPanel({ projectId, canEdit }: { projectId: string; canEdit: boolean }) {
@@ -31,6 +33,10 @@ export default function BauforschrittPanel({ projectId, canEdit }: { projectId: 
   const [savingPicker, setSavingPicker] = useState(false);
   const [editingComment, setEditingComment] = useState<string | null>(null);
   const [commentDraft, setCommentDraft] = useState('');
+  const [addOpen, setAddOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newDue, setNewDue] = useState('');
+  const [savingAdd, setSavingAdd] = useState(false);
 
   const loadAll = async () => {
     setLoading(true);
@@ -54,7 +60,7 @@ export default function BauforschrittPanel({ projectId, canEdit }: { projectId: 
   const remaining = total - completedCount;
 
   const openPicker = () => {
-    setPickedIds(new Set(items.map(i => i.milestoneId)));
+    setPickedIds(new Set(items.map(i => i.milestoneId).filter((id): id is string => !!id)));
     setPickerOpen(true);
   };
 
@@ -92,16 +98,62 @@ export default function BauforschrittPanel({ projectId, canEdit }: { projectId: 
     loadAll();
   };
 
+  const addMilestone = async () => {
+    if (!newName.trim()) return;
+    setSavingAdd(true);
+    try {
+      await api.post(`/projects/${projectId}/milestones/add`, { name: newName.trim(), dueDate: newDue || undefined });
+      setNewName(''); setNewDue(''); setAddOpen(false);
+      await loadAll();
+    } finally {
+      setSavingAdd(false);
+    }
+  };
+
+  const deleteMilestone = async (item: ProjMilestone) => {
+    await api.delete(`/projects/${projectId}/milestones/${item.id}`);
+    loadAll();
+  };
+
+  const milestoneName = (m: ProjMilestone) => m.name || m.milestone?.name || '';
+
   return (
     <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '20px 22px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Bauforschritt</div>
         {canEdit && (
-          <button onClick={openPicker} style={btnSecondary}>
-            <FiSettings size={12} /> Schritte auswählen
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => setAddOpen(o => !o)} style={btnSecondary}>
+              <FiPlus size={12} /> Meilenstein
+            </button>
+            <button onClick={openPicker} style={btnSecondary}>
+              <FiSettings size={12} /> Schritte auswählen
+            </button>
+          </div>
         )}
       </div>
+
+      {/* Ad-hoc milestone add form (name + due date) */}
+      {canEdit && addOpen && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+          <input
+            value={newName}
+            onChange={e => setNewName(e.target.value)}
+            placeholder="Meilenstein-Name (z.B. Aushub)"
+            style={{ flex: '1 1 200px', fontSize: 13, padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: 7 }}
+            autoFocus
+          />
+          <input
+            type="date"
+            value={newDue}
+            onChange={e => setNewDue(e.target.value)}
+            style={{ fontSize: 13, padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: 7 }}
+          />
+          <button onClick={addMilestone} disabled={savingAdd || !newName.trim()} style={btnPrimary}>
+            {savingAdd ? 'Speichern…' : 'Hinzufügen'}
+          </button>
+        </div>
+      )}
 
       {loading && <div style={{ color: '#94a3b8', fontSize: 12 }}>Wird geladen…</div>}
 
@@ -158,13 +210,20 @@ export default function BauforschrittPanel({ projectId, canEdit }: { projectId: 
                     </button>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', textDecoration: item.completed ? 'line-through' : 'none' }}>
-                        {item.milestone.name}
+                        {milestoneName(item)}
                       </div>
-                      {item.completed && item.completedAt && (
-                        <div style={{ fontSize: 11, color: '#16a34a', marginTop: 2 }}>
-                          ✓ {new Date(item.completedAt).toLocaleDateString('de-CH')}
-                        </div>
-                      )}
+                      <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
+                        {item.dueDate && (
+                          <span style={{ fontSize: 11, color: !item.completed && new Date(item.dueDate) < new Date() ? '#dc2626' : '#64748b' }}>
+                            Fällig: {new Date(item.dueDate).toLocaleDateString('de-CH')}
+                          </span>
+                        )}
+                        {item.completed && item.completedAt && (
+                          <span style={{ fontSize: 11, color: '#16a34a' }}>
+                            ✓ {new Date(item.completedAt).toLocaleDateString('de-CH')}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {canEdit && (
                       <button
@@ -176,6 +235,11 @@ export default function BauforschrittPanel({ projectId, canEdit }: { projectId: 
                         title="Kommentar"
                       >
                         <FiEdit3 size={11} />
+                      </button>
+                    )}
+                    {canEdit && (
+                      <button onClick={() => deleteMilestone(item)} style={{ ...btnIcon }} title="Löschen">
+                        <FiTrash2 size={11} />
                       </button>
                     )}
                   </div>

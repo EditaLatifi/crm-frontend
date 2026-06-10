@@ -5,14 +5,39 @@ import DealsKanbanBoard from '../../../components/deals/DealsKanbanBoard';
 import DealInsightsWidget from '../../../components/deals/DealInsightsWidget';
 import Modal from '../../../components/ui/Modal';
 import DealForm from '../../../components/forms/DealForm';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { api } from '../../../src/api/client';
+import { useAuth, isManagerRole } from '../../../src/auth/AuthProvider';
 import './deals-desktop.css';
 import './responsive.css';
 
 type ViewMode = 'kanban' | 'table';
 
 export default function DealsPage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const allowed = isManagerRole(user?.role);
+
+  // Deals are restricted to ADMIN / PROJEKTLEITER. Redirect others to the dashboard.
+  useEffect(() => {
+    if (!authLoading && user && !allowed) router.replace('/dashboard');
+  }, [authLoading, user, allowed, router]);
+
+  if (authLoading || !user) return null;
+  if (!allowed) {
+    return (
+      <div style={{ padding: 48, textAlign: 'center', color: '#64748b' }}>
+        <h1 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a', marginBottom: 8 }}>Zugriff verweigert</h1>
+        <p>Deals sind nur für Administratoren und die Geschäftsleitung sichtbar.</p>
+      </div>
+    );
+  }
+
+  return <DealsPageInner />;
+}
+
+function DealsPageInner() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editDeal, setEditDeal] = useState<any | null>(null);
   const [dealsKey, setDealsKey] = useState(0);

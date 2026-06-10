@@ -137,8 +137,10 @@ export default function ProjectDetailPage() {
   );
 
   const phases         = project.phases || [];
-  const completedCount = phases.filter((p: any) => p.status === 'COMPLETED' || p.status === 'SKIPPED').length;
-  const progress       = phases.length > 0 ? Math.round((completedCount / phases.length) * 100) : 0;
+  // Main phases (SIA 1–6) carry budget & progress; sub-phases are organization only (no own Kontingent).
+  const mainPhases     = phases.filter((p: any) => !p.parentPhaseId);
+  const completedCount = mainPhases.filter((p: any) => p.status === 'COMPLETED' || p.status === 'SKIPPED').length;
+  const progress       = mainPhases.length > 0 ? Math.round((completedCount / mainPhases.length) * 100) : 0;
   const memberIds      = (project.members || []).map((m: any) => m.userId);
   const availableUsers = allUsers.filter((u: any) => !memberIds.includes(u.id));
 
@@ -208,7 +210,7 @@ export default function ProjectDetailPage() {
                     {TYPE_LABELS[project.type] || project.type}
                   </span>
                   <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20, background: '#f0fdf4', color: '#16a34a', fontWeight: 600 }}>
-                    {completedCount} von {phases.length} {phases.length === 1 ? 'Phase' : 'Phasen'} abgeschlossen
+                    {completedCount} von {mainPhases.length} {mainPhases.length === 1 ? 'Phase' : 'Phasen'} abgeschlossen
                   </span>
                 </div>
                 {project.description && (
@@ -224,11 +226,11 @@ export default function ProjectDetailPage() {
                     </div>
                   )}
                   {(() => {
-                    // Prefer project-level budgetHours; fallback to sum of phase budgets
-                    const phaseBudgetH = phases.reduce((s: number, ph: any) => s + (ph.budgetHours || 0), 0);
+                    // Prefer project-level budgetHours; fallback to sum of main-phase budgets
+                    const phaseBudgetH = mainPhases.reduce((s: number, ph: any) => s + (ph.budgetHours || 0), 0);
                     const totalBudgetH = project.budgetHours ?? phaseBudgetH;
                     if (!totalBudgetH) return null;
-                    const totalUsedMin = phases.reduce((s: number, ph: any) => s + ((ph.timeEntries || []).reduce((s2: number, te: any) => s2 + (te.durationMinutes || 0), 0)), 0);
+                    const totalUsedMin = mainPhases.reduce((s: number, ph: any) => s + ((ph.timeEntries || []).reduce((s2: number, te: any) => s2 + (te.durationMinutes || 0), 0)), 0);
                     const totalUsedH = totalUsedMin / 60;
                     const pct = Math.round((totalUsedH / totalBudgetH) * 100);
                     const barColor = pct >= 100 ? '#dc2626' : pct >= 80 ? '#d97706' : '#3b82f6';
@@ -368,7 +370,7 @@ export default function ProjectDetailPage() {
               <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '24px 28px' }}>
                 <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Phasenübersicht</h2>
                 {['PENDING','IN_PROGRESS','COMPLETED','SKIPPED'].map(s => {
-                  const count = phases.filter((p: any) => p.status === s).length;
+                  const count = mainPhases.filter((p: any) => p.status === s).length;
                   if (count === 0) return null;
                   const colors: Record<string,string> = { PENDING:'#94a3b8', IN_PROGRESS:'#3b82f6', COMPLETED:'#22c55e', SKIPPED:'#e2e8f0' };
                   const labels: Record<string,string> = { PENDING:'Nicht gestartet', IN_PROGRESS:'In Bearbeitung', COMPLETED:'Abgeschlossen', SKIPPED:'Übersprungen' };
@@ -678,9 +680,9 @@ export default function ProjectDetailPage() {
                 </button>
               </div>
               {(() => {
-                const phaseBudget = phases.reduce((s: number, p: any) => s + (p.budgetHours || 0), 0);
+                const phaseBudget = mainPhases.reduce((s: number, p: any) => s + (p.budgetHours || 0), 0);
                 const totalBudget = project.budgetHours ?? phaseBudget;
-                const totalUsedAll = phases.reduce(
+                const totalUsedAll = mainPhases.reduce(
                   (s: number, p: any) => s + (p.timeEntries || []).reduce((s2: number, e: any) => s2 + (e.durationMinutes || 0), 0),
                   0,
                 ) / 60;
@@ -693,7 +695,7 @@ export default function ProjectDetailPage() {
               <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Zeiterfassung pro SIA-Phase</h2>
               {(() => {
                 // Calculate used hours directly from phase timeEntries (loaded from backend)
-                const totalBudget = phases.reduce((s: number, p: any) => s + (p.budgetHours || 0), 0);
+                const totalBudget = mainPhases.reduce((s: number, p: any) => s + (p.budgetHours || 0), 0);
                 let totalUsed = 0;
 
                 const handlePhaseBudgetSave = async (phaseId: string, value: number) => {
@@ -705,7 +707,7 @@ export default function ProjectDetailPage() {
 
                 return (
                   <>
-                    {phases.map((p: any) => {
+                    {mainPhases.map((p: any) => {
                       // Sum hours from timeEntries directly linked to this phase
                       const phaseEntries = p.timeEntries || [];
                       const used = phaseEntries.reduce((s: number, e: any) => s + (e.durationMinutes || 0), 0) / 60;

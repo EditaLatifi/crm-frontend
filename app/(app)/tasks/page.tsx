@@ -22,6 +22,8 @@ export default function TasksPage() {
     dealId: '',
     projectId: '',
     phase: '',
+    projectPhaseId: '',
+    isPaymentReminder: false,
     specification: '',
     assigneeIds: [] as string[],
     budgetHours: '',
@@ -32,6 +34,7 @@ export default function TasksPage() {
   const [contacts, setContacts] = useState<{ id: string; name: string }[]>([]);
   const [deals, setDeals] = useState<{ id: string; name: string }[]>([]);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [projectPhases, setProjectPhases] = useState<{ id: string; name: string; code?: string; parentPhaseId?: string | null }[]>([]);
   const [saving, setSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -45,12 +48,20 @@ export default function TasksPage() {
     }
   }, [showForm]);
 
+  // When a project is chosen, load its phases so tasks link to a real project phase.
+  useEffect(() => {
+    if (!form.projectId) { setProjectPhases([]); return; }
+    api.get(`/projects/${form.projectId}`)
+      .then((p: any) => setProjectPhases(Array.isArray(p?.phases) ? p.phases : []))
+      .catch(() => setProjectPhases([]));
+  }, [form.projectId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
       await api.post('/tasks', form);
-      setForm({ title: '', description: '', status: 'OPEN', priority: 'LOW', dueDate: '', assignedToUserId: '', accountId: '', contactId: '', dealId: '', projectId: '', phase: '', specification: '', assigneeIds: [], budgetHours: '' });
+      setForm({ title: '', description: '', status: 'OPEN', priority: 'LOW', dueDate: '', assignedToUserId: '', accountId: '', contactId: '', dealId: '', projectId: '', phase: '', projectPhaseId: '', isPaymentReminder: false, specification: '', assigneeIds: [], budgetHours: '' });
       setShowForm(false);
       setRefreshKey(k => k + 1);
     } finally {
@@ -159,19 +170,38 @@ export default function TasksPage() {
                   </div>
                   <div>
                     <label style={labelStyle}>Projekt</label>
-                    <select style={inputStyle} value={form.projectId} onChange={e => setForm(f => ({ ...f, projectId: e.target.value }))}>
+                    <select style={inputStyle} value={form.projectId} onChange={e => setForm(f => ({ ...f, projectId: e.target.value, projectPhaseId: '' }))}>
                       <option value="">Kein Projekt</option>
                       {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                   </div>
                 </div>
-                <div>
-                  <label style={labelStyle}>Leistungsphase (SIA) *</label>
-                  <select style={inputStyle} value={form.phase} onChange={e => setForm(f => ({ ...f, phase: e.target.value }))}>
-                    <option value="">— Phase wählen —</option>
-                    {phaseOptions.map(p => <option key={p.code} value={p.code}>{p.label}</option>)}
-                  </select>
-                </div>
+                {form.projectId ? (
+                  <div>
+                    <label style={labelStyle}>Phase *</label>
+                    <select required style={inputStyle} value={form.projectPhaseId} onChange={e => setForm(f => ({ ...f, projectPhaseId: e.target.value }))}>
+                      <option value="">— Phase wählen —</option>
+                      {projectPhases.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.parentPhaseId ? '  ↳ ' : ''}{p.code ? `${p.code} ` : ''}{p.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>Phasen stammen aus dem gewählten Projekt.</div>
+                  </div>
+                ) : (
+                  <div>
+                    <label style={labelStyle}>Leistungsphase (SIA) *</label>
+                    <select style={inputStyle} value={form.phase} onChange={e => setForm(f => ({ ...f, phase: e.target.value }))}>
+                      <option value="">— Phase wählen —</option>
+                      {phaseOptions.map(p => <option key={p.code} value={p.code}>{p.label}</option>)}
+                    </select>
+                  </div>
+                )}
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1a1a1a', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={form.isPaymentReminder} onChange={e => setForm(f => ({ ...f, isPaymentReminder: e.target.checked }))} />
+                  Zahlungserinnerung (Payment Reminder)
+                </label>
                 {isAdmin && (
                   <div>
                     <label style={labelStyle}>Stundenkontingent (h)</label>

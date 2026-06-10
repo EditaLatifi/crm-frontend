@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import Link from "next/link";
 import { api } from "../../src/api/client";
@@ -25,6 +26,7 @@ function stageColor(stage: Stage): string {
 
 export default function DealsKanbanBoard({ onEdit, onRefresh }: { onEdit?: (deal: Deal) => void; onRefresh?: () => void }) {
   const toast = useToast();
+  const router = useRouter();
   const [stages, setStages] = useState<Stage[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,9 +54,11 @@ export default function DealsKanbanBoard({ onEdit, onRefresh }: { onEdit?: (deal
     const newStage = stages.find((s) => s.id === newStageId);
     setDeals((prev) => prev.map((d) => d.id === draggableId ? { ...d, stageId: newStageId } : d));
     try {
-      await api.post(`/deals/${draggableId}/change-stage`, { toStageId: newStageId });
-      if (newStage?.isWon) toast.success("Deal als gewonnen markiert! 🎉");
-      else if (newStage?.isLost) toast.warning("Deal als verloren markiert.");
+      const res = await api.post(`/deals/${draggableId}/change-stage`, { toStageId: newStageId });
+      if (newStage?.isWon) {
+        toast.success("Deal als gewonnen markiert! Projekt wurde erstellt. 🎉");
+        if (res?.createdProjectId) { router.push(`/projects/${res.createdProjectId}`); return; }
+      } else if (newStage?.isLost) toast.warning("Deal als verloren markiert.");
       else toast.info(`Deal verschoben nach „${newStage?.name}".`);
       onRefresh?.();
     } catch {

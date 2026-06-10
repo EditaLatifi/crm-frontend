@@ -15,7 +15,7 @@ import ProjektErstellenButton from "../../../../components/deals/ProjektErstelle
 import { FiMail } from "react-icons/fi";
 import ConfirmDialog from "../../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../../components/ui/Toast";
-import { useAuth, canViewFinancials } from "../../../../src/auth/AuthProvider";
+import { useAuth, canViewFinancials, isManagerRole } from "../../../../src/auth/AuthProvider";
 
 /* ─── SIA Leistungsphasen (from central siaPhases.ts) ─── */
 const SIA_PHASES = [
@@ -59,8 +59,14 @@ export default function DealDetailPage() {
   const params = { id: routeParams?.id as string };
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
+  const dealsAllowed = isManagerRole(user?.role);
   const showFinancials = canViewFinancials(user?.role);
   const canViewContingent = !!user?.role && user.role !== 'EXTERN';
+
+  // Deals are restricted to ADMIN / PROJEKTLEITER. Send others back to the dashboard.
+  useEffect(() => {
+    if (user && !dealsAllowed) router.replace('/dashboard');
+  }, [user, dealsAllowed, router]);
   const [deal, setDeal] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [attachments, setAttachments] = useState<any[]>([]);
@@ -144,6 +150,11 @@ export default function DealDetailPage() {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const selectedPhases: number[] = Array.isArray(deal?.phases) ? deal.phases : [];
+  // Count for the tab badge: prefer the structured deal phases (main phases), fall back to the legacy SIA array.
+  const mainDealPhaseCount = Array.isArray(deal?.dealPhases)
+    ? deal.dealPhases.filter((p: any) => !p.parentId).length
+    : 0;
+  const phaseTabCount = mainDealPhaseCount || selectedPhases.length;
 
   async function togglePhase(nr: number) {
     const current = [...selectedPhases];
@@ -160,7 +171,17 @@ export default function DealDetailPage() {
 
   async function handleStageChange(toStageId: string) {
     setSaving(true);
-    try { await api.post(`/deals/${params.id}/change-stage`, { toStageId }); await fetchAll(); } catch {}
+    try {
+      const res = await api.post(`/deals/${params.id}/change-stage`, { toStageId });
+      if (res?.createdProjectId) {
+        toast.success(`Deal als gewonnen markiert. Projekt "${res.name || deal?.name || ''}" wurde erstellt.`);
+        router.push(`/projects/${res.createdProjectId}`);
+        return;
+      }
+      await fetchAll();
+    } catch (err: any) {
+      toast.error(err?.message || 'Phasenwechsel fehlgeschlagen');
+    }
     setSaving(false);
   }
 
@@ -231,6 +252,12 @@ export default function DealDetailPage() {
     } catch { alert('Anhang konnte nicht gelöscht werden.'); }
   }
 
+  if (user && !dealsAllowed) return (
+    <div style={{ padding: 48, textAlign: 'center', color: '#64748b' }}>
+      <h1 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a', marginBottom: 8 }}>Zugriff verweigert</h1>
+      <p>Deals sind nur für Administratoren und die Geschäftsleitung sichtbar.</p>
+    </div>
+  );
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
       <div style={{ width: 28, height: 28, border: '3px solid #e5e7eb', borderTopColor: '#1a1a1a', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
@@ -458,7 +485,7 @@ export default function DealDetailPage() {
               {([
                 ['comments', <FiMessageSquare size={14} key="c" />, `Kommentare (${notes.length})`],
                 ['attachments', <FiPaperclip size={14} key="a" />, `Anhänge (${attachments.length})`],
-                ['phases', <FiTag size={14} key="p" />, `Leistungsphasen (${selectedPhases.length})`],
+                ['phases', <FiTag size={14} key="p" />, `Leistungsphasen (${phaseTabCount})`],
               ] as [string, any, string][]).map(([tab, icon, label]) => (
                 <button key={tab} onClick={() => setActiveTab(tab as any)}
                   style={{ flex: 1, padding: '14px 16px', border: 'none', background: activeTab === tab ? '#fff' : '#FAF9F6', color: activeTab === tab ? '#1a1a1a' : '#64748b', fontWeight: activeTab === tab ? 700 : 500, fontSize: 13, cursor: 'pointer', borderBottom: activeTab === tab ? '2px solid #1a1a1a' : '2px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>

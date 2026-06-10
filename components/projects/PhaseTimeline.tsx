@@ -16,6 +16,8 @@ type LinkedTask = {
 type Phase = {
   id: string;
   name: string;
+  code?: string | null;
+  parentPhaseId?: string | null;
   description?: string;
   order: number;
   status: string;
@@ -54,10 +56,17 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
   const [editNotes, setEditNotes] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
-  const completedCount = phases.filter(p => p.status === 'COMPLETED' || p.status === 'SKIPPED').length;
-  const progress = phases.length > 0 ? Math.round((completedCount / phases.length) * 100) : 0;
+  // Main phases (SIA 1–6) are the budget/progress carriers; sub-phases are organization only.
+  const mainPhases = phases.filter(p => !p.parentPhaseId);
+  const childrenByParent = phases.reduce((acc: Record<string, Phase[]>, p) => {
+    if (p.parentPhaseId) (acc[p.parentPhaseId] ||= []).push(p);
+    return acc;
+  }, {});
 
-  const currentPhase = phases.find(p => p.status === 'IN_PROGRESS') || phases.find(p => p.status === 'PENDING');
+  const completedCount = mainPhases.filter(p => p.status === 'COMPLETED' || p.status === 'SKIPPED').length;
+  const progress = mainPhases.length > 0 ? Math.round((completedCount / mainPhases.length) * 100) : 0;
+
+  const currentPhase = mainPhases.find(p => p.status === 'IN_PROGRESS') || mainPhases.find(p => p.status === 'PENDING');
 
   async function handleStatusChange(phase: Phase, newStatus: string) {
     setLoadingId(phase.id);
@@ -163,11 +172,12 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
 
       {/* Phase list */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-        {phases.map((phase, idx) => {
+        {mainPhases.map((phase, idx) => {
           const isExpanded = expandedId === phase.id;
           const isLoading = loadingId === phase.id;
-          const isLast = idx === phases.length - 1;
+          const isLast = idx === mainPhases.length - 1;
           const color = PHASE_COLORS[phase.status] || '#94a3b8';
+          const subPhases = childrenByParent[phase.id] || [];
 
           return (
             <div key={phase.id} style={{ display: 'flex', gap: 0 }}>
@@ -250,6 +260,19 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
                       {isExpanded ? <FiChevronUp size={14} color="#94a3b8" /> : <FiChevronDown size={14} color="#94a3b8" />}
                     </div>
                   </div>
+
+                  {/* Sub-phases (organization only — shown inline, no budget) */}
+                  {subPhases.length > 0 && (
+                    <div style={{ marginTop: 10, paddingLeft: 30, display: 'flex', flexDirection: 'column', gap: 4 }} onClick={e => e.stopPropagation()}>
+                      {subPhases.map(sp => (
+                        <div key={sp.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#64748b' }}>
+                          <span style={{ color: '#cbd5e1' }}>↳</span>
+                          {sp.code && <span style={{ fontWeight: 700, color: '#94a3b8' }}>{sp.code}</span>}
+                          <span style={{ textDecoration: sp.status === 'COMPLETED' ? 'line-through' : 'none' }}>{sp.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Expanded details */}
                   {isExpanded && (

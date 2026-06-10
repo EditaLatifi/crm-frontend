@@ -23,7 +23,7 @@ const NAV_GROUPS: { label: string | null; minRole?: MinRole; items: { href: stri
       { href: "/dashboard", label: "Dashboard", icon: FiGrid, countKey: null },
       { href: "/accounts", label: "Firmen", icon: FiUsers, countKey: "accounts", minRole: "internal" },
       { href: "/contacts", label: "Kontakte", icon: FiUser, countKey: "contacts", minRole: "internal" },
-      { href: "/deals", label: "Deals", icon: FiBriefcase, countKey: "deals", minRole: "internal" },
+      { href: "/deals", label: "Deals", icon: FiBriefcase, countKey: "deals", minRole: "manager" },
     ],
   },
   {

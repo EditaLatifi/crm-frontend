@@ -85,8 +85,11 @@ export default function TaskDetailsPage() {
   const [editDueDate, setEditDueDate] = useState("");
   const [editEstimate, setEditEstimate] = useState("");
   const [editPhase, setEditPhase] = useState("");
+  const [editProjectPhaseId, setEditProjectPhaseId] = useState("");
   const [editSpecification, setEditSpecification] = useState("");
   const [editBudgetHours, setEditBudgetHours] = useState("");
+  const [editPaymentReminder, setEditPaymentReminder] = useState(false);
+  const [projectPhases, setProjectPhases] = useState<{ id: string; name: string; code?: string; parentPhaseId?: string | null }[]>([]);
   const [saving, setSaving] = useState(false);
   const phaseOptions = getAllPhaseCodes();
   const isAdmin = user?.role === 'ADMIN';
@@ -176,28 +179,43 @@ export default function TaskDetailsPage() {
     setLoadingTime(false);
   };
 
+  // Load the linked project's phases so a project task can be reassigned to a real phase.
+  useEffect(() => {
+    if (!task?.projectId) { setProjectPhases([]); return; }
+    api.get(`/projects/${task.projectId}`)
+      .then((p: any) => setProjectPhases(Array.isArray(p?.phases) ? p.phases : []))
+      .catch(() => setProjectPhases([]));
+  }, [task?.projectId]);
+
   const startEdit = () => {
     setEditTitle(task.title);
     setEditDescription(task.description || "");
     setEditDueDate(task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : "");
     setEditEstimate(task.estimate || "");
     setEditPhase(task.phase || "");
+    setEditProjectPhaseId(task.projectPhaseId || "");
     setEditSpecification(task.specification || "");
     setEditBudgetHours(task.budgetHours ?? "");
+    setEditPaymentReminder(!!task.isPaymentReminder);
     setEditMode(true);
   };
 
   const saveEdit = async () => {
     setSaving(true);
     try {
+      // For project tasks, the project-phase FK is the source of truth; otherwise use the SIA code.
+      const phasePayload = task?.projectId
+        ? { projectPhaseId: editProjectPhaseId || null }
+        : { phase: editPhase || null };
       await api.patch(`/tasks/${taskId}`, {
         title: editTitle,
         description: editDescription,
         dueDate: editDueDate ? new Date(editDueDate).toISOString() : null,
         estimate: editEstimate !== "" ? Number(editEstimate) : null,
-        phase: editPhase || null,
+        ...phasePayload,
         specification: editSpecification || null,
         budgetHours: editBudgetHours !== "" ? Number(editBudgetHours) : null,
+        isPaymentReminder: editPaymentReminder,
       });
       setEditMode(false);
       fetchTask();
@@ -449,12 +467,28 @@ export default function TaskDetailsPage() {
                 {editMode && (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 16 }}>
                     <div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", marginBottom: 4, textTransform: "uppercase" }}>Leistungsphase</div>
-                      <select value={editPhase} onChange={e => setEditPhase(e.target.value)}
-                        style={{ width: "100%", padding: "7px 10px", border: "1px solid #E8E4DE", borderRadius: 8, fontSize: 13, color: "#374151", boxSizing: "border-box" }}>
-                        <option value="">— Keine Phase —</option>
-                        {phaseOptions.map(p => <option key={p.code} value={p.code}>{p.label}</option>)}
-                      </select>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", marginBottom: 4, textTransform: "uppercase" }}>{task?.projectId ? 'Phase' : 'Leistungsphase'}</div>
+                      {task?.projectId ? (
+                        <select value={editProjectPhaseId} onChange={e => setEditProjectPhaseId(e.target.value)}
+                          style={{ width: "100%", padding: "7px 10px", border: "1px solid #E8E4DE", borderRadius: 8, fontSize: 13, color: "#374151", boxSizing: "border-box" }}>
+                          <option value="">— Phase wählen —</option>
+                          {projectPhases.map(p => (
+                            <option key={p.id} value={p.id}>{p.parentPhaseId ? '  ↳ ' : ''}{p.code ? `${p.code} ` : ''}{p.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <select value={editPhase} onChange={e => setEditPhase(e.target.value)}
+                          style={{ width: "100%", padding: "7px 10px", border: "1px solid #E8E4DE", borderRadius: 8, fontSize: 13, color: "#374151", boxSizing: "border-box" }}>
+                          <option value="">— Keine Phase —</option>
+                          {phaseOptions.map(p => <option key={p.code} value={p.code}>{p.label}</option>)}
+                        </select>
+                      )}
+                    </div>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#374151", cursor: "pointer" }}>
+                        <input type="checkbox" checked={editPaymentReminder} onChange={e => setEditPaymentReminder(e.target.checked)} />
+                        Zahlungserinnerung (Payment Reminder)
+                      </label>
                     </div>
                     {isAdmin && (
                       <div>

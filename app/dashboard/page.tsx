@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../src/auth/AuthProvider';
+import { useAuth, isManagerRole } from '../../src/auth/AuthProvider';
 import { api } from '../../src/api/client';
 import Link from 'next/link';
 import { FiArrowRight } from 'react-icons/fi';
@@ -22,6 +22,8 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  // Deals are management-only; hide all deal surfaces from regular employees.
+  const showDeals = isManagerRole(user?.role);
 
   const [tasks, setTasks] = useState<any[]>([]);
   const [deals, setDeals] = useState<any[]>([]);
@@ -117,6 +119,8 @@ export default function DashboardPage() {
 
   followUps
     .filter(f => f.dueDate)
+    // Hide deal-linked follow-ups from non-managers (deals are management-only).
+    .filter(f => showDeals || f.entityType !== 'Deal')
     .forEach(f => upcoming.push({
       id: `fu-${f.id}`,
       date: new Date(f.dueDate),
@@ -176,8 +180,9 @@ export default function DashboardPage() {
       </div>
 
       {/* ═══ KPI Cards ═══ */}
-      <div className="dash-kpi-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
-        {/* Offene Deals */}
+      <div className="dash-kpi-row" style={{ display: 'grid', gridTemplateColumns: `repeat(${showDeals ? 4 : 2}, 1fr)`, gap: 16, marginBottom: 28 }}>
+        {/* Offene Deals — management only */}
+        {showDeals && (
         <div style={kpiCard}>
           <div style={kpiLabel}>OFFENE DEALS</div>
           <div style={kpiValue}>{openDeals.length}</div>
@@ -185,8 +190,10 @@ export default function DashboardPage() {
             {negotiationDeals.length > 0 ? `${negotiationDeals.length} in Verhandlung` : `${deals.length} total`}
           </div>
         </div>
+        )}
 
-        {/* Deal-Volumen */}
+        {/* Deal-Volumen — management only */}
+        {showDeals && (
         <div style={kpiCard}>
           <div style={kpiLabel}>DEAL-VOLUMEN</div>
           <div style={{ ...kpiValue, fontSize: pipelineValue >= 1000000 ? 28 : 32 }}>{formatCHF(pipelineValue)}</div>
@@ -194,6 +201,7 @@ export default function DashboardPage() {
             Gewichtet: {formatCHF(Math.round(weightedPipeline))}
           </div>
         </div>
+        )}
 
         {/* Aktive Projekte */}
         <div style={kpiCard}>
