@@ -38,7 +38,7 @@ const PHASE_STATUS_LABELS: Record<string, { label: string; bg: string; color: st
   ON_HOLD:     { label: 'Pausiert',       bg: '#fef3c7', color: '#b45309' },
 };
 
-export default function DealPhaseTree({ dealId, currency, canViewPayments = true }: { dealId: string; currency: string; canViewPayments?: boolean }) {
+export default function DealPhaseTree({ dealId, currency, canViewPayments = true, locked = false }: { dealId: string; currency: string; canViewPayments?: boolean; locked?: boolean }) {
   const [phases, setPhases] = useState<Phase[]>([]);
   const [loading, setLoading] = useState(false);
   const [addingTopLevel, setAddingTopLevel] = useState(false);
@@ -70,13 +70,19 @@ export default function DealPhaseTree({ dealId, currency, canViewPayments = true
         <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>
           Leistungsphasen mit Sub-Phasen & Zahlungsplan
         </div>
-        {!addingTopLevel && (
+        {!addingTopLevel && !locked && (
           <button onClick={() => setAddingTopLevel(true)}
             style={btnPrimary}>
             <FiPlus size={13} /> Phase hinzufügen
           </button>
         )}
       </div>
+
+      {locked && (
+        <div style={{ fontSize: 12, color: '#92400e', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
+          Dieser Deal wurde in ein Projekt übernommen. Phasen, Aufgaben und Stunden werden jetzt im <strong>Projekt</strong> verwaltet.
+        </div>
+      )}
 
       {addingTopLevel && (
         <div style={cardBox}>
@@ -99,7 +105,7 @@ export default function DealPhaseTree({ dealId, currency, canViewPayments = true
       )}
 
       {phases.map(p => (
-        <PhaseRow key={p.id} phase={p} currency={currency} onChange={reload} canViewPayments={canViewPayments} />
+        <PhaseRow key={p.id} phase={p} currency={currency} onChange={reload} canViewPayments={canViewPayments} locked={locked} />
       ))}
 
       {phases.length > 0 && (
@@ -254,7 +260,7 @@ function BulkBudgetEditor({ dealId, phases, onSaved }: { dealId: string; phases:
   );
 }
 
-function PhaseRow({ phase, currency, onChange, canViewPayments }: { phase: Phase; currency: string; onChange: () => void; canViewPayments: boolean }) {
+function PhaseRow({ phase, currency, onChange, canViewPayments, locked = false }: { phase: Phase; currency: string; onChange: () => void; canViewPayments: boolean; locked?: boolean }) {
   const [addingSub, setAddingSub] = useState(false);
   const [showPayments, setShowPayments] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -299,18 +305,18 @@ function PhaseRow({ phase, currency, onChange, canViewPayments }: { phase: Phase
             )}
           </div>
           <div style={{ display: 'flex', gap: 6 }} onClick={e => e.stopPropagation()}>
-            <button title="Bearbeiten" onClick={() => setEditing(v => !v)} style={{ ...btnIcon, color: editing ? '#3b82f6' : '#64748b' }}><FiEdit2 size={13} /></button>
-            <button title="Sub-Phase hinzufügen" onClick={() => setAddingSub(v => !v)} style={btnIcon}><FiPlus size={13} /></button>
+            {!locked && <button title="Bearbeiten" onClick={() => setEditing(v => !v)} style={{ ...btnIcon, color: editing ? '#3b82f6' : '#64748b' }}><FiEdit2 size={13} /></button>}
+            {!locked && <button title="Sub-Phase hinzufügen" onClick={() => setAddingSub(v => !v)} style={btnIcon}><FiPlus size={13} /></button>}
             {canViewPayments && (
               <button title="Zahlungsplan" onClick={() => setShowPayments(v => !v)} style={{ ...btnIcon, color: showPayments ? '#7c3aed' : '#64748b' }}>
                 <LuCoins size={13} />
               </button>
             )}
-            <button title="Löschen" onClick={async () => {
+            {!locked && <button title="Löschen" onClick={async () => {
               if (!confirm(`Phase "${phase.name}" löschen?`)) return;
               await api.delete(`/deals/phases/${phase.id}`);
               onChange();
-            }} style={{ ...btnIcon, color: '#dc2626' }}><FiTrash2 size={13} /></button>
+            }} style={{ ...btnIcon, color: '#dc2626' }}><FiTrash2 size={13} /></button>}
           </div>
         </div>
         {phase.notes && !editing && (
@@ -333,7 +339,7 @@ function PhaseRow({ phase, currency, onChange, canViewPayments }: { phase: Phase
           {phase.children.map(c => {
             const csCfg = PHASE_STATUS_LABELS[c.status || 'PENDING'];
             return (
-              <SubPhaseRow key={c.id} phase={c} statusCfg={csCfg} onChange={onChange} />
+              <SubPhaseRow key={c.id} phase={c} statusCfg={csCfg} onChange={onChange} locked={locked} />
             );
           })}
         </div>
@@ -346,7 +352,7 @@ function PhaseRow({ phase, currency, onChange, canViewPayments }: { phase: Phase
   );
 }
 
-function SubPhaseRow({ phase, statusCfg, onChange }: { phase: Phase; statusCfg: { label: string; bg: string; color: string }; onChange: () => void }) {
+function SubPhaseRow({ phase, statusCfg, onChange, locked = false }: { phase: Phase; statusCfg: { label: string; bg: string; color: string }; onChange: () => void; locked?: boolean }) {
   const [editing, setEditing] = useState(false);
   return (
     <div style={{ borderBottom: '1px solid #f8fafc' }}>
@@ -368,14 +374,16 @@ function SubPhaseRow({ phase, statusCfg, onChange }: { phase: Phase; statusCfg: 
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          <button title="Bearbeiten" onClick={() => setEditing(v => !v)} style={{ ...btnIcon, padding: 4 }}><FiEdit2 size={11} /></button>
-          <button title="Löschen" onClick={async () => {
-            if (!confirm(`Sub-Phase "${phase.name}" löschen?`)) return;
-            await api.delete(`/deals/phases/${phase.id}`);
-            onChange();
-          }} style={{ ...btnIcon, color: '#dc2626', padding: 4 }}><FiTrash2 size={11} /></button>
-        </div>
+        {!locked && (
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button title="Bearbeiten" onClick={() => setEditing(v => !v)} style={{ ...btnIcon, padding: 4 }}><FiEdit2 size={11} /></button>
+            <button title="Löschen" onClick={async () => {
+              if (!confirm(`Sub-Phase "${phase.name}" löschen?`)) return;
+              await api.delete(`/deals/phases/${phase.id}`);
+              onChange();
+            }} style={{ ...btnIcon, color: '#dc2626', padding: 4 }}><FiTrash2 size={11} /></button>
+          </div>
+        )}
       </div>
       {phase.description && !editing && (
         <div style={{ fontSize: 12, color: '#94a3b8', paddingLeft: 16, paddingBottom: 6 }}>{phase.description}</div>

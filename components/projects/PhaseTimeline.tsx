@@ -56,6 +56,47 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
   const [editNotes, setEditNotes] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
+  // ── Add phase / sub-phase / task (project is the source of truth) ──
+  const [busy, setBusy] = useState(false);
+  const [showAddPhase, setShowAddPhase] = useState(false);
+  const [np, setNp] = useState({ code: '', name: '', budgetHours: '' });
+  const [subFor, setSubFor] = useState<string | null>(null);
+  const [ns, setNs] = useState({ code: '', name: '' });
+  const [taskFor, setTaskFor] = useState<string | null>(null);
+  const [nt, setNt] = useState({ title: '', extra: false });
+
+  async function addPhase() {
+    if (!np.name.trim()) return;
+    setBusy(true); setError(null);
+    try {
+      await api.post(`/projects/${projectId}/phases`, {
+        name: np.name.trim(),
+        code: np.code.trim() || undefined,
+        budgetHours: np.budgetHours !== '' ? Number(np.budgetHours) : undefined,
+      });
+      setNp({ code: '', name: '', budgetHours: '' }); setShowAddPhase(false); onUpdate?.();
+    } catch (e: any) { setError(e.message || 'Fehler beim Hinzufügen'); } finally { setBusy(false); }
+  }
+  async function addSub(parentId: string) {
+    if (!ns.name.trim()) return;
+    setBusy(true); setError(null);
+    try {
+      await api.post(`/projects/${projectId}/phases`, { name: ns.name.trim(), code: ns.code.trim() || undefined, parentPhaseId: parentId });
+      setNs({ code: '', name: '' }); setSubFor(null); onUpdate?.();
+    } catch (e: any) { setError(e.message || 'Fehler beim Hinzufügen'); } finally { setBusy(false); }
+  }
+  async function addTask(phaseId: string) {
+    if (!nt.title.trim()) return;
+    setBusy(true); setError(null);
+    try {
+      await api.post('/tasks', { title: nt.title.trim(), status: 'OPEN', priority: 'MEDIUM', projectId, projectPhaseId: phaseId, isBillableExtra: nt.extra });
+      setNt({ title: '', extra: false }); setTaskFor(null); onUpdate?.();
+    } catch (e: any) { setError(e.message || 'Fehler beim Hinzufügen'); } finally { setBusy(false); }
+  }
+  const miniInput: React.CSSProperties = { fontSize: 12, padding: '6px 9px', border: '1px solid #e2e8f0', borderRadius: 7, outline: 'none' };
+  const miniBtn: React.CSSProperties = { fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 7, border: 'none', background: '#1a1a1a', color: '#fff', cursor: 'pointer' };
+  const miniGhost: React.CSSProperties = { fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 7, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', cursor: 'pointer' };
+
   // Main phases (SIA 1–6) are the budget/progress carriers; sub-phases are organization only.
   const mainPhases = phases.filter(p => !p.parentPhaseId);
   const childrenByParent = phases.reduce((acc: Record<string, Phase[]>, p) => {
@@ -170,6 +211,23 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
         </div>
       )}
 
+      {/* Add phase (project is the source of truth for phases/Kontingent) */}
+      {canEdit && (
+        <div style={{ marginBottom: 14 }}>
+          {!showAddPhase ? (
+            <button onClick={() => setShowAddPhase(true)} style={miniBtn}>+ Phase hinzufügen</button>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: 12 }}>
+              <input value={np.code} onChange={e => setNp({ ...np, code: e.target.value })} placeholder="Code (z.B. 31)" style={{ ...miniInput, width: 110 }} />
+              <input value={np.name} onChange={e => setNp({ ...np, name: e.target.value })} placeholder="Name (z.B. Vorprojekt)" style={{ ...miniInput, flex: '1 1 200px' }} autoFocus />
+              <input value={np.budgetHours} onChange={e => setNp({ ...np, budgetHours: e.target.value })} type="number" min="0" step="0.5" placeholder="Stundenkontingent" style={{ ...miniInput, width: 150 }} title="Internes Stundenkontingent (nur Admin)" />
+              <button onClick={addPhase} disabled={busy || !np.name.trim()} style={miniBtn}>{busy ? '…' : 'Speichern'}</button>
+              <button onClick={() => { setShowAddPhase(false); setNp({ code: '', name: '', budgetHours: '' }); }} style={miniGhost}>Abbrechen</button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Phase list */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
         {mainPhases.map((phase, idx) => {
@@ -271,6 +329,35 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
                           <span style={{ textDecoration: sp.status === 'COMPLETED' ? 'line-through' : 'none' }}>{sp.name}</span>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {/* Per-phase add: sub-phase + task (with Mehrkosten toggle) */}
+                  {canEdit && (
+                    <div style={{ marginTop: 10, paddingLeft: 30 }} onClick={e => e.stopPropagation()}>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button onClick={() => { setSubFor(subFor === phase.id ? null : phase.id); setTaskFor(null); }} style={miniGhost}>+ Sub-Phase</button>
+                        <button onClick={() => { setTaskFor(taskFor === phase.id ? null : phase.id); setSubFor(null); }} style={miniGhost}>+ Aufgabe</button>
+                      </div>
+                      {subFor === phase.id && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                          <input value={ns.code} onChange={e => setNs({ ...ns, code: e.target.value })} placeholder="Code (z.B. 31.1)" style={{ ...miniInput, width: 120 }} />
+                          <input value={ns.name} onChange={e => setNs({ ...ns, name: e.target.value })} placeholder="Sub-Phase Name" style={{ ...miniInput, flex: '1 1 180px' }} autoFocus />
+                          <button onClick={() => addSub(phase.id)} disabled={busy || !ns.name.trim()} style={miniBtn}>{busy ? '…' : 'Speichern'}</button>
+                          <button onClick={() => { setSubFor(null); setNs({ code: '', name: '' }); }} style={miniGhost}>Abbrechen</button>
+                        </div>
+                      )}
+                      {taskFor === phase.id && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                          <input value={nt.title} onChange={e => setNt({ ...nt, title: e.target.value })} placeholder="Aufgaben-Titel" style={{ ...miniInput, flex: '1 1 200px' }} autoFocus />
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#b45309', whiteSpace: 'nowrap' }} title="Stunden werden NICHT vom Kontingent abgezogen, sondern als Mehrkosten zusätzlich verrechnet">
+                            <input type="checkbox" checked={nt.extra} onChange={e => setNt({ ...nt, extra: e.target.checked })} />
+                            Mehrkosten
+                          </label>
+                          <button onClick={() => addTask(phase.id)} disabled={busy || !nt.title.trim()} style={miniBtn}>{busy ? '…' : 'Aufgabe'}</button>
+                          <button onClick={() => { setTaskFor(null); setNt({ title: '', extra: false }); }} style={miniGhost}>Abbrechen</button>
+                        </div>
+                      )}
                     </div>
                   )}
 

@@ -230,7 +230,7 @@ export default function ProjectDetailPage() {
                     const phaseBudgetH = mainPhases.reduce((s: number, ph: any) => s + (ph.budgetHours || 0), 0);
                     const totalBudgetH = project.budgetHours ?? phaseBudgetH;
                     if (!totalBudgetH) return null;
-                    const totalUsedMin = mainPhases.reduce((s: number, ph: any) => s + ((ph.timeEntries || []).reduce((s2: number, te: any) => s2 + (te.durationMinutes || 0), 0)), 0);
+                    const totalUsedMin = mainPhases.reduce((s: number, ph: any) => s + ((ph.timeEntries || []).filter((te: any) => !te.task?.isBillableExtra).reduce((s2: number, te: any) => s2 + (te.durationMinutes || 0), 0)), 0);
                     const totalUsedH = totalUsedMin / 60;
                     const pct = Math.round((totalUsedH / totalBudgetH) * 100);
                     const barColor = pct >= 100 ? '#dc2626' : pct >= 80 ? '#d97706' : '#3b82f6';
@@ -314,26 +314,9 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
-        {/* Verknüpfungen prominent (Deal + Aufgaben Anzahl) */}
-        {(project.deal || projectTasks.length > 0) && (
+        {/* Verknüpfte Aufgaben (Deal-Karte entfernt — minimalistisch, Deal/Projekt integriert) */}
+        {projectTasks.length > 0 && (
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
-            {project.deal && (
-              <Link
-                href={`/deals/${project.deal.id}`}
-                style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, background: '#f5f3ff', border: '1.5px solid #ddd6fe', borderRadius: 12, padding: '12px 18px', minWidth: 220 }}
-              >
-                <FiBriefcase size={16} color="#7c3aed" />
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verknüpfter Deal</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginTop: 2 }}>{project.deal.name}</div>
-                  {project.deal.amount != null && (
-                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-                      {formatCurrency(project.deal.amount, project.deal.currency || 'CHF')}
-                    </div>
-                  )}
-                </div>
-              </Link>
-            )}
             {projectTasks.length > 0 && (
               <button
                 onClick={() => setActiveTab('tasks')}
@@ -683,7 +666,7 @@ export default function ProjectDetailPage() {
                 const phaseBudget = mainPhases.reduce((s: number, p: any) => s + (p.budgetHours || 0), 0);
                 const totalBudget = project.budgetHours ?? phaseBudget;
                 const totalUsedAll = mainPhases.reduce(
-                  (s: number, p: any) => s + (p.timeEntries || []).reduce((s2: number, e: any) => s2 + (e.durationMinutes || 0), 0),
+                  (s: number, p: any) => s + (p.timeEntries || []).filter((e: any) => !e.task?.isBillableExtra).reduce((s2: number, e: any) => s2 + (e.durationMinutes || 0), 0),
                   0,
                 ) / 60;
                 return (
@@ -708,8 +691,8 @@ export default function ProjectDetailPage() {
                 return (
                   <>
                     {mainPhases.map((p: any) => {
-                      // Sum hours from timeEntries directly linked to this phase
-                      const phaseEntries = p.timeEntries || [];
+                      // Sum hours from timeEntries directly linked to this phase (Mehrkosten excluded from Kontingent)
+                      const phaseEntries = (p.timeEntries || []).filter((e: any) => !e.task?.isBillableExtra);
                       const used = phaseEntries.reduce((s: number, e: any) => s + (e.durationMinutes || 0), 0) / 60;
                       totalUsed += used;
                       const budget = p.budgetHours || 0;

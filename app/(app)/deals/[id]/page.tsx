@@ -611,23 +611,25 @@ export default function DealDetailPage() {
                     </div>
                   ))}
 
-                  {/* Quick Task creator — pre-fills dealId + projectId */}
-                  <div style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <input
-                      placeholder={linkedProject ? `Neue Aufgabe (verknüpft mit Deal + ${linkedProject.name})` : 'Neue Aufgabe (verknüpft mit Deal)'}
-                      value={newTaskTitle}
-                      onChange={e => setNewTaskTitle(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') quickCreateTask(); }}
-                      style={{ flex: 1, padding: '8px 12px', borderRadius: 7, border: '1px solid #d1d5db', fontSize: 13 }}
-                    />
-                    <button
-                      onClick={quickCreateTask}
-                      disabled={creatingTask || !newTaskTitle.trim()}
-                      style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 14px', fontWeight: 600, fontSize: 12, cursor: creatingTask || !newTaskTitle.trim() ? 'not-allowed' : 'pointer', opacity: creatingTask || !newTaskTitle.trim() ? 0.6 : 1 }}
-                    >
-                      {creatingTask ? '…' : '+ Aufgabe'}
-                    </button>
-                  </div>
+                  {/* Quick Task creator — only before a project exists; afterwards tasks are managed in the project */}
+                  {!linkedProject && (
+                    <div style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input
+                        placeholder={'Neue Aufgabe (verknüpft mit Deal)'}
+                        value={newTaskTitle}
+                        onChange={e => setNewTaskTitle(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') quickCreateTask(); }}
+                        style={{ flex: 1, padding: '8px 12px', borderRadius: 7, border: '1px solid #d1d5db', fontSize: 13 }}
+                      />
+                      <button
+                        onClick={quickCreateTask}
+                        disabled={creatingTask || !newTaskTitle.trim()}
+                        style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 14px', fontWeight: 600, fontSize: 12, cursor: creatingTask || !newTaskTitle.trim() ? 'not-allowed' : 'pointer', opacity: creatingTask || !newTaskTitle.trim() ? 0.6 : 1 }}
+                      >
+                        {creatingTask ? '…' : '+ Aufgabe'}
+                      </button>
+                    </div>
+                  )}
 
                   {/* Phase budget overview */}
                   {/* Phase budget overview — uses deal.phaseBudgets (phase-level) + task actual hours */}
@@ -636,8 +638,8 @@ export default function DealDetailPage() {
                     setDeal((d: any) => ({ ...d, phaseBudgets: budgets }));
                   }} />}
 
-                  {/* Sub-phases + Zahlungsplan */}
-                  <DealPhaseTree dealId={params.id as string} currency={deal.currency || 'CHF'} canViewPayments={isAdmin} />
+                  {/* Sub-phases + Zahlungsplan — locked once the deal became a project */}
+                  <DealPhaseTree dealId={params.id as string} currency={deal.currency || 'CHF'} canViewPayments={isAdmin} locked={!!linkedProject} />
                 </div>
               )}
             </div>

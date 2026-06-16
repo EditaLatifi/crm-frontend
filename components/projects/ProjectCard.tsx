@@ -22,6 +22,7 @@ type Project = {
   owner: { id: string; name: string; email: string };
   phases: Phase[];
   members: { userId: string; user: { id: string; name: string } }[];
+  milestones?: { completed: boolean }[];
 };
 
 export default function ProjectCard({ project }: { project: Project }) {
@@ -29,6 +30,12 @@ export default function ProjectCard({ project }: { project: Project }) {
   const completed = phases.filter(p => p.status === 'COMPLETED' || p.status === 'SKIPPED').length;
   const progress = phases.length > 0 ? Math.round((completed / phases.length) * 100) : 0;
   const currentPhase = phases.find(p => p.status === 'IN_PROGRESS') || phases.find(p => p.status === 'PENDING');
+
+  // Baufortschritt: completed vs total construction milestones (filled circle on the list).
+  const ms = project.milestones || [];
+  const msDone = ms.filter(m => m.completed).length;
+  const bau = ms.length > 0 ? Math.round((msDone / ms.length) * 100) : 0;
+  const R = 13, C = 2 * Math.PI * R;
 
   return (
     <Link href={`/projects/${project.id}`} style={{ textDecoration: 'none' }}>
@@ -86,7 +93,20 @@ export default function ProjectCard({ project }: { project: Project }) {
               </span>
             </div>
           </div>
-          <FiChevronRight size={16} color="#94a3b8" style={{ marginTop: 4, flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            {ms.length > 0 && (
+              <div style={{ position: 'relative', width: 34, height: 34 }} title={`Baufortschritt: ${msDone}/${ms.length} (${bau}%)`}>
+                <svg width="34" height="34" viewBox="0 0 34 34">
+                  <circle cx="17" cy="17" r={R} fill="none" stroke="#e2e8f0" strokeWidth="3" />
+                  <circle cx="17" cy="17" r={R} fill="none" stroke={bau === 100 ? '#22c55e' : '#3b82f6'} strokeWidth="3"
+                    strokeDasharray={C} strokeDashoffset={C * (1 - bau / 100)} strokeLinecap="round"
+                    transform="rotate(-90 17 17)" style={{ transition: 'stroke-dashoffset 0.4s' }} />
+                </svg>
+                <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#475569' }}>{bau}%</span>
+              </div>
+            )}
+            <FiChevronRight size={16} color="#94a3b8" style={{ marginTop: 4 }} />
+          </div>
         </div>
 
         {/* Progress bar */}

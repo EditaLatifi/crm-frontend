@@ -16,6 +16,8 @@ type ProjMilestone = {
   milestoneId?: string | null;
   name?: string | null;
   dueDate?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
   order: number;
   completed: boolean;
   completedAt?: string | null;
@@ -36,6 +38,8 @@ export default function BauforschrittPanel({ projectId, canEdit }: { projectId: 
   const [addOpen, setAddOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDue, setNewDue] = useState('');
+  const [newStart, setNewStart] = useState('');
+  const [newEnd, setNewEnd] = useState('');
   const [savingAdd, setSavingAdd] = useState(false);
 
   const loadAll = async () => {
@@ -102,8 +106,13 @@ export default function BauforschrittPanel({ projectId, canEdit }: { projectId: 
     if (!newName.trim()) return;
     setSavingAdd(true);
     try {
-      await api.post(`/projects/${projectId}/milestones/add`, { name: newName.trim(), dueDate: newDue || undefined });
-      setNewName(''); setNewDue(''); setAddOpen(false);
+      await api.post(`/projects/${projectId}/milestones/add`, {
+        name: newName.trim(),
+        startDate: newStart || undefined,
+        endDate: newEnd || undefined,
+        dueDate: newDue || undefined,
+      });
+      setNewName(''); setNewDue(''); setNewStart(''); setNewEnd(''); setAddOpen(false);
       await loadAll();
     } finally {
       setSavingAdd(false);
@@ -133,22 +142,27 @@ export default function BauforschrittPanel({ projectId, canEdit }: { projectId: 
         )}
       </div>
 
-      {/* Ad-hoc milestone add form (name + due date) */}
+      {/* Ad-hoc milestone add form (name + Beginn/Ende dates) */}
       {canEdit && addOpen && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-          <input
-            value={newName}
-            onChange={e => setNewName(e.target.value)}
-            placeholder="Meilenstein-Name (z.B. Aushub)"
-            style={{ flex: '1 1 200px', fontSize: 13, padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: 7 }}
-            autoFocus
-          />
-          <input
-            type="date"
-            value={newDue}
-            onChange={e => setNewDue(e.target.value)}
-            style={{ fontSize: 13, padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: 7 }}
-          />
+        <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div style={{ flex: '1 1 200px' }}>
+            <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 3 }}>Meilenstein</div>
+            <input
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              placeholder="z.B. Aushub"
+              style={{ width: '100%', fontSize: 13, padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: 7, boxSizing: 'border-box' }}
+              autoFocus
+            />
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 3 }}>Beginn</div>
+            <input type="date" value={newStart} onChange={e => setNewStart(e.target.value)} style={{ fontSize: 13, padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: 7 }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 3 }}>Ende</div>
+            <input type="date" value={newEnd} onChange={e => setNewEnd(e.target.value)} style={{ fontSize: 13, padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: 7 }} />
+          </div>
           <button onClick={addMilestone} disabled={savingAdd || !newName.trim()} style={btnPrimary}>
             {savingAdd ? 'Speichern…' : 'Hinzufügen'}
           </button>
@@ -212,7 +226,12 @@ export default function BauforschrittPanel({ projectId, canEdit }: { projectId: 
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', textDecoration: item.completed ? 'line-through' : 'none' }}>
                         {milestoneName(item)}
                       </div>
-                      <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
+                      <div style={{ display: 'flex', gap: 10, marginTop: 2, flexWrap: 'wrap' }}>
+                        {(item.startDate || item.endDate) && (
+                          <span style={{ fontSize: 11, color: '#64748b' }}>
+                            {item.startDate ? new Date(item.startDate).toLocaleDateString('de-CH') : '—'} – {item.endDate ? new Date(item.endDate).toLocaleDateString('de-CH') : '—'}
+                          </span>
+                        )}
                         {item.dueDate && (
                           <span style={{ fontSize: 11, color: !item.completed && new Date(item.dueDate) < new Date() ? '#dc2626' : '#64748b' }}>
                             Fällig: {new Date(item.dueDate).toLocaleDateString('de-CH')}

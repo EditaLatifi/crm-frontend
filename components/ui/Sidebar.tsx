@@ -54,8 +54,6 @@ const NAV_GROUPS: { label: string | null; minRole?: MinRole; items: { href: stri
     minRole: "admin",
     items: [
       { href: "/users", label: "Benutzer", icon: FiUsers, countKey: null, minRole: "admin" },
-      { href: "/admin/milestones", label: "Bauschritte", icon: FiTrendingUp, countKey: null, minRole: "admin" },
-      { href: "/admin/templates", label: "Projektvorlagen", icon: FiCopy, countKey: null, minRole: "admin" },
       { href: "/admin/vacation", label: "Urlaubsanträge", icon: FiUmbrella, countKey: null, minRole: "admin" },
       { href: "/activity", label: "Aktivitätsprotokoll", icon: FiList, countKey: null, minRole: "admin" },
     ],

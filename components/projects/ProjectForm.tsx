@@ -8,18 +8,21 @@ import {
 import AddressAutocomplete from '../ui/AddressAutocomplete';
 
 const PROJECT_TYPES = [
-  { value: 'HOUSE',                   label: '🏠  Haus' },
-  { value: 'APARTMENT',               label: '🏢  Wohnung' },
-  { value: 'RENOVATION',              label: '🔨  Renovation' },
-  { value: 'COMMERCIAL',              label: '🏪  Gewerbe' },
-  { value: 'CUSTOM',                  label: '✨  Sonstiges' },
-  { value: 'ARCHITECTURE',            label: '🏛️  Architektur' },
-  { value: 'INTERIOR_DESIGN',         label: '🛋️  Innenarchitektur' },
-  { value: 'CONSTRUCTION_MANAGEMENT', label: '🏗️  Bauleitung' },
-  { value: 'VISUALIZATION',           label: '🎨  Visualisierung' },
-  { value: 'REAL_ESTATE',             label: '🏠  Immobilien' },
-  { value: 'DIGITIZATION',            label: '💻  Digitalisierung' },
+  { value: 'ARCHITECTURE',              label: 'Architektur' },
+  { value: 'CONSTRUCTION_MANAGEMENT',   label: 'Bauleitung' },
+  { value: 'ARCHITEKTUR_UND_BAULEITUNG', label: 'Architektur und Bauleitung' },
+  { value: 'PROJEKTLEITUNG',            label: 'Projektleitung' },
+  { value: 'GENERALPLANER',             label: 'Generalplaner' },
 ];
+
+// Stundenkontingent auto-calc: Budget / MwSt / Stundensatz × Faktor (e.g. 100'000 → 480h). Editable.
+const VAT = 1.081;
+const HOURLY_RATE = 135; // Stundensatz CHF
+const FACTOR = 0.7;      // Faktor
+const calcKontingent = (budget: any): string => {
+  const n = parseFloat(budget);
+  return Number.isFinite(n) && n > 0 ? String(Math.round((n / VAT / HOURLY_RATE) * FACTOR)) : '';
+};
 
 const PROJECT_STATUSES = [
   { value: 'ACTIVE',    label: '● Aktiv',           color: '#22c55e' },
@@ -78,6 +81,13 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
   }, [initialData]);
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+  // Track whether the user manually edited the Kontingent (so auto-calc doesn't overwrite it).
+  const [budgetHoursTouched, setBudgetHoursTouched] = useState(false);
+  const onBudgetChange = (v: string) => setForm(f => ({
+    ...f,
+    budget: v,
+    budgetHours: budgetHoursTouched ? f.budgetHours : calcKontingent(v),
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -266,7 +276,7 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
             <span style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.02em' }}>{form.currency}</span>,
             <input
               style={{ ...inputWithIcon, paddingLeft: 44 }} type="number" min="0" value={form.budget}
-              onChange={e => set('budget', e.target.value)}
+              onChange={e => onBudgetChange(e.target.value)}
               onFocus={onFocus} onBlur={onBlur}
               placeholder="150 000"
             />
@@ -283,10 +293,12 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
           <label style={label}>Stundenkontingent</label>
           <input
             style={input} type="number" min="0" step="0.5" value={form.budgetHours}
-            onChange={e => set('budgetHours', e.target.value)}
+            onChange={e => { setBudgetHoursTouched(true); set('budgetHours', e.target.value); }}
             onFocus={onFocus} onBlur={onBlur}
-            placeholder="500"
+            placeholder="auto"
+            title="Wird automatisch aus dem Budget berechnet (Budget ÷ 1.081 ÷ 135 × 0.7) — überschreibbar."
           />
+          <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3 }}>auto aus Budget · überschreibbar</div>
         </div>
       </div>
 
