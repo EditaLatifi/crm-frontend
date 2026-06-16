@@ -42,18 +42,35 @@ export const STATUS_LABELS: Record<string, string> = {
 
 export const TYPE_LABELS: Record<string, string> = {
   ARCHITECTURE: 'Architektur',
-  INTERIOR_DESIGN: 'Innenarchitektur',
   CONSTRUCTION_MANAGEMENT: 'Bauleitung',
+  ARCHITEKTUR_UND_BAULEITUNG: 'Architektur und Bauleitung',
+  PROJEKTLEITUNG: 'Projektleitung',
+  GENERALPLANER: 'Generalplaner',
+  // legacy values (kept so existing projects still display correctly)
+  INTERIOR_DESIGN: 'Innenarchitektur',
   VISUALIZATION: 'Visualisierung',
   REAL_ESTATE: 'Immobilien',
   DIGITIZATION: 'Digitalisierung',
+  HOUSE: 'Haus',
+  APARTMENT: 'Wohnung',
+  RENOVATION: 'Renovation',
+  COMMERCIAL: 'Gewerbe',
+  CUSTOM: 'Sonstiges',
 };
 
 export const TYPE_ICONS: Record<string, string> = {
   ARCHITECTURE: '🏛️',
-  INTERIOR_DESIGN: '🛋️',
   CONSTRUCTION_MANAGEMENT: '🏗️',
+  ARCHITEKTUR_UND_BAULEITUNG: '🏛️',
+  PROJEKTLEITUNG: '📋',
+  GENERALPLANER: '🧭',
+  INTERIOR_DESIGN: '🛋️',
   VISUALIZATION: '🎨',
   REAL_ESTATE: '🏠',
   DIGITIZATION: '💻',
+  HOUSE: '🏠',
+  APARTMENT: '🏢',
+  RENOVATION: '🔨',
+  COMMERCIAL: '🏪',
+  CUSTOM: '✨',
 };

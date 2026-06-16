@@ -81,8 +81,9 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
   }, [initialData]);
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
-  // Track whether the user manually edited the Kontingent (so auto-calc doesn't overwrite it).
-  const [budgetHoursTouched, setBudgetHoursTouched] = useState(false);
+  // Track whether the Kontingent is "manual" so auto-calc doesn't overwrite it.
+  // When editing an existing project that already has a Kontingent, treat it as manual.
+  const [budgetHoursTouched, setBudgetHoursTouched] = useState(!!initialData?.budgetHours);
   const onBudgetChange = (v: string) => setForm(f => ({
     ...f,
     budget: v,

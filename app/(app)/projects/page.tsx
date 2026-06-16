@@ -12,7 +12,7 @@ import { formatCurrency } from '../../../src/lib/formatCurrency';
 import './projects.css';
 
 const STATUSES = ['ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED'];
-const TYPES = ['ARCHITECTURE', 'INTERIOR_DESIGN', 'CONSTRUCTION_MANAGEMENT', 'VISUALIZATION', 'REAL_ESTATE', 'DIGITIZATION'];
+const TYPES = ['ARCHITECTURE', 'CONSTRUCTION_MANAGEMENT', 'ARCHITEKTUR_UND_BAULEITUNG', 'PROJEKTLEITUNG', 'GENERALPLANER'];
 
 type View = 'grid' | 'list';
 
