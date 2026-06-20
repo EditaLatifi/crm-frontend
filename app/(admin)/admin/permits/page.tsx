@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api } from '../../../../src/api/client';
 import ProtectedRoute from '../../../../src/routes/ProtectedRoute';
+import AdminConfigTabs from '../../../../components/admin/AdminConfigTabs';
 import { PERMIT_STATUS_LABELS, PERMIT_STATUS_COLORS } from '../../../../components/permits/permitConfig';
 import { FiSearch, FiFilter } from 'react-icons/fi';
 import '../../../(app)/projects/projects.css';
@@ -39,6 +40,7 @@ function AdminPermitsContent() {
 
   return (
     <div className="proj-admin-page">
+      <AdminConfigTabs />
       <div className="proj-admin-header">
         <div>
           <h1 className="proj-page-title">Baubewilligungen</h1>

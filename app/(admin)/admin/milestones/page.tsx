@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { api } from '../../../../src/api/client';
 import { useAuth } from '../../../../src/auth/AuthProvider';
 import { useToast } from '../../../../components/ui/Toast';
+import AdminConfigTabs from '../../../../components/admin/AdminConfigTabs';
 import { FiPlus, FiEdit2, FiTrash2, FiArrowUp, FiArrowDown, FiCheck, FiX } from 'react-icons/fi';
 
 type Milestone = {
@@ -103,6 +104,7 @@ export default function AdminMilestonesPage() {
 
   return (
     <div style={{ padding: '28px 32px', maxWidth: 900, margin: '0 auto' }}>
+      <AdminConfigTabs />
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 6 }}>Bauforschritt – Stammdaten</h1>
       <p style={{ color: '#64748b', fontSize: 13, marginBottom: 24 }}>
         Verwalte die Liste der verfügbaren Bauschritte. Aktivierte Schritte können in jedem Projekt ausgewählt werden.

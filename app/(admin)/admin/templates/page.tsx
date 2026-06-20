@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { api } from '../../../../src/api/client';
 import { useAuth } from '../../../../src/auth/AuthProvider';
 import { useToast } from '../../../../components/ui/Toast';
+import AdminConfigTabs from '../../../../components/admin/AdminConfigTabs';
 import { FiPlus, FiTrash2, FiX, FiSave, FiEdit2 } from 'react-icons/fi';
 
 type Phase = { name: string; description?: string; order: number; budgetHours?: number | null };
@@ -73,6 +74,7 @@ export default function AdminTemplatesPage() {
 
   return (
     <div style={{ padding: '28px 32px', maxWidth: 1000, margin: '0 auto' }}>
+      <AdminConfigTabs />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Projektvorlagen</h1>

@@ -1,18 +1,7 @@
-import ProtectedRoute from '../../src/routes/ProtectedRoute';
+import { redirect } from 'next/navigation';
 
-function AdminPageContent() {
-  return (
-    <div>
-      <h1>Admin</h1>
-      <div>Admin-only views (users, time, reports) will appear here.</div>
-    </div>
-  );
-}
-
-export default function AdminPage() {
-  return (
-    <ProtectedRoute role="ADMIN">
-      <AdminPageContent />
-    </ProtectedRoute>
-  );
+// Root URL: there is no standalone landing page. Send everyone to the dashboard,
+// which itself handles auth (redirects to /login when not authenticated).
+export default function RootPage() {
+  redirect('/dashboard');
 }
