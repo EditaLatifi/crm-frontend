@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '../../../src/api/client';
 import { useAuth, isManagerRole } from '../../../src/auth/AuthProvider';
+import { useToast } from '../../../components/ui/Toast';
 import './deals-desktop.css';
 import './responsive.css';
 
@@ -38,22 +39,33 @@ export default function DealsPage() {
 }
 
 function DealsPageInner() {
+  const toast = useToast();
   const [modalOpen, setModalOpen] = useState(false);
   const [editDeal, setEditDeal] = useState<any | null>(null);
   const [dealsKey, setDealsKey] = useState(0);
   const [view, setView] = useState<ViewMode>('kanban');
 
   const handleCreate = async (data: any) => {
-    await api.post('/deals', data);
-    setModalOpen(false);
-    setDealsKey((k) => k + 1);
+    try {
+      await api.post('/deals', data);
+      toast.success('Deal erstellt.');
+      setModalOpen(false); // close only on success so a failed save keeps the typed data
+      setDealsKey((k) => k + 1);
+    } catch (err: any) {
+      toast.error('Deal konnte nicht erstellt werden: ' + (err?.message || 'Unbekannter Fehler'));
+    }
   };
 
   const handleEditSubmit = async (data: any) => {
     if (!editDeal) return;
-    await api.patch(`/deals/${editDeal.id}`, data);
-    setEditDeal(null);
-    setDealsKey((k) => k + 1);
+    try {
+      await api.patch(`/deals/${editDeal.id}`, data);
+      toast.success('Deal gespeichert.');
+      setEditDeal(null);
+      setDealsKey((k) => k + 1);
+    } catch (err: any) {
+      toast.error('Deal konnte nicht gespeichert werden: ' + (err?.message || 'Unbekannter Fehler'));
+    }
   };
 
   return (

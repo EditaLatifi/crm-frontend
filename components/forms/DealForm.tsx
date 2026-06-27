@@ -49,7 +49,7 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
     if (!name.trim()) e.name = 'Name ist erforderlich';
     else if (name.trim().length < 2) e.name = 'Name muss mindestens 2 Zeichen haben';
     if (!accountId) e.accountId = 'Konto ist erforderlich';
-    if (!stageId) e.stageId = 'Phase ist erforderlich';
+    if (!stageId) e.stageId = 'Verkaufsphase ist erforderlich';
     if (amount === '' || amount === null) e.amount = 'Betrag ist erforderlich';
     else if (isNaN(parseFloat(String(amount))) || parseFloat(String(amount)) < 0) e.amount = 'Betrag muss eine positive Zahl sein';
     return e;
@@ -95,9 +95,9 @@ export default function DealForm({ onSubmit, initialData }: DealFormProps) {
         {errors.accountId && <div style={errStyle}>{errors.accountId}</div>}
       </div>
       <div style={{ marginBottom: 16 }}>
-        <label>Phase *</label><br />
+        <label>Verkaufsphase *</label><br />
         <select value={stageId} onChange={e => setStageId(e.target.value)} style={inputStyle(!!errors.stageId)}>
-          <option value="">Phase auswählen</option>
+          <option value="">Verkaufsphase auswählen</option>
           {stages.map((s: any) => (
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}

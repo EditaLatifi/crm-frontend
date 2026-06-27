@@ -77,7 +77,7 @@ export default function DealDetailPage() {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editVal, setEditVal] = useState<any>("");
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'comments' | 'attachments' | 'phases'>('comments');
+  const [activeTab, setActiveTab] = useState<'comments' | 'attachments' | 'phases'>('phases');
   const [editMode, setEditMode] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -464,7 +464,7 @@ export default function DealDetailPage() {
 
           {/* Stage pipeline */}
           <div style={{ background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 14, padding: '20px 24px', marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 14 }}>Phase verschieben</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 14 }}>Verkaufsstufe ändern</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {stages.map((s: any) => {
                 const active = s.id === deal.stageId;
@@ -580,8 +580,12 @@ export default function DealDetailPage() {
               {/* ── LEISTUNGSPHASEN TAB ── */}
               {activeTab === 'phases' && (
                 <div>
-                  <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
-                    Relevante SIA-Leistungsphasen für diesen Deal auswählen:
+                  {/* Guidance: one clear model so users aren't confused by multiple phase surfaces (the core "too complicated" complaint). */}
+                  <div style={{ background: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#5b21b6', lineHeight: 1.7 }}>
+                    <strong>So funktionieren die Phasen:</strong><br />
+                    <strong>1.</strong> Unten die relevanten SIA-Leistungsphasen auswählen.<br />
+                    <strong>2.</strong> Die <strong>Übersicht</strong> zeigt Budget &amp; erfasste Stunden pro Phase. Das Phasen-Budget ist hier nur Anzeige; Task-Budgets lassen sich im Bearbeiten-Modus anpassen.<br />
+                    <strong>3.</strong> Stundenbudgets, Unterphasen und Zahlungsplan werden im <strong>Phasen-Editor</strong> ganz unten verwaltet — die <strong>massgebende Quelle</strong>.
                   </div>
                   {SIA_PHASES.map(group => (
                     <div key={group.group} style={{ marginBottom: 16 }}>
@@ -611,25 +615,7 @@ export default function DealDetailPage() {
                     </div>
                   ))}
 
-                  {/* Quick Task creator — only before a project exists; afterwards tasks are managed in the project */}
-                  {!linkedProject && (
-                    <div style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <input
-                        placeholder={'Neue Aufgabe (verknüpft mit Deal)'}
-                        value={newTaskTitle}
-                        onChange={e => setNewTaskTitle(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') quickCreateTask(); }}
-                        style={{ flex: 1, padding: '8px 12px', borderRadius: 7, border: '1px solid #d1d5db', fontSize: 13 }}
-                      />
-                      <button
-                        onClick={quickCreateTask}
-                        disabled={creatingTask || !newTaskTitle.trim()}
-                        style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 14px', fontWeight: 600, fontSize: 12, cursor: creatingTask || !newTaskTitle.trim() ? 'not-allowed' : 'pointer', opacity: creatingTask || !newTaskTitle.trim() ? 0.6 : 1 }}
-                      >
-                        {creatingTask ? '…' : '+ Aufgabe'}
-                      </button>
-                    </div>
-                  )}
+                  {/* Deal tasks removed (S3): deal nudges are handled by Follow-ups; work tasks live in the project. */}
 
                   {/* Phase budget overview */}
                   {/* Phase budget overview — uses deal.phaseBudgets (phase-level) + task actual hours */}
@@ -677,10 +663,9 @@ export default function DealDetailPage() {
 
           {deal.account && (
             <div style={{ background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 14, padding: '20px 22px' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>Verknüpftes Konto</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>{deal.account.name}</div>
-              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>{deal.account.type}</div>
-              <Link href="/accounts" style={{ fontSize: 12, color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>Konto anzeigen →</Link>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>Kunde</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>{deal.account.name}</div>
+              <Link href={deal.account.id ? `/accounts/${deal.account.id}` : '/accounts'} style={{ fontSize: 12, color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>Kunde anzeigen →</Link>
             </div>
           )}
 
@@ -759,38 +744,15 @@ function PhaseOverview({ deal, tasks, selectedPhases, editMode, onBudgetSave, on
   dealId: string;
   linkedProjectId?: string | null;
 }) {
-  const [addingForPhase, setAddingForPhase] = useState<string | null>(null);
-  const [phaseTaskTitle, setPhaseTaskTitle] = useState('');
-  const [creatingPhaseTask, setCreatingPhaseTask] = useState(false);
-
-  async function createPhaseTask(phaseCode: string) {
-    const title = phaseTaskTitle.trim();
-    if (!title) return;
-    setCreatingPhaseTask(true);
-    try {
-      await api.post('/tasks', {
-        title,
-        status: 'OPEN',
-        priority: 'MEDIUM',
-        dealId,
-        projectId: linkedProjectId ?? undefined,
-        accountId: deal?.accountId ?? undefined,
-        phase: phaseCode,
-      });
-      setPhaseTaskTitle('');
-      setAddingForPhase(null);
-      onTaskUpdated?.();
-    } catch {
-      // silent — toast handled elsewhere
-    } finally {
-      setCreatingPhaseTask(false);
-    }
-  }
   const budgets: Record<string, number> = deal.phaseBudgets && typeof deal.phaseBudgets === 'object' ? deal.phaseBudgets : {};
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [savingPhase, setSavingPhase] = useState<string | null>(null);
   const [expandedPhase, setExpandedPhase] = useState<string | null>(null);
   const selectedSet = new Set(selectedPhases.map(String));
+  // Phase-level hour budgets are now edited ONLY in the structured Phasen-Editor (DealPhaseTree),
+  // which is the single source of truth. Here they stay read-only so there aren't two conflicting
+  // budget editors. (Per-task budgets further below remain editable — DealPhaseTree doesn't manage those.)
+  const phaseBudgetEditable = false;
 
   useEffect(() => {
     const d: Record<string, string> = {};
@@ -887,7 +849,7 @@ function PhaseOverview({ deal, tasks, selectedPhases, editMode, onBudgetSave, on
                       </div>
                     </td>
                     <td style={tdS}>
-                      {editMode ? (
+                      {phaseBudgetEditable ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                           <input type="number" min="0" step="0.5" value={drafts[row.code] ?? ''} placeholder="—"
                             onChange={e => { e.stopPropagation(); setDrafts(d => ({ ...d, [row.code]: e.target.value })); }}
@@ -951,75 +913,16 @@ function PhaseOverview({ deal, tasks, selectedPhases, editMode, onBudgetSave, on
                         <td style={{ ...tdS, fontSize: 11 }}>{t.budgetHours ? (t.budgetHours - tUsed).toFixed(1) : '—'}</td>
                         <td style={tdS}>
                           <span style={{ fontSize: 9, fontWeight: 600, color: STATUS_CFG[t.status === 'DONE' ? 'done' : t.status === 'IN_PROGRESS' ? 'in_progress' : 'pending'].color, background: STATUS_CFG[t.status === 'DONE' ? 'done' : t.status === 'IN_PROGRESS' ? 'in_progress' : 'pending'].bg, borderRadius: 8, padding: '1px 6px' }}>
-                            {t.status === 'DONE' ? 'Erledigt' : t.status === 'IN_PROGRESS' ? 'In Arbeit' : 'Offen'}
+                            {t.status === 'DONE' ? 'Erledigt' : t.status === 'IN_PROGRESS' ? 'In Bearbeitung' : 'Offen'}
                           </span>
                         </td>
                       </tr>
                     );
                   })}
-                  {isExpanded && pt.length > 0 && addingForPhase === row.code && (
-                    <tr style={{ background: '#f0f7ff' }}>
-                      <td colSpan={6} style={{ ...tdS, paddingLeft: 32 }}>
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }} onClick={e => e.stopPropagation()}>
-                          <input
-                            autoFocus
-                            placeholder={`Aufgabe für Phase ${row.code}`}
-                            value={phaseTaskTitle}
-                            onChange={e => setPhaseTaskTitle(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') createPhaseTask(row.code); if (e.key === 'Escape') { setAddingForPhase(null); setPhaseTaskTitle(''); } }}
-                            style={{ flex: 1, padding: '4px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 11 }}
-                          />
-                          <button onClick={(e) => { e.stopPropagation(); createPhaseTask(row.code); }} disabled={creatingPhaseTask || !phaseTaskTitle.trim()} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 10, fontWeight: 600, cursor: 'pointer', opacity: !phaseTaskTitle.trim() ? 0.5 : 1 }}>{creatingPhaseTask ? '…' : '✓'}</button>
-                          <button onClick={(e) => { e.stopPropagation(); setAddingForPhase(null); setPhaseTaskTitle(''); }} style={{ background: '#E8E4DE', color: '#64748b', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 10, cursor: 'pointer' }}>✕</button>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                  {isExpanded && pt.length > 0 && addingForPhase !== row.code && (
-                    <tr style={{ background: '#f0f7ff' }}>
-                      <td colSpan={6} style={{ ...tdS, paddingLeft: 32, textAlign: 'right' }}>
-                        <button onClick={(e) => { e.stopPropagation(); setAddingForPhase(row.code); }} style={{ background: '#fff', color: '#1a1a1a', border: '1px dashed #cbd5e1', borderRadius: 6, padding: '3px 10px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>+ Aufgabe für Phase {row.code}</button>
-                      </td>
-                    </tr>
-                  )}
                   {isExpanded && pt.length === 0 && (
                     <tr style={{ background: '#f0f7ff' }}>
                       <td colSpan={6} style={{ ...tdS, paddingLeft: 32 }}>
-                        {addingForPhase === row.code ? (
-                          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }} onClick={e => e.stopPropagation()}>
-                            <input
-                              autoFocus
-                              placeholder={`Aufgabe für Phase ${row.code}`}
-                              value={phaseTaskTitle}
-                              onChange={e => setPhaseTaskTitle(e.target.value)}
-                              onKeyDown={e => { if (e.key === 'Enter') createPhaseTask(row.code); if (e.key === 'Escape') { setAddingForPhase(null); setPhaseTaskTitle(''); } }}
-                              style={{ flex: 1, padding: '4px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 11 }}
-                            />
-                            <button
-                              onClick={(e) => { e.stopPropagation(); createPhaseTask(row.code); }}
-                              disabled={creatingPhaseTask || !phaseTaskTitle.trim()}
-                              style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 10, fontWeight: 600, cursor: 'pointer', opacity: !phaseTaskTitle.trim() ? 0.5 : 1 }}
-                            >
-                              {creatingPhaseTask ? '…' : '✓'}
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setAddingForPhase(null); setPhaseTaskTitle(''); }}
-                              style={{ background: '#E8E4DE', color: '#64748b', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 10, cursor: 'pointer' }}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <span style={{ color: '#94a3b8', fontSize: 11 }}>Keine Tasks für diese Phase</span>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setAddingForPhase(row.code); }}
-                              style={{ background: '#fff', color: '#1a1a1a', border: '1px dashed #cbd5e1', borderRadius: 6, padding: '3px 10px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}
-                            >
-                              + Aufgabe
-                            </button>
-                          </div>
-                        )}
+                        <span style={{ color: '#94a3b8', fontSize: 11 }}>Keine Tasks für diese Phase</span>
                       </td>
                     </tr>
                   )}

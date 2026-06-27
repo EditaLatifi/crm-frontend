@@ -4,10 +4,9 @@ import Sidebar from "../components/ui/Sidebar";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "../src/routes/ProtectedRoute";
 import { useState, useEffect } from "react";
-import { FiMenu, FiSearch, FiPlus, FiClock } from "react-icons/fi";
+import { FiMenu, FiSearch } from "react-icons/fi";
 import GlobalSearch from "../components/ui/GlobalSearch";
 import NotificationBell from "../components/ui/NotificationBell";
-import LogTimeQuickModal from "../components/time/LogTimeQuickModal";
 import TimerWidget from "../components/time/TimerWidget";
 import { ping } from "../src/api/client";
 import "./responsive.css";
@@ -55,7 +54,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isShare = pathname?.startsWith("/share/");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [logTimeOpen, setLogTimeOpen] = useState(false);
 
   useEffect(() => {
     ping();
@@ -115,23 +113,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               ⌘K
             </kbd>
           </button>
-          <button
-            onClick={() => setLogTimeOpen(true)}
-            title="Zeit erfassen"
-            style={{
-              display: "flex", alignItems: "center", gap: 6, background: "#1a1a1a",
-              border: "none", borderRadius: 8, padding: "6px 12px",
-              fontSize: 13, color: "#fff", cursor: "pointer", fontWeight: 600,
-            }}
-          >
-            <FiClock size={13} />
-            <span className="log-time-label">Zeit erfassen</span>
-          </button>
           <NotificationBell />
         </div>
       </div>
 
-      <LogTimeQuickModal open={logTimeOpen} onClose={() => setLogTimeOpen(false)} />
       <TimerWidget />
 
       {/* Sidebar for desktop */}

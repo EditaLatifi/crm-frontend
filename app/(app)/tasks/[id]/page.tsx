@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useAuth } from "../../../../src/auth/AuthProvider";
 import { api } from "../../../../src/api/client";
 import { getAllPhaseCodes } from "../../../../src/lib/siaPhases";
+import LogTimeQuickModal from "../../../../components/time/LogTimeQuickModal";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   OPEN:        { label: "Offen",          color: "#1d4ed8", bg: "#dbeafe" },
@@ -76,8 +77,7 @@ export default function TaskDetailsPage() {
   const [newComment, setNewComment] = useState("");
   const [loadingComment, setLoadingComment] = useState(false);
 
-  const [newTime, setNewTime] = useState({ startedAt: "", endedAt: "", description: "", date: new Date().toISOString().slice(0, 10), hours: "", minutes: "" });
-  const [loadingTime, setLoadingTime] = useState(false);
+  const [timeModalOpen, setTimeModalOpen] = useState(false);
 
   const [editMode, setEditMode] = useState(false);
   const [editTitle, setEditTitle] = useState("");
@@ -152,31 +152,6 @@ export default function TaskDetailsPage() {
       showToast(e?.message || "Fehler beim Hinzufügen", "error");
     }
     setLoadingComment(false);
-  };
-
-  const handleAddTime = async () => {
-    const h = parseInt(newTime.hours || "0");
-    const m = parseInt(newTime.minutes || "0");
-    const durationMinutes = h * 60 + m;
-    if (durationMinutes <= 0) { showToast("Bitte Dauer angeben (Stunden/Minuten)", "error"); return; }
-    const date = newTime.date || new Date().toISOString().slice(0, 10);
-    setLoadingTime(true);
-    try {
-      await api.post(`/time-entries`, {
-        durationMinutes,
-        date,
-        description: newTime.description,
-        taskId,
-        projectId: task?.projectId || undefined,
-        accountId: task?.accountId || undefined,
-      });
-      setNewTime({ startedAt: "", endedAt: "", description: "", date: new Date().toISOString().slice(0, 10), hours: "", minutes: "" });
-      fetchTask();
-      showToast("Zeit erfasst");
-    } catch (e: any) {
-      showToast(e?.message || "Fehler", "error");
-    }
-    setLoadingTime(false);
   };
 
   // Load the linked project's phases so a project task can be reassigned to a real phase.
@@ -359,7 +334,7 @@ export default function TaskDetailsPage() {
                     onChange={e => handleStatusChange(e.target.value)}
                     style={{
                       appearance: "none", border: "none", background: statusCfg.bg, color: statusCfg.color,
-                      fontWeight: 600, fontSize: 12, padding: "4px 24px 4px 10px", borderRadius: 20,
+                      fontWeight: 600, fontSize: 14, padding: "9px 28px 9px 14px", borderRadius: 20,
                       cursor: "pointer", letterSpacing: "0.02em"
                     }}
                   >
@@ -376,8 +351,8 @@ export default function TaskDetailsPage() {
                     onChange={e => handlePriorityChange(e.target.value)}
                     style={{
                       appearance: "none", border: "1px solid #E8E4DE", background: "#fff",
-                      color: priorityCfg.color, fontWeight: 500, fontSize: 12,
-                      padding: "4px 24px 4px 10px", borderRadius: 8, cursor: "pointer"
+                      color: priorityCfg.color, fontWeight: 500, fontSize: 14,
+                      padding: "9px 28px 9px 14px", borderRadius: 8, cursor: "pointer"
                     }}
                   >
                     {Object.entries(PRIORITY_CONFIG).map(([k, v]) => (
@@ -487,7 +462,7 @@ export default function TaskDetailsPage() {
                     <div style={{ gridColumn: "1 / -1" }}>
                       <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#374151", cursor: "pointer" }}>
                         <input type="checkbox" checked={editPaymentReminder} onChange={e => setEditPaymentReminder(e.target.checked)} />
-                        Zahlungserinnerung (Payment Reminder)
+                        Zahlungserinnerung
                       </label>
                     </div>
                     {isAdmin && (
@@ -803,6 +778,13 @@ export default function TaskDetailsPage() {
               {/* ── TIME TAB ── */}
               {activeTab === "time" && (
                 <>
+                  {/* Time always lands on the project phase (single carrier) — make that explicit so it doesn't feel like a separate place to count hours. */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "#eff6ff", border: "1px solid #dbeafe", borderRadius: 8, marginBottom: 12, fontSize: 12, color: "#1e40af" }}>
+                    <span>ℹ️</span>
+                    <span>
+                      Diese Stunden werden auf die <strong>Phase{task?.linkedFromPhase ? ` „${task.linkedFromPhase.name}"` : task?.phase ? ` ${task.phase}` : ''}</strong> des Projekts gebucht — Aufgaben sind nur die Checkliste, die Phase trägt die Zeit.
+                    </span>
+                  </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 300, overflowY: "auto" }}>
                     {timeEntries.length === 0 && (
                       <div style={{ textAlign: "center", padding: "24px 0", color: "#94a3b8", fontSize: 13 }}>
@@ -827,67 +809,28 @@ export default function TaskDetailsPage() {
                     {totalMin > 0 && (
                       <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: 4 }}>
                         <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a" }}>
-                          Gesamt: {Math.floor(totalMin / 60)}h {totalMin % 60}min
+                          Auf diese Aufgabe gebucht: {Math.floor(totalMin / 60)}h {totalMin % 60}min
                         </span>
                       </div>
                     )}
                   </div>
 
-                  {/* Add time form */}
-                  <div style={{ borderTop: "1px solid #E8E4DE", paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: "#64748b" }}>+ Zeit erfassen</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 80px", gap: 8 }}>
-                      <div>
-                        <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 4 }}>Datum</label>
-                        <input
-                          type="date"
-                          value={newTime.date}
-                          onChange={e => setNewTime(nt => ({ ...nt, date: e.target.value }))}
-                          style={{ width: "100%", padding: "7px 9px", border: "1px solid #E8E4DE", borderRadius: 7, fontSize: 12, boxSizing: "border-box" }}
-                        />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 4 }}>Stunden</label>
-                        <input
-                          type="number" min={0} max={23}
-                          value={newTime.hours}
-                          onChange={e => setNewTime(nt => ({ ...nt, hours: e.target.value }))}
-                          placeholder="0"
-                          style={{ width: "100%", padding: "7px 9px", border: "1px solid #E8E4DE", borderRadius: 7, fontSize: 12, boxSizing: "border-box" }}
-                        />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 4 }}>Minuten</label>
-                        <input
-                          type="number" min={0} max={59} step={5}
-                          value={newTime.minutes}
-                          onChange={e => setNewTime(nt => ({ ...nt, minutes: e.target.value }))}
-                          placeholder="0"
-                          style={{ width: "100%", padding: "7px 9px", border: "1px solid #E8E4DE", borderRadius: 7, fontSize: 12, boxSizing: "border-box" }}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 4 }}>Beschreibung (optional)</label>
-                      <input
-                        value={newTime.description}
-                        onChange={e => setNewTime(nt => ({ ...nt, description: e.target.value }))}
-                        placeholder="Was wurde gemacht..."
-                        style={{ width: "100%", padding: "7px 9px", border: "1px solid #E8E4DE", borderRadius: 7, fontSize: 12, boxSizing: "border-box" }}
-                      />
-                    </div>
-                    {task?.phase && <div style={{ fontSize: 11, color: "#7c3aed", fontWeight: 600 }}>Phase: {task.phase} {task?.projectId ? '| Projekt verknüpft' : ''}</div>}
+                  {/* Add time — uses the ONE unified modal (phase pre-filled), same as everywhere else */}
+                  <div style={{ borderTop: "1px solid #E8E4DE", paddingTop: 16 }}>
                     <button
-                      onClick={handleAddTime}
-                      disabled={loadingTime || (parseInt(newTime.hours || "0") * 60 + parseInt(newTime.minutes || "0")) <= 0}
+                      onClick={() => setTimeModalOpen(true)}
                       style={{
                         padding: "9px 16px", background: "#1a1a1a", color: "#fff", border: "none",
                         borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                        opacity: loadingTime || (parseInt(newTime.hours || "0") * 60 + parseInt(newTime.minutes || "0")) <= 0 ? 0.5 : 1
                       }}
                     >
-                      {loadingTime ? "Speichern..." : "Zeit erfassen"}
+                      + Zeit erfassen
                     </button>
+                    {!task?.projectId && (
+                      <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>
+                        Diese Aufgabe ist mit keinem Projekt verknüpft — wähle das Projekt im Dialog.
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -923,6 +866,14 @@ export default function TaskDetailsPage() {
           </div>
         </div>
       </div>
+      <LogTimeQuickModal
+        open={timeModalOpen}
+        onClose={() => setTimeModalOpen(false)}
+        onSaved={fetchTask}
+        defaultProjectId={task?.projectId || undefined}
+        defaultTaskId={taskId}
+        defaultPhaseId={task?.projectPhaseId || undefined}
+      />
     </div>
   );
 }

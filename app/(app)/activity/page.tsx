@@ -2,11 +2,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../src/api/client";
 import Link from "next/link";
+import { useAuth, isAdminRole } from "../../../src/auth/AuthProvider";
 
 interface Activity {
   id: string;
   actorUserId: string;
-  actorUser?: { name: string };
+  actor?: { name: string };
   entityType: string;
   entityId: string;
   action: string;
@@ -105,6 +106,7 @@ const labelStyle: React.CSSProperties = {
 };
 
 export default function ActivityPage() {
+  const { user } = useAuth();
   const [data, setData] = useState<Activity[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -152,6 +154,16 @@ export default function ActivityPage() {
     setDateFrom("");
     setDateTo("");
   };
+
+  // Audit log is admin-only — gate the page so URL access matches the already-hidden nav item.
+  if (!isAdminRole(user?.role)) {
+    return (
+      <div style={{ padding: 48, textAlign: "center", color: "#64748b" }}>
+        <h1 style={{ fontSize: 18, fontWeight: 700, color: "#1a1a1a", marginBottom: 8 }}>Zugriff verweigert</h1>
+        <p>Das Aktivitätsprotokoll ist nur für Administratoren sichtbar.</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1100, margin: "0 auto" }}>
@@ -313,7 +325,7 @@ export default function ActivityPage() {
                       {formatDateTime(a.createdAt)}
                     </td>
                     <td style={{ padding: "12px 16px", color: "#333", fontWeight: 500 }}>
-                      {a.actorUser?.name || "\u2013"}
+                      {a.actor?.name || "\u2013"}
                     </td>
                     <td style={{ padding: "12px 16px" }}>
                       <span style={{

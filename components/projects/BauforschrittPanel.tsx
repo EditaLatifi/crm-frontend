@@ -129,7 +129,7 @@ export default function BauforschrittPanel({ projectId, canEdit }: { projectId: 
   return (
     <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '20px 22px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Bauforschritt</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Baufortschritt</div>
         {canEdit && (
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => setAddOpen(o => !o)} style={btnSecondary}>

@@ -172,9 +172,11 @@ export default function ContactsTable({
               <tr>
                 <td
                   colSpan={adminView ? 6 : 5}
-                  style={{ padding: '48px 24px', textAlign: 'center', color: '#94a3b8', fontSize: 14 }}
+                  style={{ padding: '48px 24px', textAlign: 'center' }}
                 >
-                  Keine Kontakte gefunden.
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>👤</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#475569', marginBottom: 4 }}>Noch keine Kontakte</div>
+                  <div style={{ fontSize: 13, color: '#94a3b8' }}>Füge deinen ersten Kontakt über „+ Neuer Kontakt" oben rechts hinzu.</div>
                 </td>
               </tr>
             ) : (

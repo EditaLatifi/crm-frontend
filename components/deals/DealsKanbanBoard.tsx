@@ -164,7 +164,7 @@ export default function DealsKanbanBoard({ onEdit, onRefresh }: { onEdit?: (deal
                               }}
                             >
                               <Link href={`/deals/${deal.id}`} style={{ textDecoration: "none" }}>
-                                <div style={{ fontWeight: 700, fontSize: 13, color: "#1e293b", marginBottom: 4, lineHeight: 1.35 }}>
+                                <div style={{ fontWeight: 700, fontSize: 13, color: "#1e293b", marginBottom: 4, lineHeight: 1.35, textDecoration: "underline", textUnderlineOffset: 2 }}>
                                   {deal.name}
                                 </div>
                               </Link>
@@ -192,16 +192,22 @@ export default function DealsKanbanBoard({ onEdit, onRefresh }: { onEdit?: (deal
                                   ))}
                                 </div>
                               )}
-                              {onEdit && (
-                                <div style={{ display: "flex", gap: 6, marginTop: 8, justifyContent: "flex-end" }}>
+                              <div style={{ display: "flex", gap: 6, marginTop: 8, justifyContent: "flex-end", alignItems: "center" }}>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); router.push(`/deals/${deal.id}`); }}
+                                  style={{ background: "#1a1a1a", border: "none", borderRadius: 6, padding: "5px 12px", cursor: "pointer", color: "#fff", fontSize: 12, fontWeight: 600 }}
+                                >
+                                  Öffnen
+                                </button>
+                                {onEdit && (
                                   <button
                                     onClick={(e) => { e.stopPropagation(); onEdit(deal); }}
                                     style={{ background: "#eff6ff", border: "none", borderRadius: 6, padding: "4px 9px", cursor: "pointer", color: "#2563eb", display: "flex", alignItems: "center" }}
                                   >
                                     <FiEdit2 size={13} />
                                   </button>
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </div>
                           )}
                         </Draggable>

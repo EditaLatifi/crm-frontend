@@ -11,14 +11,15 @@ export const metadata = {
   },
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover' as const,
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de">
-      <head>
-        <link rel="icon" href="/logoip3.png" type="image/png" />
-        <title>IP3 CRM</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-      </head>
       <body>
         <Providers>
           <AppShell>{children}</AppShell>

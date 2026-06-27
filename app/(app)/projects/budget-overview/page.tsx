@@ -56,10 +56,11 @@ export default function BudgetOverviewPage() {
       const projects = projRes?.data ?? (Array.isArray(projRes) ? projRes : []);
       const timeEntries = Array.isArray(timeRes) ? timeRes : [];
 
-      // Sum hours per project from time entries
+      // Sum hours per project from time entries — EXCLUDE Mehrkosten (isBillableExtra), to match
+      // the canonical getPhaseKontingent / phase hub so the same project never shows two different numbers.
       const usedByProject: Record<string, number> = {};
       for (const te of timeEntries) {
-        if (te.projectId) {
+        if (te.projectId && !(te.isBillableExtra || te.task?.isBillableExtra)) {
           usedByProject[te.projectId] = (usedByProject[te.projectId] || 0) + (te.durationMinutes || 0);
         }
       }
@@ -161,8 +162,8 @@ export default function BudgetOverviewPage() {
         </table>
       </Section>
 
-      {/* Projects table */}
-      <Section title="Alle Projekte">
+      {/* Per-project — money and hours split into two clearly-titled blocks so CHF and Stunden are never mixed in one grid */}
+      <Section title="💰 Finanzen pro Projekt (CHF)">
         <table style={tbl}>
           <thead>
             <tr style={trh}>
@@ -173,9 +174,6 @@ export default function BudgetOverviewPage() {
               <th style={thR}>Geschätzt</th>
               <th style={thR}>Tatsächlich</th>
               <th style={thR}>Verbleibend</th>
-              <th style={thR}>Kontingent (h)</th>
-              <th style={thR}>Erfasst (h)</th>
-              <th style={thR}>Verfügbar (h)</th>
             </tr>
           </thead>
           <tbody>
@@ -192,6 +190,31 @@ export default function BudgetOverviewPage() {
                 <td style={{ ...tdR, color: p.remaining < 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}>
                   {formatCurrency(p.remaining, p.currency || 'CHF')}
                 </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Section>
+
+      {/* Per-project hours / capacity — kept separate from the CHF block above */}
+      <Section title="⏱️ Auslastung pro Projekt (Stunden)">
+        <table style={tbl}>
+          <thead>
+            <tr style={trh}>
+              <th style={th}>Projekt</th>
+              <th style={th}>Status</th>
+              <th style={thR}>Kontingent (h)</th>
+              <th style={thR}>Erfasst (h)</th>
+              <th style={thR}>Verfügbar (h)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.projects.map(p => (
+              <tr key={p.id} style={trb}>
+                <td style={td}>
+                  <Link href={`/projects/${p.id}`} style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>{p.name}</Link>
+                </td>
+                <td style={td}>{STATUS_LABELS[p.status] || p.status}</td>
                 <td style={tdR}>
                   {hours[p.id]?.budgetHours ? `${hours[p.id].budgetHours}h` : '—'}
                 </td>

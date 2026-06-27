@@ -6,9 +6,7 @@ import { ROLE_LABELS } from '../../../../src/lib/labels';
 import { formatCurrency } from '../../../../src/lib/formatCurrency';
 import { useAuth, canViewFinancials } from '../../../../src/auth/AuthProvider';
 import PhaseTimeline from '../../../../components/projects/PhaseTimeline';
-import EffektivView from '../../../../components/projects/EffektivView';
 import LogTimeQuickModal from '../../../../components/time/LogTimeQuickModal';
-import { FiClock } from 'react-icons/fi';
 import BauforschrittPanel from '../../../../components/projects/BauforschrittPanel';
 import ProjectForm from '../../../../components/projects/ProjectForm';
 import Modal from '../../../../components/ui/Modal';
@@ -36,11 +34,10 @@ type Tab = 'overview' | 'baufortschritt' | 'tasks' | 'team' | 'documents' | 'tim
 const TABS: { id: Tab; label: string; icon: any; roles?: string[] }[] = [
   { id: 'overview',       label: 'Phasen',          icon: FiLayers },
   { id: 'baufortschritt', label: 'Baufortschritt',  icon: FiTruck },
-  { id: 'tasks',          label: 'Aufgaben',        icon: FiCheckSquare },
-  { id: 'team',           label: 'Team',            icon: FiUsers },
+  { id: 'tasks',          label: 'Aufgaben',        icon: FiCheckSquare, roles: ['ADMIN', 'PROJEKTLEITER', 'MITARBEITER'] },
+  { id: 'team',           label: 'Team',            icon: FiUsers, roles: ['ADMIN', 'PROJEKTLEITER', 'MITARBEITER'] },
   { id: 'documents',      label: 'Dokumente',       icon: FiFolder },
-  { id: 'time',           label: 'Zeiterfassung',   icon: FiCalendar },
-  { id: 'budget',         label: 'Budget',          icon: LuCoins, roles: ['ADMIN', 'PROJEKTLEITER'] },
+  { id: 'budget',         label: 'Baukosten',       icon: LuCoins, roles: ['ADMIN', 'PROJEKTLEITER'] },
   { id: 'permits',        label: 'Baubewilligung',  icon: FiFileText },
 ];
 
@@ -62,10 +59,14 @@ export default function ProjectDetailPage() {
   const [activeTab,       setActiveTab]       = useState<Tab>('overview');
   const [projectTasks,    setProjectTasks]    = useState<any[]>([]);
   const [logTimeOpen,     setLogTimeOpen]     = useState(false);
+  const [logTimePhaseId,  setLogTimePhaseId]  = useState<string | undefined>(undefined);
 
   const isAdmin  = user?.role === 'ADMIN';
+  const isExtern = user?.role === 'EXTERN';
+  const isManager = user?.role === 'ADMIN' || user?.role === 'PROJEKTLEITER';
   const isOwner  = project?.ownerUserId === user?.id || project?.owner?.id === user?.id;
-  const canEdit  = isAdmin || isOwner;
+  // Projektleiter are co-managers: they may edit projects, not only the ones they own.
+  const canEdit  = isAdmin || isManager || isOwner;
 
   const load = useCallback(async () => {
     try {
@@ -217,26 +218,26 @@ export default function ProjectDetailPage() {
                   <p style={{ margin: 0, fontSize: 14, color: '#475569', maxWidth: 500 }}>{project.description}</p>
                 )}
               </div>
-              {(isAdmin || (user?.role && user.role !== 'EXTERN')) && (
+              {(showFinancials || isExtern) && (
                 <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
-                  {isAdmin && project.budget && (
+                  {(project.budget || isExtern) && (
                     <div style={{ border: '1.5px solid #16a34a', borderRadius: 10, padding: '10px 16px', minWidth: 130 }}>
-                      <div style={{ fontSize: 10, color: '#16a34a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Kunden-Offerte</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>{formatCurrency(project.budget, project.currency || 'CHF')}</div>
+                      <div style={{ fontSize: 10, color: '#16a34a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{isExtern ? 'Vereinbarter Preis' : 'Kunden-Offerte'}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>{project.budget ? formatCurrency(project.budget, project.currency || 'CHF') : 'Noch nicht festgelegt'}</div>
                     </div>
                   )}
-                  {(() => {
+                  {!isExtern && (() => {
                     // Prefer project-level budgetHours; fallback to sum of main-phase budgets
                     const phaseBudgetH = mainPhases.reduce((s: number, ph: any) => s + (ph.budgetHours || 0), 0);
                     const totalBudgetH = project.budgetHours ?? phaseBudgetH;
                     if (!totalBudgetH) return null;
-                    const totalUsedMin = mainPhases.reduce((s: number, ph: any) => s + ((ph.timeEntries || []).filter((te: any) => !te.task?.isBillableExtra).reduce((s2: number, te: any) => s2 + (te.durationMinutes || 0), 0)), 0);
+                    const totalUsedMin = mainPhases.reduce((s: number, ph: any) => s + ((ph.timeEntries || []).filter((te: any) => !(te.isBillableExtra || te.task?.isBillableExtra)).reduce((s2: number, te: any) => s2 + (te.durationMinutes || 0), 0)), 0);
                     const totalUsedH = totalUsedMin / 60;
                     const pct = Math.round((totalUsedH / totalBudgetH) * 100);
                     const barColor = pct >= 100 ? '#dc2626' : pct >= 80 ? '#d97706' : '#3b82f6';
                     return (
-                      <div style={{ border: '1.5px solid #3b82f6', borderRadius: 10, padding: '10px 16px', minWidth: 150 }}>
-                        <div style={{ fontSize: 10, color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Kontingent</div>
+                      <div title="Geplante Stunden für das Projekt: erfasst / geplant. Mehrkosten zählen nicht mit." style={{ border: '1.5px solid #3b82f6', borderRadius: 10, padding: '10px 16px', minWidth: 150, cursor: 'help' }}>
+                        <div style={{ fontSize: 10, color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Kontingent (Std.)</div>
                         <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>{totalUsedH.toFixed(1)}h / {totalBudgetH}h</div>
                         <div style={{ height: 4, background: '#e5e7eb', borderRadius: 4, marginTop: 6, overflow: 'hidden' }}>
                           <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: barColor, borderRadius: 4 }} />
@@ -314,28 +315,38 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
-        {/* Verknüpfte Aufgaben (Deal-Karte entfernt — minimalistisch, Deal/Projekt integriert) */}
-        {projectTasks.length > 0 && (
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
-            {projectTasks.length > 0 && (
-              <button
-                onClick={() => setActiveTab('tasks')}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 12, padding: '12px 18px', minWidth: 220, cursor: 'pointer', textAlign: 'left' }}
-              >
-                <FiCheckSquare size={16} color="#15803d" />
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verknüpfte Aufgaben</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginTop: 2 }}>
-                    {projectTasks.length} {projectTasks.length === 1 ? 'Aufgabe' : 'Aufgaben'}
-                  </div>
-                  <div style={{ fontSize: 12, color: '#16a34a', marginTop: 2 }}>
-                    {projectTasks.filter((t: any) => t.status !== 'DONE').length} offen → ansehen
-                  </div>
-                </div>
-              </button>
-            )}
+        {/* Summary cards: SIA Leistungsphasen progress is the canonical headline number;
+            Baufortschritt (construction site) is the secondary metric, shown in its own tab. */}
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '14px 18px', minWidth: 260 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Projektfortschritt</span>
+              <span style={{ fontSize: 20, fontWeight: 800, color: '#1e293b' }}>{progress}%</span>
+            </div>
+            <div style={{ height: 8, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${progress}%`, borderRadius: 99, background: progress === 100 ? 'linear-gradient(90deg,#22c55e,#16a34a)' : 'linear-gradient(90deg,#3b82f6,#6366f1)', transition: 'width 0.3s' }} />
+            </div>
+            <div style={{ fontSize: 12, color: '#94a3b8' }}>{completedCount} von {mainPhases.length} SIA-Leistungsphasen abgeschlossen</div>
           </div>
-        )}
+
+          {projectTasks.length > 0 && (
+            <button
+              onClick={() => setActiveTab('tasks')}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 12, padding: '12px 18px', minWidth: 220, cursor: 'pointer', textAlign: 'left' }}
+            >
+              <FiCheckSquare size={16} color="#15803d" />
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verknüpfte Aufgaben</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginTop: 2 }}>
+                  {projectTasks.length} {projectTasks.length === 1 ? 'Aufgabe' : 'Aufgaben'}
+                </div>
+                <div style={{ fontSize: 12, color: '#16a34a', marginTop: 2 }}>
+                  {projectTasks.filter((t: any) => t.status !== 'DONE').length} offen → ansehen
+                </div>
+              </div>
+            </button>
+          )}
+        </div>
 
         {/* Tab content */}
         <div>
@@ -345,7 +356,7 @@ export default function ProjectDetailPage() {
             <div>
               {/* SIA Phase Timeline */}
               <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '16px 24px', marginBottom: 16 }}>
-                <PhaseTimeline projectId={id} phases={phases} canEdit={canEdit} onUpdate={load} />
+                <PhaseTimeline projectId={id} phases={phases} canEdit={canEdit} onUpdate={load} showFinancials={showFinancials} onLogTime={(phaseId) => { setLogTimePhaseId(phaseId); setLogTimeOpen(true); }} />
               </div>
 
               <div className="proj-detail-grid">
@@ -409,8 +420,8 @@ export default function ProjectDetailPage() {
                       <select value={addMemberRole} onChange={e => setAddMemberRole(e.target.value)}
                         style={{ width: '100%', padding: '7px 10px', borderRadius: 7, border: '1px solid #e2e8f0', fontSize: 12, marginBottom: 8, background: '#f8fafc' }}>
                         <option value="">Rolle wählen…</option>
-                        <option value="DEVELOPER">Developer</option>
-                        <option value="DESIGNER">Designer</option>
+                        <option value="DEVELOPER">Fachplaner</option>
+                        <option value="DESIGNER">Gestalter</option>
                         <option value="ARCHITECT">Architekt</option>
                         <option value="PROJECT_MANAGER">Projektmanager</option>
                         <option value="CONSULTANT">Berater</option>
@@ -486,8 +497,8 @@ export default function ProjectDetailPage() {
                       <option value="">Rolle wählen...</option>
                       <option value="ARCHITECT">Architekt</option>
                       <option value="PROJECT_MANAGER">Projektmanager</option>
-                      <option value="DEVELOPER">Developer</option>
-                      <option value="DESIGNER">Designer</option>
+                      <option value="DEVELOPER">Fachplaner</option>
+                      <option value="DESIGNER">Gestalter</option>
                       <option value="CONSULTANT">Berater</option>
                       <option value="OBSERVER">Beobachter</option>
                     </select>
@@ -506,7 +517,6 @@ export default function ProjectDetailPage() {
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px 28px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Aufgaben ({projectTasks.length})</h2>
-                <Link href="/tasks" style={{ fontSize: 13, color: '#1a1a1a', textDecoration: 'none', fontWeight: 600 }}>Alle Aufgaben →</Link>
               </div>
 
               {projectTasks.length === 0 ? (
@@ -515,90 +525,14 @@ export default function ProjectDetailPage() {
                 </div>
               ) : (
                 <>
-                  {/* Phase overview from project tasks */}
-                  {(() => {
-                    const byPhase: Record<string, { tasks: any[]; budget: number; used: number }> = {};
-                    projectTasks.forEach((t: any) => {
-                      const ph = t.phase || 'Ohne Phase';
-                      if (!byPhase[ph]) byPhase[ph] = { tasks: [], budget: 0, used: 0 };
-                      byPhase[ph].tasks.push(t);
-                      byPhase[ph].budget += t.budgetHours || 0;
-                      byPhase[ph].used += (t.timeEntries || []).reduce((s: number, e: any) => s + (e.durationMinutes || 0), 0) / 60;
-                    });
-                    const phases = Object.entries(byPhase).sort(([a], [b]) => a.localeCompare(b));
-                    const totalBudget = phases.reduce((s, [, d]) => s + d.budget, 0);
-                    const totalUsed = phases.reduce((s, [, d]) => s + d.used, 0);
-
-                    return (
-                      <div style={{ overflowX: 'auto', borderRadius: 10, border: '1px solid #e5e7eb', marginBottom: 20 }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                          <thead>
-                            <tr style={{ background: '#f8fafc' }}>
-                              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Phase</th>
-                              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Tasks</th>
-                              {showFinancials && <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Budget (h)</th>}
-                              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Effektiv (h)</th>
-                              {showFinancials && <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Verbleibend</th>}
-                              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb' }}>Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {phases.map(([ph, data]) => {
-                              const allDone = data.tasks.every((t: any) => t.status === 'DONE');
-                              const hasProgress = data.tasks.some((t: any) => t.status === 'IN_PROGRESS' || data.used > 0);
-                              const status = allDone ? 'done' : hasProgress ? 'in_progress' : 'pending';
-                              const over = data.budget > 0 && data.used > data.budget;
-                              const statusCfg: Record<string, { label: string; color: string; bg: string }> = {
-                                pending: { label: 'Nicht gestartet', color: '#64748b', bg: '#f1f5f9' },
-                                in_progress: { label: 'In Bearbeitung', color: '#d97706', bg: '#fef3c7' },
-                                done: { label: 'Abgeschlossen', color: '#16a34a', bg: '#dcfce7' },
-                              };
-                              const sc = statusCfg[status];
-                              return (
-                                <tr key={ph} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                  <td style={{ padding: '10px 14px', fontWeight: 600, color: '#1e293b' }}>
-                                    {ph !== 'Ohne Phase' && <span style={{ color: '#7c3aed', marginRight: 6 }}>{ph}</span>}
-                                    {ph === 'Ohne Phase' && <span style={{ color: '#94a3b8' }}>{ph}</span>}
-                                  </td>
-                                  <td style={{ padding: '10px 14px', color: '#64748b' }}>{data.tasks.length}</td>
-                                  {showFinancials && <td style={{ padding: '10px 14px', color: '#1e293b', fontWeight: 600 }}>{data.budget > 0 ? data.budget.toFixed(1) : '—'}</td>}
-                                  <td style={{ padding: '10px 14px', color: over ? '#dc2626' : '#1e293b', fontWeight: 600 }}>
-                                    {data.used.toFixed(1)}
-                                    {over && <span style={{ marginLeft: 4, fontSize: 9, color: '#dc2626', background: '#fee2e2', borderRadius: 3, padding: '0 4px', fontWeight: 700 }}>!</span>}
-                                  </td>
-                                  {showFinancials && <td style={{ padding: '10px 14px', fontWeight: 600, color: data.budget > 0 ? (data.budget - data.used > 0 ? '#16a34a' : '#dc2626') : '#94a3b8' }}>
-                                    {data.budget > 0 ? `${(data.budget - data.used).toFixed(1)}h` : '—'}
-                                  </td>}
-                                  <td style={{ padding: '10px 14px' }}>
-                                    <span style={{ fontSize: 10, fontWeight: 700, color: sc.color, background: sc.bg, borderRadius: 10, padding: '2px 8px' }}>{sc.label}</span>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                          <tfoot>
-                            <tr style={{ background: '#f8fafc', fontWeight: 700 }}>
-                              <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb' }}>Gesamt</td>
-                              <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb' }}>{projectTasks.length}</td>
-                              {showFinancials && <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb' }}>{totalBudget > 0 ? totalBudget.toFixed(1) : '—'}</td>}
-                              <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb', color: totalBudget > 0 && totalUsed > totalBudget ? '#dc2626' : '#1e293b' }}>{totalUsed.toFixed(1)}</td>
-                              {showFinancials && <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb', fontWeight: 700, color: totalBudget > 0 ? (totalBudget - totalUsed > 0 ? '#16a34a' : '#dc2626') : '#94a3b8' }}>
-                                {totalBudget > 0 ? `${(totalBudget - totalUsed).toFixed(1)}h` : '—'}
-                              </td>}
-                              <td style={{ padding: '10px 14px', borderTop: '2px solid #e5e7eb' }}></td>
-                            </tr>
-                          </tfoot>
-                        </table>
-                      </div>
-                    );
-                  })()}
+                  {/* Note: per-phase hours/budget live in the Phasen tab (single source). Hier nur die Aufgaben-Liste. */}
 
                   {/* Task list */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {projectTasks.map((t: any) => {
                       const statusMap: Record<string, { label: string; color: string; bg: string }> = {
                         OPEN: { label: 'Offen', color: '#1d4ed8', bg: '#dbeafe' },
-                        IN_PROGRESS: { label: 'In Arbeit', color: '#d97706', bg: '#fef3c7' },
+                        IN_PROGRESS: { label: 'In Bearbeitung', color: '#d97706', bg: '#fef3c7' },
                         DONE: { label: 'Erledigt', color: '#16a34a', bg: '#dcfce7' },
                       };
                       const sc = statusMap[t.status] || statusMap.OPEN;
@@ -651,120 +585,6 @@ export default function ProjectDetailPage() {
             </div>
           )}
 
-          {/* ZEITERFASSUNG TAB */}
-          {activeTab === 'time' && (
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px 28px' }}>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                <button
-                  onClick={() => setLogTimeOpen(true)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
-                >
-                  <FiClock size={13} /> Zeit erfassen
-                </button>
-              </div>
-              {(() => {
-                const phaseBudget = mainPhases.reduce((s: number, p: any) => s + (p.budgetHours || 0), 0);
-                const totalBudget = project.budgetHours ?? phaseBudget;
-                const totalUsedAll = mainPhases.reduce(
-                  (s: number, p: any) => s + (p.timeEntries || []).filter((e: any) => !e.task?.isBillableExtra).reduce((s2: number, e: any) => s2 + (e.durationMinutes || 0), 0),
-                  0,
-                ) / 60;
-                return (
-                  <div style={{ marginBottom: 20 }}>
-                    <EffektivView budgetHours={totalBudget} usedHours={totalUsedAll} title="Effektiv (Projekt)" />
-                  </div>
-                );
-              })()}
-              <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Zeiterfassung pro SIA-Phase</h2>
-              {(() => {
-                // Calculate used hours directly from phase timeEntries (loaded from backend)
-                const totalBudget = mainPhases.reduce((s: number, p: any) => s + (p.budgetHours || 0), 0);
-                let totalUsed = 0;
-
-                const handlePhaseBudgetSave = async (phaseId: string, value: number) => {
-                  try {
-                    await api.patch(`/projects/${id}/phases/${phaseId}`, { budgetHours: value });
-                    load();
-                  } catch {}
-                };
-
-                return (
-                  <>
-                    {mainPhases.map((p: any) => {
-                      // Sum hours from timeEntries directly linked to this phase (Mehrkosten excluded from Kontingent)
-                      const phaseEntries = (p.timeEntries || []).filter((e: any) => !e.task?.isBillableExtra);
-                      const used = phaseEntries.reduce((s: number, e: any) => s + (e.durationMinutes || 0), 0) / 60;
-                      totalUsed += used;
-                      const budget = p.budgetHours || 0;
-                      const remaining = budget > 0 ? budget - used : 0;
-                      const ratio = budget > 0 ? used / budget : 0;
-                      const pct = Math.min(ratio * 100, 100);
-                      const barColor = ratio >= 1 ? '#dc2626' : ratio >= 0.8 ? '#d97706' : '#1a1a1a';
-                      return (
-                        <div key={p.id} style={{ marginBottom: 16, padding: '12px 16px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e5e7eb' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, gap: 8 }}>
-                            <span style={{ fontWeight: 600, fontSize: 13, color: '#1e293b', flex: 1 }}>{p.name}</span>
-                            {showFinancials ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <span style={{ fontSize: 12, color: ratio >= 1 ? '#dc2626' : ratio >= 0.8 ? '#d97706' : '#475569', fontWeight: 600 }}>{used.toFixed(1)}h /</span>
-                                <input
-                                  type="number" min={0} step={0.5}
-                                  defaultValue={budget || ''}
-                                  placeholder="Budget h"
-                                  onBlur={e => { const v = parseFloat(e.target.value); if (!isNaN(v)) handlePhaseBudgetSave(p.id, v); }}
-                                  style={{ width: 64, fontSize: 12, padding: '3px 6px', borderRadius: 6, border: '1px solid #d1d5db', textAlign: 'right', fontWeight: 600, color: '#1e293b' }}
-                                />
-                                <span style={{ fontSize: 12, color: '#94a3b8' }}>h</span>
-                                {budget > 0 && (
-                                  <span style={{ fontSize: 11, fontWeight: 600, marginLeft: 6, color: remaining <= 0 ? '#dc2626' : '#16a34a', background: remaining <= 0 ? '#fef2f2' : '#f0fdf4', borderRadius: 8, padding: '2px 7px' }}>
-                                    {remaining > 0 ? `${remaining.toFixed(1)}h übrig` : `${Math.abs(remaining).toFixed(1)}h über Budget`}
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>
-                                {used.toFixed(1)}h erfasst
-                              </span>
-                            )}
-                          </div>
-                          {budget > 0 && (
-                            <div style={{ background: '#e2e8f0', borderRadius: 20, height: 6, overflow: 'hidden' }}>
-                              <div style={{ height: '100%', background: barColor, borderRadius: 20, width: `${pct}%`, transition: 'width 0.3s' }} />
-                            </div>
-                          )}
-                          {/* Show recent time entries for this phase */}
-                          {phaseEntries.length > 0 && (
-                            <div style={{ marginTop: 8, borderTop: '1px solid #e5e7eb', paddingTop: 8 }}>
-                              {phaseEntries.slice(0, 3).map((e: any) => (
-                                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748b', padding: '2px 0' }}>
-                                  <span>{e.user?.name || '—'} — {e.description || 'Keine Beschreibung'}</span>
-                                  <span style={{ fontWeight: 600 }}>{(e.durationMinutes / 60).toFixed(1)}h · {new Date(e.startedAt).toLocaleDateString('de-CH')}</span>
-                                </div>
-                              ))}
-                              {phaseEntries.length > 3 && (
-                                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>+ {phaseEntries.length - 3} weitere Einträge</div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderTop: '2px solid #e5e7eb', fontWeight: 700, fontSize: 14 }}>
-                      <span>Gesamt</span>
-                      <span style={{ color: totalBudget > 0 && totalUsed > totalBudget ? '#dc2626' : '#1e293b' }}>
-                        {totalUsed.toFixed(1)}h {totalBudget > 0 ? `/ ${totalBudget.toFixed(1)}h` : ''}
-                        {totalBudget > 0 && (
-                          <span style={{ fontSize: 12, fontWeight: 600, marginLeft: 8, color: totalBudget - totalUsed <= 0 ? '#dc2626' : '#16a34a' }}>
-                            ({totalBudget - totalUsed > 0 ? `${(totalBudget - totalUsed).toFixed(1)}h übrig` : `${(totalUsed - totalBudget).toFixed(1)}h über Budget`})
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          )}
 
         </div>
       </div>
@@ -775,9 +595,10 @@ export default function ProjectDetailPage() {
 
       <LogTimeQuickModal
         open={logTimeOpen}
-        onClose={() => setLogTimeOpen(false)}
+        onClose={() => { setLogTimeOpen(false); setLogTimePhaseId(undefined); }}
         onSaved={() => { load(); }}
         defaultProjectId={id}
+        defaultPhaseId={logTimePhaseId}
       />
     </div>
   );

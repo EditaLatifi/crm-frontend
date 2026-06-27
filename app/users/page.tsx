@@ -8,6 +8,29 @@ import PasswordStrength from '../../components/ui/PasswordStrength';
 import './users-desktop.css';
 import './users-mobile.css';
 
+// Plain-language role labels + what each role may do (so a non-technical admin can manage access alone).
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'Admin/Management',
+  PROJEKTLEITER: 'Projektleiter',
+  MITARBEITER: 'Mitarbeiter',
+  EXTERN: 'Extern (Kunde)',
+  USER: 'Benutzer (Legacy)',
+};
+const ROLE_DESCRIPTIONS: Record<string, string> = {
+  ADMIN: 'Vollzugriff: alles inkl. Benutzer, Finanzen und Einstellungen.',
+  PROJEKTLEITER: 'Projekte, Deals und Finanzen (Geld/Baukosten). Keine Benutzerverwaltung.',
+  MITARBEITER: 'Aufgaben und Zeiterfassung. KEINE Finanzen/Baukosten.',
+  EXTERN: 'Nur Lesezugriff auf eigene Projekte. Keine Stunden, keine internen Kosten.',
+  USER: 'Alte Rolle — bitte auf Mitarbeiter ändern.',
+};
+const ROLE_BADGE: Record<string, { color: string; bg: string }> = {
+  ADMIN: { color: '#7c3aed', bg: '#f3e8ff' },
+  PROJEKTLEITER: { color: '#1d4ed8', bg: '#dbeafe' },
+  MITARBEITER: { color: '#1a1a1a', bg: '#eff6ff' },
+  EXTERN: { color: '#b45309', bg: '#fef3c7' },
+  USER: { color: '#64748b', bg: '#f1f5f9' },
+};
+
 type User = {
   id: string;
   email: string;
@@ -28,7 +51,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(false);
 
   // Create form
-  const [newUser, setNewUser] = useState({ email: '', name: '', role: 'USER', password: '' });
+  const [newUser, setNewUser] = useState({ email: '', name: '', role: 'MITARBEITER', password: '' });
   const [showPw, setShowPw] = useState(false);
 
   // Edit modal
@@ -72,7 +95,7 @@ export default function UsersPage() {
     setLoading(true);
     try {
       await api.post('/users', newUser);
-      setNewUser({ email: '', name: '', role: 'USER', password: '' });
+      setNewUser({ email: '', name: '', role: 'MITARBEITER', password: '' });
       toast.success('Benutzer erstellt.');
       fetchUsers();
     } catch (err: any) {
@@ -185,6 +208,7 @@ export default function UsersPage() {
               <option value="ADMIN">Admin/Management</option>
               <option value="EXTERN">Extern</option>
             </select>
+            <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>{ROLE_DESCRIPTIONS[newUser.role]}</div>
           </div>
           <div>
             <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Passwort *</label>
@@ -241,8 +265,8 @@ export default function UsersPage() {
                     </td>
                     <td style={{ padding: '12px 16px', color: '#64748b' }}>{u.email}</td>
                     <td style={{ padding: '12px 16px' }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: u.role === 'ADMIN' ? '#7c3aed' : '#1a1a1a', background: u.role === 'ADMIN' ? '#f3e8ff' : '#eff6ff', borderRadius: 20, padding: '3px 10px' }}>
-                        {u.role === 'ADMIN' ? 'Admin/Management' : 'Mitarbeiter'}
+                      <span title={ROLE_DESCRIPTIONS[u.role] || ''} style={{ fontSize: 11, fontWeight: 700, color: (ROLE_BADGE[u.role] || ROLE_BADGE.MITARBEITER).color, background: (ROLE_BADGE[u.role] || ROLE_BADGE.MITARBEITER).bg, borderRadius: 20, padding: '3px 10px', cursor: 'help' }}>
+                        {ROLE_LABELS[u.role] || u.role}
                       </span>
                     </td>
                     <td style={{ padding: '12px 16px', color: '#64748b', whiteSpace: 'nowrap' }}>
@@ -312,8 +336,9 @@ export default function UsersPage() {
                 <option value="PROJEKTLEITER">Projektleiter</option>
                 <option value="ADMIN">Admin/Management</option>
                 <option value="EXTERN">Extern</option>
-                <option value="USER">Benutzer (Legacy)</option>
+                {editForm.role === 'USER' && <option value="USER">Benutzer (Legacy)</option>}
               </select>
+              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>{ROLE_DESCRIPTIONS[editForm.role]}</div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
               <div>

@@ -142,18 +142,13 @@ export default function AccountsPage() {
   }, []);
 
   const handleCreate = async (data: any) => {
-    // Map UI type to backend enum
-    const typeMap: Record<string, string> = {
-      'Client': 'CLIENT',
-      'Partner': 'PARTNER',
-      'Potential Client': 'POTENTIAL_CLIENT',
-      'Supplier': 'SUPPLIER',
-    };
     try {
       if (!user || !user.id) throw new Error('No logged-in user found');
       const payload = {
         ...data,
-        type: typeMap[data.type] || 'CLIENT',
+        // AccountForm already emits valid backend enums (CLIENT/POTENTIAL_CLIENT/PARTNER/SUPPLIER) —
+        // pass through directly. The old English-label map silently saved every type as Kunde.
+        type: data.type || 'CLIENT',
         ownerUserId: user.id,
         createdByUserId: user.id,
       };
@@ -165,10 +160,9 @@ export default function AccountsPage() {
       if (!res) throw new Error('Failed to create account');
       setTableKey(k => k + 1);
       toast.success('Konto erfolgreich erstellt.');
+      setModalOpen(false); // close only on success so a failed save keeps the typed data
     } catch (err) {
       toast.error('Konto konnte nicht erstellt werden: ' + (err as Error).message);
-    } finally {
-      setModalOpen(false);
     }
   };
 

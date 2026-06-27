@@ -65,7 +65,11 @@ export default function DealsTable() {
         <tbody>
           {deals.length === 0 && (
             <tr>
-              <td colSpan={6} style={{ color: '#bbb', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>Keine Deals vorhanden.</td>
+              <td colSpan={6} style={{ textAlign: 'center', padding: '40px 0' }}>
+                <div style={{ fontSize: 30, marginBottom: 8 }}>🤝</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#475569', marginBottom: 4 }}>Noch keine Deals</div>
+                <div style={{ fontSize: 13, color: '#94a3b8' }}>Erstelle deinen ersten Deal über „+ Neuer Deal" oben rechts.</div>
+              </td>
             </tr>
           )}
           {deals.map((d: any) => (

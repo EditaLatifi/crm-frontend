@@ -30,16 +30,16 @@ const NAV_GROUPS: { label: string | null; minRole?: MinRole; items: { href: stri
     label: "Projekte",
     items: [
       { href: "/projects", label: "Projekte", icon: FiLayers, countKey: "projects" },
-      { href: "/tasks", label: "Aufgaben", icon: FiCheckSquare, countKey: "tasks" },
-      { href: "/time", label: "Zeiterfassung", icon: FiClock, countKey: null },
+      { href: "/tasks", label: "Aufgaben", icon: FiCheckSquare, countKey: "tasks", minRole: "internal" },
+      { href: "/time", label: "Zeiterfassung", icon: FiClock, countKey: null, minRole: "internal" },
     ],
   },
   {
     label: "Finanzen",
-    minRole: "internal",
+    minRole: "manager",
     items: [
-      { href: "/projects/budget-overview", label: "Budget-Übersicht", icon: LuCoins, countKey: null },
-      { href: "/reports", label: "Berichte", icon: FiBarChart2, countKey: null, minRole: "internal" },
+      { href: "/projects/budget-overview", label: "Budget-Übersicht", icon: LuCoins, countKey: null, minRole: "manager" },
+      { href: "/reports", label: "Berichte", icon: FiBarChart2, countKey: null, minRole: "manager" },
     ],
   },
   {
@@ -76,6 +76,7 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
     return true;
   }
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [pendingVacation, setPendingVacation] = useState(0);
 
   useEffect(() => {
     // Check sessionStorage cache first to avoid refetching on every navigation
@@ -94,6 +95,15 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
     }, 500);
     return () => clearTimeout(timer);
   }, []);
+
+  // Admins: surface how many vacation requests are awaiting approval as a nav badge,
+  // so approvals don't sit unseen until someone remembers to open the page.
+  useEffect(() => {
+    if (!isAdmin) return;
+    api.get('/vacation?status=PENDING')
+      .then((r: any) => setPendingVacation(Array.isArray(r) ? r.length : 0))
+      .catch(() => {});
+  }, [isAdmin]);
 
   const handleLogout = () => {
     logout();
@@ -164,7 +174,9 @@ export default function Sidebar({ className = "", onClose }: { className?: strin
               {visibleItems.map((item) => {
                 const isActive = pathname === item.href || (item.href !== "/dashboard" && (pathname.startsWith(item.href) || pathname.startsWith("/admin" + item.href)));
                 const Icon = item.icon;
-                const count = item.countKey ? counts[item.countKey] : null;
+                const count = item.href === '/admin/vacation'
+                  ? (pendingVacation > 0 ? pendingVacation : null)
+                  : (item.countKey ? counts[item.countKey] : null);
                 return (
                   <Link key={item.href} href={item.href} style={{ textDecoration: "none" }} onClick={onClose}>
                     <div style={{

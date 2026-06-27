@@ -3,14 +3,17 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { api } from '../../src/api/client';
 import { useToast } from '../ui/Toast';
 import { useAuth } from '../../src/auth/AuthProvider';
+import Tooltip from '../ui/Tooltip';
 import { FiX, FiClock } from 'react-icons/fi';
 
+// Sentinel for "no specific phase" — backend buckets these into the project's "Allgemein" phase.
+const ALLG = '__ALLG__';
 type Project = { id: string; name: string };
-type Phase = { id: string; name: string; order: number; budgetHours?: number; usedMinutes?: number };
+type Phase = { id: string; name: string; order: number; budgetHours?: number; usedMinutes?: number; status?: string };
 type Employee = { id: string; name: string };
 type TaskOpt = { id: string; title: string; projectId?: string };
 
-export default function LogTimeQuickModal({ open, onClose, onSaved, defaultProjectId, defaultTaskId }: { open: boolean; onClose: () => void; onSaved?: () => void; defaultProjectId?: string; defaultTaskId?: string }) {
+export default function LogTimeQuickModal({ open, onClose, onSaved, defaultProjectId, defaultTaskId, defaultPhaseId }: { open: boolean; onClose: () => void; onSaved?: () => void; defaultProjectId?: string; defaultTaskId?: string; defaultPhaseId?: string }) {
   const toast = useToast();
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
@@ -26,6 +29,7 @@ export default function LogTimeQuickModal({ open, onClose, onSaved, defaultProje
   const [description, setDescription] = useState('');
   const [employeeUserId, setEmployeeUserId] = useState('');
   const [overBudgetReason, setOverBudgetReason] = useState('');
+  const [isBillableExtra, setIsBillableExtra] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -34,21 +38,43 @@ export default function LogTimeQuickModal({ open, onClose, onSaved, defaultProje
     if (isAdmin) {
       api.get('/users').then((d: any) => setEmployees(Array.isArray(d) ? d : [])).catch(() => {});
     }
-    setProjectId(defaultProjectId || ''); setProjectPhaseId(''); setTaskId(defaultTaskId || ''); setHours(''); setDescription(''); setEmployeeUserId(''); setOverBudgetReason('');
+    setProjectId(defaultProjectId || ''); setProjectPhaseId(defaultPhaseId || ''); setTaskId(defaultTaskId || ''); setHours(''); setDescription(''); setEmployeeUserId(''); setOverBudgetReason('');
     setDate(new Date().toISOString().slice(0, 10));
-  }, [open, isAdmin, defaultProjectId, defaultTaskId]);
+  }, [open, isAdmin, defaultProjectId, defaultTaskId, defaultPhaseId]);
 
   const [phaseKontingent, setPhaseKontingent] = useState<{ budgetHours: number; usedHours: number; remaining: number } | null>(null);
+
+  // Compute the Kontingent preview for a phase (Mehrkosten excluded, same as the backend gate).
+  const kontingentFor = (ph?: Phase | null) => {
+    const bh = ph?.budgetHours ?? 0;
+    if (!ph || bh <= 0) return null;
+    const used = (ph.usedMinutes || 0) / 60;
+    return { budgetHours: bh, usedHours: Math.round(used * 10) / 10, remaining: Math.round((bh - used) * 10) / 10 };
+  };
 
   useEffect(() => {
     if (!projectId) { setPhases([]); setTasks([]); setPhaseKontingent(null); return; }
     api.get(`/projects/${projectId}`).then((d: any) => {
       const list = Array.isArray(d?.phases) ? d.phases : [];
-      setPhases(list.map((p: any) => ({
-        id: p.id, name: p.name, order: p.order,
+      const mapped: Phase[] = list.map((p: any) => ({
+        id: p.id, name: p.name, order: p.order, status: p.status,
         budgetHours: p.budgetHours || 0,
-        usedMinutes: (p.timeEntries || []).reduce((s: number, e: any) => s + (e.durationMinutes || 0), 0),
-      })));
+        // Exclude Mehrkosten (billable extra) so the Kontingent preview matches the backend gate.
+        usedMinutes: (p.timeEntries || []).reduce((s: number, e: any) => s + ((e.isBillableExtra || e.task?.isBillableExtra) ? 0 : (e.durationMinutes || 0)), 0),
+      }));
+      setPhases(mapped);
+      // Phase is the single time carrier — pre-select a sensible default instead of leaving it blank:
+      // the explicitly requested phase, else the currently active (IN_PROGRESS) phase.
+      const mains = mapped.filter((p: any) => true);
+      const preset = (defaultPhaseId && mapped.find(p => p.id === defaultPhaseId))
+        || mains.find(p => p.status === 'IN_PROGRESS')
+        || null;
+      if (preset && !projectPhaseId) {
+        setProjectPhaseId(preset.id);
+        setPhaseKontingent(kontingentFor(preset));
+      } else if (projectPhaseId) {
+        setPhaseKontingent(kontingentFor(mapped.find(p => p.id === projectPhaseId)));
+      }
     }).catch(() => setPhases([]));
     api.get(`/tasks`).then((d: any) => {
       const list = d?.data ?? (Array.isArray(d) ? d : []);
@@ -57,18 +83,24 @@ export default function LogTimeQuickModal({ open, onClose, onSaved, defaultProje
   }, [projectId]);
 
   const hoursNum = Number(hours) || 0;
+  // Mehrkosten hours are billed separately and never count against the Kontingent.
   const isOverBudget = !!(
+    !isBillableExtra &&
     phaseKontingent &&
     phaseKontingent.budgetHours > 0 &&
     phaseKontingent.usedHours + hoursNum > phaseKontingent.budgetHours
   );
   const reasonMissing = isOverBudget && !overBudgetReason.trim();
+  // Phase is the single time carrier — once a project is chosen, a phase must be picked,
+  // BUT the "Allgemein" escape (ALLG sentinel) is always valid so a new hire is never hard-blocked.
+  const phaseMissing = !!projectId && !projectPhaseId;
 
   if (!open) return null;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!projectId) { toast.error('Projekt ist erforderlich.'); return; }
+    if (!projectPhaseId) { toast.error('Bitte eine Phase wählen (oder „Allgemein", falls unsicher).'); return; }
     if (!hours || Number(hours) <= 0) { toast.error('Stunden sind erforderlich.'); return; }
     if (Number(hours) > 14) { toast.error('Maximale Erfassung: 14 Stunden pro Eintrag.'); return; }
     if (Number(hours) > 10) { toast.warning('Hinweis: Mehr als 10 Stunden erfasst.'); }
@@ -77,12 +109,14 @@ export default function LogTimeQuickModal({ open, onClose, onSaved, defaultProje
     try {
       const result = await api.post('/time-entries', {
         projectId,
-        projectPhaseId: projectPhaseId || undefined,
+        // "Allgemein" (ALLG) → send no phase; the backend buckets it into the project's Allgemein phase.
+        projectPhaseId: (projectPhaseId && projectPhaseId !== ALLG) ? projectPhaseId : undefined,
         taskId: taskId || undefined,
         hours: Number(hours),
         date,
         description: description.trim() || undefined,
         employeeUserId: employeeUserId || undefined,
+        isBillableExtra: isBillableExtra || undefined,
         overBudgetReason: isOverBudget ? overBudgetReason.trim() : undefined,
       });
       if (result?.overBudget) {
@@ -122,24 +156,24 @@ export default function LogTimeQuickModal({ open, onClose, onSaved, defaultProje
           </div>
 
           <div style={{ marginBottom: 12 }}>
-            <label style={lbl}>Leistungsphase</label>
+            <label style={{ ...lbl, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              Phase (Projektabschnitt) *
+              <Tooltip text={'Der Abschnitt des Projekts, auf den die Stunden gebucht werden. Im Zweifel „Allgemein“ wählen.'} />
+            </label>
             <select value={projectPhaseId} onChange={e => {
               setProjectPhaseId(e.target.value);
-              const ph = phases.find((p: any) => p.id === e.target.value);
-              const bh = ph?.budgetHours ?? 0;
-              if (ph && bh > 0) {
-                const used = (ph.usedMinutes || 0) / 60;
-                setPhaseKontingent({ budgetHours: bh, usedHours: Math.round(used * 10) / 10, remaining: Math.round((bh - used) * 10) / 10 });
-              } else {
-                setPhaseKontingent(null);
-              }
-            }} style={inp} disabled={!projectId}>
-              <option value="">— Optional —</option>
+              setPhaseKontingent(kontingentFor(phases.find((p: any) => p.id === e.target.value)));
+            }} style={{ ...inp, borderColor: phaseMissing ? '#dc2626' : '#e5e7eb' }} disabled={!projectId}>
+              <option value="">— Phase wählen —</option>
               {phases.sort((a: any, b: any) => a.order - b.order).map((p: any) => <option key={p.id} value={p.id}>{String(p.order).padStart(2, '0')} - {p.name}</option>)}
+              <option value={ALLG}>Allgemein (keine bestimmte Phase)</option>
             </select>
+            <div style={{ fontSize: 11, color: phaseMissing ? '#dc2626' : '#94a3b8', marginTop: 4 }}>
+              Falls du unsicher bist, wähle „Allgemein" — du bist nie blockiert.
+            </div>
             {phaseKontingent && (
               <div style={{ marginTop: 6, padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: phaseKontingent.remaining <= 0 ? '#fef2f2' : phaseKontingent.remaining < phaseKontingent.budgetHours * 0.2 ? '#fffbeb' : '#f0fdf4', color: phaseKontingent.remaining <= 0 ? '#dc2626' : phaseKontingent.remaining < phaseKontingent.budgetHours * 0.2 ? '#d97706' : '#16a34a' }}>
-                Kontingent: {phaseKontingent.usedHours}h / {phaseKontingent.budgetHours}h verbraucht — {phaseKontingent.remaining > 0 ? `${phaseKontingent.remaining}h ubrig` : `${Math.abs(phaseKontingent.remaining)}h uber Budget`}
+{phaseKontingent.usedHours}h von {phaseKontingent.budgetHours}h verbraucht — {phaseKontingent.remaining > 0 ? `${phaseKontingent.remaining} Std. übrig` : `${Math.abs(phaseKontingent.remaining)} Std. über Budget`}
               </div>
             )}
             {isOverBudget && (
@@ -178,6 +212,14 @@ export default function LogTimeQuickModal({ open, onClose, onSaved, defaultProje
             </div>
           </div>
 
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#b45309', marginBottom: 4, cursor: 'pointer' }}>
+            <input type="checkbox" checked={isBillableExtra} onChange={e => setIsBillableExtra(e.target.checked)} />
+            Mehrkosten
+          </label>
+          <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 12, marginLeft: 24 }}>
+            Nur ankreuzen, wenn der Kunde diese Stunden zusätzlich zahlt. Im Zweifel leer lassen.
+          </div>
+
           {isAdmin && (
             <div style={{ marginBottom: 12 }}>
               <label style={lbl}>Mitarbeiter (Admin)</label>
@@ -199,9 +241,9 @@ export default function LogTimeQuickModal({ open, onClose, onSaved, defaultProje
             />
           </div>
 
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: 10 }}>
             <button type="button" onClick={onClose} style={btnSecondary}>Abbrechen</button>
-            <button type="submit" disabled={saving || reasonMissing} style={{ ...btnPrimary, opacity: (saving || reasonMissing) ? 0.6 : 1, cursor: (saving || reasonMissing) ? 'not-allowed' : 'pointer' }}>
+            <button type="submit" disabled={saving || reasonMissing || phaseMissing} style={{ ...btnPrimary, flex: 1, opacity: (saving || reasonMissing || phaseMissing) ? 0.6 : 1, cursor: (saving || reasonMissing || phaseMissing) ? 'not-allowed' : 'pointer' }}>
               {saving ? 'Speichern…' : 'Speichern'}
             </button>
           </div>
@@ -212,7 +254,7 @@ export default function LogTimeQuickModal({ open, onClose, onSaved, defaultProje
 }
 
 const lbl: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 };
-const inp: React.CSSProperties = { width: '100%', padding: '9px 11px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, boxSizing: 'border-box', background: '#fff', fontFamily: 'inherit' };
-const btnPrimary: React.CSSProperties = { padding: '9px 18px', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' };
-const btnSecondary: React.CSSProperties = { padding: '9px 18px', background: '#fff', color: '#475569', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
+const inp: React.CSSProperties = { width: '100%', padding: '12px 13px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 15, boxSizing: 'border-box', background: '#fff', fontFamily: 'inherit' };
+const btnPrimary: React.CSSProperties = { padding: '13px 20px', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'pointer' };
+const btnSecondary: React.CSSProperties = { padding: '13px 18px', background: '#fff', color: '#475569', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer' };
 const btnIcon: React.CSSProperties = { padding: 6, background: 'transparent', color: '#94a3b8', border: 'none', borderRadius: 6, cursor: 'pointer' };

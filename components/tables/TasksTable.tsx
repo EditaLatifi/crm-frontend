@@ -4,6 +4,8 @@ import { Box, Flex, Heading, VStack, Text, Tag, Avatar, Spinner } from '@chakra-
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import Link from 'next/link';
 import { api } from '../../src/api/client';
+import { useAuth } from '../../src/auth/AuthProvider';
+import { useToast } from '../ui/Toast';
 interface Task {
   id: string;
   title: string;
@@ -12,6 +14,7 @@ interface Task {
   dueDate?: string;
   assigneeName?: string;
   assignedToUserId?: string;
+  assigneeIds?: string[];
   assignee?: { id: string; name?: string; email?: string } | null;
   project?: { id: string; name: string } | null;
   account?: { id: string; name: string } | null;
@@ -32,9 +35,14 @@ const statusColumns = [
 ];
 
 export default function TasksTable() {
+  const { user } = useAuth();
+  const toast = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [assigneeFilter, setAssigneeFilter] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('');
+  const [onlyMine, setOnlyMine] = useState(false);
 
   const fetchTasks = () => {
     api.get('/tasks?pageSize=200')
@@ -64,27 +72,77 @@ export default function TasksTable() {
 
   if (loading) return <Flex justify="center" align="center" minH="200px"><Spinner size="lg" /></Flex>;
 
-  // Group tasks by status for columns
+  // ── Filters (S5): responsible person + priority ──
+  const assigneeOptions = Array.from(
+    new Map(
+      tasks
+        .filter((t: Task) => t.assignedToUserId)
+        .map((t: Task) => [t.assignedToUserId as string, t.assignee?.name || t.assignee?.email || t.assigneeName || '—']),
+    ).entries(),
+  ).map(([id, name]) => ({ id, name }));
+
+  const mine = (t: Task) => !!user?.id && (t.assignedToUserId === user.id || (Array.isArray(t.assigneeIds) && t.assigneeIds.includes(user.id)));
+  const filtered = tasks.filter((t: Task) => {
+    if (onlyMine && !mine(t)) return false;
+    if (assigneeFilter && t.assignedToUserId !== assigneeFilter) return false;
+    if (priorityFilter && (t.priority || 'LOW') !== priorityFilter) return false;
+    return true;
+  });
+
+  const selStyle: React.CSSProperties = { fontSize: 13, padding: '9px 12px', borderRadius: 8, border: '1px solid #E8E4DE', background: '#fff', color: '#1a1a1a' };
+  const filterBar = (
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
+      <button
+        onClick={() => setOnlyMine(v => !v)}
+        style={{ ...selStyle, cursor: 'pointer', fontWeight: 600, background: onlyMine ? '#1a1a1a' : '#fff', color: onlyMine ? '#fff' : '#1a1a1a', border: onlyMine ? '1px solid #1a1a1a' : '1px solid #E8E4DE' }}
+      >
+        {onlyMine ? '✓ Meine Aufgaben' : 'Meine Aufgaben'}
+      </button>
+      <select style={selStyle} value={assigneeFilter} onChange={e => setAssigneeFilter(e.target.value)}>
+        <option value="">Alle Mitarbeiter</option>
+        {assigneeOptions.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+      </select>
+      <select style={selStyle} value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)}>
+        <option value="">Alle Prioritäten</option>
+        <option value="URGENT">Dringend</option>
+        <option value="HIGH">Hoch</option>
+        <option value="MEDIUM">Mittel</option>
+        <option value="LOW">Niedrig</option>
+      </select>
+      {(assigneeFilter || priorityFilter || onlyMine) && (
+        <button onClick={() => { setAssigneeFilter(''); setPriorityFilter(''); setOnlyMine(false); }} style={{ ...selStyle, cursor: 'pointer', color: '#64748b' }}>Zurücksetzen</button>
+      )}
+    </div>
+  );
+
+  // Group filtered tasks by status for columns
   const tasksByStatus: Record<string, Task[]> = {};
   statusColumns.forEach(col => {
-    tasksByStatus[col.key] = tasks.filter((t: Task) => t.status === col.key);
+    tasksByStatus[col.key] = filtered.filter((t: Task) => t.status === col.key);
   });
 
   // Kanban drag logic
+  const changeStatus = async (taskId: string, newStatus: string) => {
+    setTasks(prev => prev.map((t: Task) => t.id === taskId ? { ...t, status: newStatus } : t));
+    try {
+      await api.patch(`/tasks/${taskId}/status`, { status: newStatus });
+    } catch (e: any) {
+      toast?.error?.(e?.message || 'Status konnte nicht geändert werden.');
+    }
+    fetchTasks();
+  };
+
   const onDragEnd = async (result: any) => {
     const { source, destination, draggableId } = result;
     if (!destination || source.droppableId === destination.droppableId) return;
-    const taskId = draggableId;
-    const newStatus = destination.droppableId;
-    setTasks(prev => prev.map((t: Task) => t.id === taskId ? { ...t, status: newStatus } : t));
-    await api.patch(`/tasks/${taskId}/status`, { status: newStatus });
-    fetchTasks();
+    await changeStatus(draggableId, destination.droppableId);
   };
 
   // Render mobile: tasks grouped by status, each group in a box with status label
   if (isMobile) {
     return (
       <Box px={2} py={2}>
+        {filterBar}
         {statusColumns.map(col => (
           <Box key={col.key} mb={4} className="tasks-mobile-status-group" bg="#f8f9fb" borderRadius="lg" p={2}>
             <Text fontWeight="bold" fontSize="lg" color={col.color + ".600"} mb={2} ml={1}>{col.label}</Text>
@@ -113,6 +171,18 @@ export default function TasksTable() {
                         <Text>{assigneeName}</Text>
                         {t.dueDate && <Text ml={2} color={new Date(t.dueDate) < new Date() ? 'red.500' : 'gray.400'}>Fällig: {new Date(t.dueDate).toLocaleDateString('de-CH')}</Text>}
                       </Flex>
+                      {/* One-click status — mobile (no drag) */}
+                      <div style={{ display: 'flex', gap: 8, marginTop: 10 }} onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
+                        {t.status !== 'IN_PROGRESS' && t.status !== 'DONE' && (
+                          <button onClick={() => changeStatus(t.id, 'IN_PROGRESS')} style={{ flex: 1, fontSize: 13, fontWeight: 600, padding: '9px 10px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#eff6ff', color: '#1d4ed8' }}>▶ Starten</button>
+                        )}
+                        {t.status !== 'DONE' && (
+                          <button onClick={() => changeStatus(t.id, 'DONE')} style={{ flex: 1, fontSize: 13, fontWeight: 600, padding: '9px 10px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#f0fdf4', color: '#16a34a' }}>✓ Erledigt</button>
+                        )}
+                        {t.status === 'DONE' && (
+                          <button onClick={() => changeStatus(t.id, 'OPEN')} style={{ flex: 1, fontSize: 13, fontWeight: 600, padding: '9px 10px', borderRadius: 8, border: '1px solid #e5e7eb', cursor: 'pointer', background: '#fff', color: '#64748b' }}>↩ Wieder öffnen</button>
+                        )}
+                      </div>
                     </Box>
                   </Link>
                 );
@@ -126,7 +196,9 @@ export default function TasksTable() {
 
   // Render Kanban board for desktop
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
+    <div>
+      {filterBar}
+      <DragDropContext onDragEnd={onDragEnd}>
       <Flex gap={6} overflowX={{ base: 'auto', md: 'visible' }} py={4}>
         {statusColumns.map(col => (
           <Droppable droppableId={col.key} key={col.key}>
@@ -180,6 +252,18 @@ export default function TasksTable() {
                                   <Text>{assigneeName}</Text>
                                   {t.dueDate && <Text ml={2} color={new Date(t.dueDate) < new Date() ? 'red.500' : 'gray.400'}>Fällig: {new Date(t.dueDate).toLocaleDateString('de-CH')}</Text>}
                                 </Flex>
+                                {/* One-click status — no drag needed */}
+                                <div style={{ display: 'flex', gap: 6, marginTop: 8 }} onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
+                                  {t.status !== 'IN_PROGRESS' && t.status !== 'DONE' && (
+                                    <button onClick={() => changeStatus(t.id, 'IN_PROGRESS')} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 7, border: 'none', cursor: 'pointer', background: '#eff6ff', color: '#1d4ed8' }}>▶ Starten</button>
+                                  )}
+                                  {t.status !== 'DONE' && (
+                                    <button onClick={() => changeStatus(t.id, 'DONE')} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 7, border: 'none', cursor: 'pointer', background: '#f0fdf4', color: '#16a34a' }}>✓ Erledigt</button>
+                                  )}
+                                  {t.status === 'DONE' && (
+                                    <button onClick={() => changeStatus(t.id, 'OPEN')} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 7, border: '1px solid #e5e7eb', cursor: 'pointer', background: '#fff', color: '#64748b' }}>↩ Wieder öffnen</button>
+                                  )}
+                                </div>
                                 {/* Checklist mini progress */}
                                 {Array.isArray((t as any).checklists) && (t as any).checklists.length > 0 && (() => {
                                   const allItems = (t as any).checklists.flatMap((cl: any) => cl.items || []);
@@ -214,6 +298,7 @@ export default function TasksTable() {
           </Droppable>
         ))}
       </Flex>
-    </DragDropContext>
+      </DragDropContext>
+    </div>
   );
 }

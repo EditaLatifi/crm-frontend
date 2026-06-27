@@ -19,6 +19,7 @@ type View = 'grid' | 'list';
 export default function ProjectsPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
+  const isManager = user?.role === 'ADMIN' || user?.role === 'PROJEKTLEITER';
   const canModify = canEditRole(user?.role);
   const showFinancials = canViewFinancials(user?.role);
 
@@ -99,7 +100,7 @@ export default function ProjectsPage() {
           >
             <FiRefreshCw size={13} />
           </button>
-          {canModify && (
+          {isManager && (
             <button
               onClick={() => setCreateOpen(true)}
               style={{
@@ -250,7 +251,7 @@ export default function ProjectsPage() {
         </>
       )}
 
-      {isAdmin && (
+      {isManager && (
         <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Neues Projekt erstellen" width={640}>
           <ProjectForm onSubmit={handleCreate} onCancel={() => setCreateOpen(false)} />
         </Modal>

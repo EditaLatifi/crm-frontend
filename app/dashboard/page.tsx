@@ -4,13 +4,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth, isManagerRole } from '../../src/auth/AuthProvider';
 import { api } from '../../src/api/client';
 import Link from 'next/link';
-import { FiArrowRight } from 'react-icons/fi';
+import { FiArrowRight, FiX } from 'react-icons/fi';
 import './dashboard-desktop.css';
 import './dashboard-mobile.css';
 import { formatCHF } from '../../src/lib/formatCurrency';
 
 const STATUS_LABELS: Record<string, string> = {
-  OPEN: 'Offen', IN_PROGRESS: 'In Arbeit', DONE: 'Erledigt', PLANNED: 'Geplant',
+  OPEN: 'Offen', IN_PROGRESS: 'In Bearbeitung', DONE: 'Erledigt', PLANNED: 'Geplant',
 };
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   OPEN:        { bg: '#f1f5f9', text: '#64748b' },
@@ -35,10 +35,16 @@ export default function DashboardPage() {
   const [budgetAlerts, setBudgetAlerts] = useState<any[]>([]);
   const [budgetOverview, setBudgetOverview] = useState<any>(null);
   const [dataLoading, setDataLoading] = useState(true);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) router.replace('/login');
   }, [user, loading, router]);
+
+  // Show the welcome card unless this user has dismissed it before.
+  useEffect(() => {
+    try { setWelcomeDismissed(localStorage.getItem('dash-welcome-dismissed') === '1'); } catch {}
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -179,6 +185,31 @@ export default function DashboardPage() {
         <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>Dashboard</h1>
       </div>
 
+      {/* Role-aware welcome card (dismissible) — gives new / non-technical users a first orientation. */}
+      {!welcomeDismissed && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, background: '#FAF9F6', border: '1px solid #E8E4DE', borderRadius: 12, padding: '16px 20px', marginBottom: 24 }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', marginBottom: 4 }}>
+              Willkommen{user?.name ? `, ${user.name.split(' ')[0]}` : ''}! 👋
+            </div>
+            <div style={{ fontSize: 13, color: '#64748b' }}>
+              {user?.role === 'ADMIN'
+                ? 'Überblick über Projekte, Finanzen, Team und Anträge — alles an einem Ort.'
+                : isManagerRole(user?.role)
+                  ? 'Verwalte hier deine Projekte, Deals und Aufgaben.'
+                  : 'Hier findest du deine Aufgaben, anstehende Termine und die Zeiterfassung.'}
+            </div>
+          </div>
+          <button
+            onClick={() => { try { localStorage.setItem('dash-welcome-dismissed', '1'); } catch {} setWelcomeDismissed(true); }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 4, display: 'flex', flexShrink: 0 }}
+            title="Ausblenden"
+          >
+            <FiX size={18} />
+          </button>
+        </div>
+      )}
+
       {/* ═══ KPI Cards ═══ */}
       <div className="dash-kpi-row" style={{ display: 'grid', gridTemplateColumns: `repeat(${showDeals ? 4 : 2}, 1fr)`, gap: 16, marginBottom: 28 }}>
         {/* Offene Deals — management only */}
@@ -214,16 +245,16 @@ export default function DashboardPage() {
 
         {/* Budget-Auslastung */}
         <div style={kpiCard}>
-          <div style={kpiLabel}>BUDGET-AUSLASTUNG</div>
+          <div style={kpiLabel}>BUDGET-AUSLASTUNG (CHF)</div>
           <div style={{ ...kpiValue, color: budgetPct >= 100 ? '#dc2626' : budgetPct >= 80 ? '#d97706' : '#16a34a' }}>
             {budgetPct}%
           </div>
-          <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Stundenkontingent gesamt</div>
+          <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>vom Gesamtbudget verbraucht</div>
         </div>
       </div>
 
       {/* ═══ Middle Row: Tasks + Budget Warnings ═══ */}
-      <div className="dash-bottom-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 28 }}>
+      <div className="dash-bottom-grid" style={{ display: 'grid', gridTemplateColumns: showDeals ? '1fr 1fr' : '1fr', gap: 20, marginBottom: 28 }}>
 
         {/* Meine offenen Aufgaben */}
         <div style={sectionCard}>
@@ -276,7 +307,8 @@ export default function DashboardPage() {
           })}
         </div>
 
-        {/* Budget-Warnungen */}
+        {/* Budget-Warnungen — management only (finance detail, not actionable for employees) */}
+        {showDeals && (
         <div style={sectionCard}>
           <div style={sectionHeader}>
             <span style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Budget-Warnungen</span>
@@ -312,6 +344,7 @@ export default function DashboardPage() {
             );
           })}
         </div>
+        )}
       </div>
 
       {/* ═══ Anstehende Termine & Follow-ups ═══ */}

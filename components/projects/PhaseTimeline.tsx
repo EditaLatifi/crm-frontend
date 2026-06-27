@@ -1,6 +1,9 @@
 "use client";
 import { useState } from 'react';
 import { api, fetchWithAuth } from '../../src/api/client';
+import { useAuth, isExternRole } from '../../src/auth/AuthProvider';
+import { useToast } from '../ui/Toast';
+import Tooltip from '../ui/Tooltip';
 import { PHASE_COLORS, PHASE_LABELS, PHASE_BG } from './phaseConfig';
 import Link from 'next/link';
 import { FiCheck, FiClock, FiSkipForward, FiChevronDown, FiChevronUp, FiTrash2, FiCheckSquare } from 'react-icons/fi';
@@ -24,10 +27,15 @@ type Phase = {
   notes?: string;
   startDate?: string;
   endDate?: string;
+  dueDate?: string | null;
+  responsibleUserId?: string | null;
+  responsible?: { id: string; name: string } | null;
   completedAt?: string;
   completedBy?: { id: string; name: string } | null;
   linkedTaskId?: string | null;
   linkedTask?: LinkedTask | null;
+  budgetHours?: number | null;
+  timeEntries?: Array<{ id: string; durationMinutes: number; description?: string | null; startedAt: string; isBillableExtra?: boolean; user?: { id: string; name: string } | null; task?: { isBillableExtra?: boolean } | null }>;
 };
 
 const TASK_STATUS_LABELS: Record<string, { label: string; bg: string; color: string }> = {
@@ -41,7 +49,16 @@ type Props = {
   phases: Phase[];
   canEdit: boolean;
   onUpdate?: () => void;
+  showFinancials?: boolean;
+  onLogTime?: (phaseId: string) => void;
 };
+
+// Hours booked on a phase, excluding Mehrkosten (same rule as the backend Kontingent gate).
+function phaseUsedHours(phase: Phase): number {
+  return (phase.timeEntries || [])
+    .filter(e => !(e.isBillableExtra || e.task?.isBillableExtra))
+    .reduce((s, e) => s + (e.durationMinutes || 0), 0) / 60;
+}
 
 const PhaseIcon = ({ status }: { status: string }) => {
   if (status === 'COMPLETED') return <FiCheck size={14} color="#22c55e" />;
@@ -50,10 +67,14 @@ const PhaseIcon = ({ status }: { status: string }) => {
   return <span style={{ width: 14, height: 14, borderRadius: '50%', background: '#e2e8f0', display: 'inline-block' }} />;
 };
 
-export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: Props) {
+export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate, showFinancials, onLogTime }: Props) {
+  const { user } = useAuth();
+  const toast = useToast();
+  const isExtern = isExternRole(user?.role);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [editNotes, setEditNotes] = useState<Record<string, string>>({});
+  const [budgetDraft, setBudgetDraft] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
   // ── Add phase / sub-phase / task (project is the source of truth) ──
@@ -125,6 +146,17 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
     }
   }
 
+  async function savePhaseBudget(phaseId: string, value: number) {
+    try {
+      await api.patch(`/projects/${projectId}/phases/${phaseId}`, { budgetHours: value });
+      toast.success(`Geplante Stunden gespeichert: ${value} Std.`);
+      onUpdate?.();
+    } catch (e: any) {
+      setError(e.message || 'Fehler beim Speichern der geplanten Stunden');
+      toast.error('Speichern fehlgeschlagen');
+    }
+  }
+
   async function handleDelete(phase: Phase) {
     const confirmed = window.confirm(
       `Phase "${phase.name}" wirklich löschen?\n\nDieser Schritt ist nicht umkehrbar.`,
@@ -160,7 +192,7 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
       {/* Progress bar */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Gesamtfortschritt</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Phasen-Fortschritt ({completedCount} von {mainPhases.length})</span>
           <span style={{ fontSize: 13, fontWeight: 700, color: '#3b82f6' }}>{progress}%</span>
         </div>
         <div style={{ height: 8, background: '#e2e8f0', borderRadius: 99, overflow: 'hidden' }}>
@@ -285,6 +317,12 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
                         {phase.description && !isExpanded && (
                           <div style={{ fontSize: 12, color: '#64748b', marginTop: 1 }}>{phase.description}</div>
                         )}
+                        {(phase.responsible || phase.dueDate) && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 3, fontSize: 11, color: '#64748b', flexWrap: 'wrap' }}>
+                            {phase.responsible && <span title="Verantwortlich">👤 {phase.responsible.name}</span>}
+                            {phase.dueDate && <span title="Fälligkeitsdatum">📅 Fällig: {new Date(phase.dueDate).toLocaleDateString('de-CH')}</span>}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -309,13 +347,30 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
                           </Link>
                         );
                       })()}
+                      {/* Remaining hours visible WITHOUT expanding (the most-needed number, plain words) */}
+                      {!isExtern && (phase.budgetHours || 0) > 0 && (() => {
+                        const used = phaseUsedHours(phase);
+                        const rem = (phase.budgetHours || 0) - used;
+                        return (
+                          <span style={{
+                            fontSize: 11, fontWeight: 700,
+                            color: rem <= 0 ? '#dc2626' : rem < (phase.budgetHours || 0) * 0.2 ? '#d97706' : '#16a34a',
+                            background: rem <= 0 ? '#fef2f2' : rem < (phase.budgetHours || 0) * 0.2 ? '#fffbeb' : '#f0fdf4',
+                            borderRadius: 20, padding: '2px 10px', whiteSpace: 'nowrap',
+                          }} title="Verbleibende Stunden">
+                            {rem > 0 ? `${rem.toFixed(1)} von ${(phase.budgetHours || 0).toFixed(0)} Std. übrig` : `${Math.abs(rem).toFixed(1)} Std. über`}
+                          </span>
+                        );
+                      })()}
                       <span style={{
                         fontSize: 11, fontWeight: 600, color, background: PHASE_BG[phase.status],
                         border: `1px solid ${color}`, borderRadius: 20, padding: '2px 10px',
                       }}>
                         {PHASE_LABELS[phase.status] || phase.status}
                       </span>
-                      {isExpanded ? <FiChevronUp size={14} color="#94a3b8" /> : <FiChevronDown size={14} color="#94a3b8" />}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: '#64748b' }}>
+                        {isExpanded ? <>Schliessen <FiChevronUp size={13} /></> : <>Details <FiChevronDown size={13} /></>}
+                      </span>
                     </div>
                   </div>
 
@@ -350,9 +405,10 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
                       {taskFor === phase.id && (
                         <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                           <input value={nt.title} onChange={e => setNt({ ...nt, title: e.target.value })} placeholder="Aufgaben-Titel" style={{ ...miniInput, flex: '1 1 200px' }} autoFocus />
-                          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#b45309', whiteSpace: 'nowrap' }} title="Stunden werden NICHT vom Kontingent abgezogen, sondern als Mehrkosten zusätzlich verrechnet">
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#b45309', whiteSpace: 'nowrap' }}>
                             <input type="checkbox" checked={nt.extra} onChange={e => setNt({ ...nt, extra: e.target.checked })} />
                             Mehrkosten
+                            <Tooltip text={'Mehrkosten = zusätzlich verrechnete Stunden, die NICHT vom Kontingent abgezogen werden. Nur ankreuzen, wenn der Kunde diese Stunden extra zahlt.'} />
                           </label>
                           <button onClick={() => addTask(phase.id)} disabled={busy || !nt.title.trim()} style={miniBtn}>{busy ? '…' : 'Aufgabe'}</button>
                           <button onClick={() => { setTaskFor(null); setNt({ title: '', extra: false }); }} style={miniGhost}>Abbrechen</button>
@@ -387,6 +443,84 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate }: 
                           </div>
                         )}
                       </div>
+
+                      {/* Phase hub: hours + recent entries + Zeit erfassen (one place per phase). Hidden for external clients. */}
+                      {!isExtern && (() => {
+                        const used = phaseUsedHours(phase);
+                        const budget = phase.budgetHours || 0;
+                        const remaining = budget > 0 ? budget - used : 0;
+                        const ratio = budget > 0 ? used / budget : 0;
+                        const pct = Math.min(ratio * 100, 100);
+                        const barColor = ratio >= 1 ? '#dc2626' : ratio >= 0.8 ? '#d97706' : '#1a1a1a';
+                        const entries = (phase.timeEntries || []).filter(e => !(e.isBillableExtra || e.task?.isBillableExtra));
+                        return (
+                          <div style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 12px', marginBottom: 12 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                Stunden
+                                <Tooltip text={'Kontingent = die für diese Phase geplanten Stunden. „Std. geplant" ist das Budget, „übrig" der Rest. Mehrkosten zählen nicht mit.'} />
+                              </span>
+                              <button
+                                onClick={() => onLogTime?.(phase.id)}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 7, padding: '5px 11px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                              >
+                                <FiClock size={12} /> Zeit erfassen
+                              </button>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: budget > 0 ? 6 : 0, fontSize: 12 }}>
+                              <span style={{ color: ratio >= 1 ? '#dc2626' : ratio >= 0.8 ? '#d97706' : '#475569', fontWeight: 600 }}>{used.toFixed(1)}h</span>
+                              <span style={{ color: '#94a3b8' }}>/</span>
+                              {showFinancials && canEdit ? (() => {
+                                const draft = budgetDraft[phase.id];
+                                const dirty = draft !== undefined && draft !== '' && Number(draft) !== budget;
+                                const commit = () => { const v = parseFloat(budgetDraft[phase.id]); if (!isNaN(v) && v !== budget) savePhaseBudget(phase.id, v); };
+                                return (
+                                  <>
+                                    <input
+                                      type="number" min={0} step={0.5}
+                                      value={draft ?? (budget || '')}
+                                      placeholder="geplante Std."
+                                      title="Geplante Stunden für diese Phase"
+                                      onClick={e => e.stopPropagation()}
+                                      onChange={e => setBudgetDraft(d => ({ ...d, [phase.id]: e.target.value }))}
+                                      onKeyDown={e => { if (e.key === 'Enter') commit(); }}
+                                      onBlur={commit}
+                                      style={{ width: 70, fontSize: 12, padding: '3px 6px', borderRadius: 6, border: dirty ? '1px solid #1a1a1a' : '1px solid #d1d5db', textAlign: 'right', fontWeight: 600 }}
+                                    />
+                                    {dirty && (
+                                      <button onClick={e => { e.stopPropagation(); commit(); }} style={{ fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 6, border: 'none', background: '#1a1a1a', color: '#fff', cursor: 'pointer' }}>Speichern</button>
+                                    )}
+                                  </>
+                                );
+                              })() : (
+                                <span style={{ fontWeight: 600, color: '#1e293b' }}>{budget > 0 ? `${budget.toFixed(1)}h` : '—'}</span>
+                              )}
+                              <span style={{ color: '#94a3b8' }}>Std. geplant</span>
+                              {budget > 0 && (
+                                <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: remaining <= 0 ? '#dc2626' : '#16a34a', background: remaining <= 0 ? '#fef2f2' : '#f0fdf4', borderRadius: 8, padding: '2px 8px' }}>
+                                  {remaining > 0 ? `${remaining.toFixed(1)} Std. übrig` : `${Math.abs(remaining).toFixed(1)} Std. über`}
+                                </span>
+                              )}
+                            </div>
+                            {budget > 0 && (
+                              <div style={{ background: '#e2e8f0', borderRadius: 20, height: 6, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', background: barColor, borderRadius: 20, width: `${pct}%`, transition: 'width 0.3s' }} />
+                              </div>
+                            )}
+                            {entries.length > 0 && (
+                              <div style={{ marginTop: 8, borderTop: '1px solid #e5e7eb', paddingTop: 8 }}>
+                                {entries.slice(0, 3).map(e => (
+                                  <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748b', padding: '2px 0', gap: 8 }}>
+                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.user?.name || '—'} — {e.description || 'Keine Beschreibung'}</span>
+                                    <span style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{(e.durationMinutes / 60).toFixed(1)}h · {new Date(e.startedAt).toLocaleDateString('de-CH')}</span>
+                                  </div>
+                                ))}
+                                {entries.length > 3 && <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>+ {entries.length - 3} weitere Einträge</div>}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {/* Linked task block */}
                       {phase.linkedTask && (

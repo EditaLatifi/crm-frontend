@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { api } from '../../../src/api/client';
 import { useAuth } from '../../../src/auth/AuthProvider';
 import Link from 'next/link';
+import LogTimeQuickModal from '../../../components/time/LogTimeQuickModal';
 
 interface TimeEntry {
   id: string;
@@ -115,6 +116,8 @@ export default function TimePage() {
 
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [timeModalOpen, setTimeModalOpen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [page, setPage] = useState(1);
 
   const [filterUser, setFilterUser] = useState('');
@@ -148,7 +151,7 @@ export default function TimePage() {
       .then((d: any) => setEntries(Array.isArray(d) ? d : []))
       .catch(() => setEntries([]))
       .finally(() => setLoading(false));
-  }, [filterUser, filterFrom, filterTo, filterAccount, filterProject]);
+  }, [filterUser, filterFrom, filterTo, filterAccount, filterProject, reloadKey]);
 
   useEffect(() => { setPage(1); }, [filterUser, filterFrom, filterTo, filterAccount, filterProject]);
 
@@ -184,6 +187,16 @@ export default function TimePage() {
             </div>
           )}
           <button
+            onClick={() => setTimeModalOpen(true)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '10px 18px', borderRadius: 8, border: 'none',
+              background: '#1a1a1a', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer',
+            }}
+          >
+            + Zeit erfassen
+          </button>
+          <button
             onClick={() => exportCSV(entries, isManager)}
             disabled={loading || entries.length === 0}
             style={{
@@ -197,6 +210,7 @@ export default function TimePage() {
           </button>
         </div>
       </div>
+      <LogTimeQuickModal open={timeModalOpen} onClose={() => setTimeModalOpen(false)} onSaved={() => setReloadKey(k => k + 1)} />
 
       {/* KPI cards */}
       {!loading && entries.length > 0 && (() => {
@@ -339,7 +353,8 @@ export default function TimePage() {
                         {(() => {
                           const ph = e.projectPhase;
                           if (!ph?.budgetHours || !ph.timeEntries) return <span style={{ color: '#94a3b8' }}>—</span>;
-                          const usedMin = ph.timeEntries.reduce((s, t) => s + t.durationMinutes, 0);
+                          // Exclude Mehrkosten so this matches the phase hub / getPhaseKontingent.
+                          const usedMin = ph.timeEntries.reduce((s, t) => s + ((t as any).isBillableExtra ? 0 : t.durationMinutes), 0);
                           const usedH = usedMin / 60;
                           const pct = Math.round((usedH / ph.budgetHours) * 100);
                           const barColor = pct >= 100 ? '#dc2626' : pct >= 80 ? '#d97706' : '#16a34a';

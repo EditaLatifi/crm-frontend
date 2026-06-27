@@ -4,12 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../../src/api/client';
 import { useAuth, canEdit as canEditRole } from '../../../src/auth/AuthProvider';
 import { getAllPhaseCodes } from '../../../src/lib/siaPhases';
+import Tooltip from '../../../components/ui/Tooltip';
 
 export default function TasksPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
   const canModify = canEditRole(user?.role);
   const [showForm, setShowForm] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -63,6 +65,7 @@ export default function TasksPage() {
       await api.post('/tasks', form);
       setForm({ title: '', description: '', status: 'OPEN', priority: 'LOW', dueDate: '', assignedToUserId: '', accountId: '', contactId: '', dealId: '', projectId: '', phase: '', projectPhaseId: '', isPaymentReminder: false, specification: '', assigneeIds: [], budgetHours: '' });
       setShowForm(false);
+      setShowAdvanced(false);
       setRefreshKey(k => k + 1);
     } finally {
       setSaving(false);
@@ -89,7 +92,7 @@ export default function TasksPage() {
           <div style={{ fontSize: 13, color: '#999', fontWeight: 400, marginTop: 4 }}>Verwalte und priorisiere deine Aufgaben im Kanban-Board.</div>
         </div>
         {canModify && <button
-          onClick={() => setShowForm(true)}
+          onClick={() => { setShowAdvanced(false); setShowForm(true); }}
           style={{ fontSize: 13, fontWeight: 600, borderRadius: 8, border: 'none', background: '#1a1a1a', color: '#fff', padding: '9px 20px', cursor: 'pointer' }}
         >
           + Neue Aufgabe
@@ -144,37 +147,13 @@ export default function TasksPage() {
                     {users.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
                   </select>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <div>
-                    <label style={labelStyle}>Firma</label>
-                    <select style={inputStyle} value={form.accountId} onChange={e => setForm(f => ({ ...f, accountId: e.target.value }))}>
-                      <option value="">Keine Firma</option>
-                      {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Kontakt</label>
-                    <select style={inputStyle} value={form.contactId} onChange={e => setForm(f => ({ ...f, contactId: e.target.value }))}>
-                      <option value="">Kein Kontakt</option>
-                      {contacts.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <div>
-                    <label style={labelStyle}>Deal</label>
-                    <select style={inputStyle} value={form.dealId} onChange={e => setForm(f => ({ ...f, dealId: e.target.value }))}>
-                      <option value="">Kein Deal</option>
-                      {deals.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Projekt</label>
-                    <select style={inputStyle} value={form.projectId} onChange={e => setForm(f => ({ ...f, projectId: e.target.value, projectPhaseId: '' }))}>
-                      <option value="">Kein Projekt</option>
-                      {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
-                  </div>
+                {/* Deal field removed (S4): tasks belong to a project + phase, not a deal. */}
+                <div>
+                  <label style={labelStyle}>Projekt</label>
+                  <select style={inputStyle} value={form.projectId} onChange={e => setForm(f => ({ ...f, projectId: e.target.value, projectPhaseId: '' }))}>
+                    <option value="">Kein Projekt</option>
+                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
                 </div>
                 {form.projectId ? (
                   <div>
@@ -191,35 +170,65 @@ export default function TasksPage() {
                   </div>
                 ) : (
                   <div>
-                    <label style={labelStyle}>Leistungsphase (SIA) *</label>
+                    <label style={{ ...labelStyle, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      Leistungsphase (SIA)
+                      <Tooltip text={'Optional. Im Zweifel „Allgemein / noch offen“ wählen — du musst keine SIA-Phase kennen.'} />
+                    </label>
                     <select style={inputStyle} value={form.phase} onChange={e => setForm(f => ({ ...f, phase: e.target.value }))}>
-                      <option value="">— Phase wählen —</option>
+                      <option value="">Allgemein / noch offen</option>
                       {phaseOptions.map(p => <option key={p.code} value={p.code}>{p.label}</option>)}
                     </select>
                   </div>
                 )}
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1a1a1a', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={form.isPaymentReminder} onChange={e => setForm(f => ({ ...f, isPaymentReminder: e.target.checked }))} />
-                  Zahlungserinnerung (Payment Reminder)
-                </label>
-                {isAdmin && (
-                  <div>
-                    <label style={labelStyle}>Stundenkontingent (h)</label>
-                    <input type="number" min="0" step="0.5" style={inputStyle} value={form.budgetHours} onChange={e => setForm(f => ({ ...f, budgetHours: e.target.value }))} placeholder="z.B. 40" />
-                  </div>
+
+                {/* Advanced fields collapsed by default — keeps the common case down to a few fields */}
+                <button type="button" onClick={() => setShowAdvanced(s => !s)}
+                  style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: '#64748b', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '2px 0' }}>
+                  {showAdvanced ? '− Weniger anzeigen' : '+ Mehr anzeigen'}
+                </button>
+
+                {showAdvanced && (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div>
+                        <label style={labelStyle}>Firma</label>
+                        <select style={inputStyle} value={form.accountId} onChange={e => setForm(f => ({ ...f, accountId: e.target.value }))}>
+                          <option value="">Keine Firma</option>
+                          {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Kontakt</label>
+                        <select style={inputStyle} value={form.contactId} onChange={e => setForm(f => ({ ...f, contactId: e.target.value }))}>
+                          <option value="">Kein Kontakt</option>
+                          {contacts.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1a1a1a', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={form.isPaymentReminder} onChange={e => setForm(f => ({ ...f, isPaymentReminder: e.target.checked }))} />
+                      Zahlungserinnerung
+                    </label>
+                    {isAdmin && (
+                      <div>
+                        <label style={labelStyle}>Stundenkontingent (h)</label>
+                        <input type="number" min="0" step="0.5" style={inputStyle} value={form.budgetHours} onChange={e => setForm(f => ({ ...f, budgetHours: e.target.value }))} placeholder="z.B. 40" />
+                      </div>
+                    )}
+                    <div>
+                      <label style={labelStyle}>Weitere Mitarbeiter</label>
+                      <select multiple style={{ ...inputStyle, minHeight: 80 }} value={form.assigneeIds}
+                        onChange={e => setForm(f => ({ ...f, assigneeIds: Array.from(e.target.selectedOptions, o => o.value) }))}>
+                        {users.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
+                      </select>
+                      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>Ctrl/Cmd + Klick für Mehrfachauswahl</div>
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Spezifikation</label>
+                      <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} value={form.specification} onChange={e => setForm(f => ({ ...f, specification: e.target.value }))} placeholder="Freitext-Spezifikation (optional)" />
+                    </div>
+                  </>
                 )}
-                <div>
-                  <label style={labelStyle}>Weitere Mitarbeiter</label>
-                  <select multiple style={{ ...inputStyle, minHeight: 80 }} value={form.assigneeIds}
-                    onChange={e => setForm(f => ({ ...f, assigneeIds: Array.from(e.target.selectedOptions, o => o.value) }))}>
-                    {users.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
-                  </select>
-                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>Ctrl/Cmd + Klick für Mehrfachauswahl</div>
-                </div>
-                <div>
-                  <label style={labelStyle}>Spezifikation</label>
-                  <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} value={form.specification} onChange={e => setForm(f => ({ ...f, specification: e.target.value }))} placeholder="Freitext-Spezifikation (optional)" />
-                </div>
               </div>
               <div style={{ padding: '16px 24px', borderTop: '1px solid #E8E4DE', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                 <button type="button" onClick={() => setShowForm(false)} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #E8E4DE', background: '#fff', color: '#666', fontSize: 13, cursor: 'pointer' }}>Abbrechen</button>

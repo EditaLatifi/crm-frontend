@@ -17,6 +17,9 @@ const ICONS: Record<string, string> = {
   APPOINTMENT_CREATED: "📅",
   PERMIT_STATUS_CHANGED: "📄",
   VACATION_REVIEWED: "🌴",
+  VACATION_REQUESTED: "🏖️",
+  FOLLOW_UP_CREATED: "🔔",
+  FOLLOW_UP_DUE: "⏰",
 };
 
 export default function NotificationBell() {

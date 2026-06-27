@@ -779,7 +779,11 @@ function AccountsTable({
       {loading ? (
         <div style={{ padding: "40px 24px", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>Lade Firmen...</div>
       ) : filteredAccounts.length === 0 ? (
-        <div style={{ padding: "40px 24px", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>Keine Firmen gefunden.</div>
+        <div style={{ padding: "48px 24px", textAlign: "center" }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>🏢</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#475569", marginBottom: 4 }}>Noch keine Firmen</div>
+          <div style={{ fontSize: 13, color: "#94a3b8" }}>Lege deine erste Firma über „+ Neue Firma" oben rechts an.</div>
+        </div>
       ) : (() => {
         const [sortField, sortDir] = sortBy.split("-");
         const handleSort = (field: string) => {

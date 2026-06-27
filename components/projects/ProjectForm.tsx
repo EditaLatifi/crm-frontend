@@ -291,15 +291,15 @@ export default function ProjectForm({ onSubmit, initialData, onCancel }: Props) 
           </select>
         </div>
         <div>
-          <label style={label}>Stundenkontingent</label>
+          <label style={label}>Geplante Stunden (gesamt)</label>
           <input
             style={input} type="number" min="0" step="0.5" value={form.budgetHours}
             onChange={e => { setBudgetHoursTouched(true); set('budgetHours', e.target.value); }}
             onFocus={onFocus} onBlur={onBlur}
-            placeholder="auto"
-            title="Wird automatisch aus dem Budget berechnet (Budget ÷ 1.081 ÷ 135 × 0.7) — überschreibbar."
+            placeholder="wird automatisch berechnet"
+            title="Vorschlag aus dem Budget: Betrag ohne MwSt., geteilt durch den Stundensatz (135), davon 70% für Honorar. Sie können die Zahl jederzeit überschreiben."
           />
-          <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3 }}>auto aus Budget · überschreibbar</div>
+          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3 }}>Vorschlag aus dem Budget (Betrag ÷ MwSt. ÷ Std.-Satz · 70% Honorar) — frei überschreibbar.</div>
         </div>
       </div>
 

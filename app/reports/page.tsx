@@ -202,7 +202,7 @@ export default function ReportsPage() {
     return {
       labels: sorted.map(u => u.name),
       datasets: [
-        { label: 'Offen / In Arbeit', data: sorted.map(u => u.open), backgroundColor: '#eab308', borderRadius: 4 },
+        { label: 'Offen / In Bearbeitung', data: sorted.map(u => u.open), backgroundColor: '#eab308', borderRadius: 4 },
         { label: 'Erledigt', data: sorted.map(u => u.done), backgroundColor: '#16a34a', borderRadius: 4 },
       ],
     };
