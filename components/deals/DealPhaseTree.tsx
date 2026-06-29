@@ -38,7 +38,7 @@ const PHASE_STATUS_LABELS: Record<string, { label: string; bg: string; color: st
   ON_HOLD:     { label: 'Pausiert',       bg: '#fef3c7', color: '#b45309' },
 };
 
-export default function DealPhaseTree({ dealId, currency, canViewPayments = true, locked = false }: { dealId: string; currency: string; canViewPayments?: boolean; locked?: boolean }) {
+export default function DealPhaseTree({ dealId, currency, canViewPayments = true, locked = false, reloadKey }: { dealId: string; currency: string; canViewPayments?: boolean; locked?: boolean; reloadKey?: string }) {
   const [phases, setPhases] = useState<Phase[]>([]);
   const [loading, setLoading] = useState(false);
   const [addingTopLevel, setAddingTopLevel] = useState(false);
@@ -55,7 +55,9 @@ export default function DealPhaseTree({ dealId, currency, canViewPayments = true
     }
   };
 
-  useEffect(() => { reload(); }, [dealId]);
+  // Reload when the deal or its SIA phase selection changes, so newly ticked phases appear immediately
+  // (the backend materializes selected SIA phases into rows on load).
+  useEffect(() => { reload(); }, [dealId, reloadKey]);
 
   const addTopLevel = async () => {
     if (!topLevelName.trim()) return;
@@ -107,30 +109,34 @@ export default function DealPhaseTree({ dealId, currency, canViewPayments = true
       {phases.map(p => (
         <PhaseRow key={p.id} phase={p} currency={currency} onChange={reload} canViewPayments={canViewPayments} locked={locked} />
       ))}
-
-      {phases.length > 0 && (
-        <BulkBudgetEditor dealId={dealId} phases={phases} onSaved={reload} />
-      )}
     </div>
   );
 }
 
-function useDealSiaTotal(dealId: string): number | null {
-  const [total, setTotal] = useState<number | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    api.get(`/deals/${dealId}`).then((d: any) => {
-      if (cancelled) return;
-      const pb = (d?.phaseBudgets && typeof d.phaseBudgets === 'object' && !Array.isArray(d.phaseBudgets)) ? d.phaseBudgets as Record<string, any> : {};
-      const sum = Object.values(pb).reduce((s: number, v: any) => {
-        const n = Number(v);
-        return s + (Number.isFinite(n) ? n : 0);
-      }, 0);
-      setTotal(sum);
-    }).catch(() => { if (!cancelled) setTotal(0); });
-    return () => { cancelled = true; };
-  }, [dealId]);
-  return total;
+// Inline hours editor shown on each phase row — one table, no separate "Stundenbudget pro Phase".
+function InlineHours({ phase, onChange, locked }: { phase: Phase; onChange: () => void; locked?: boolean }) {
+  const [val, setVal] = useState(phase.hourBudget != null ? String(phase.hourBudget) : '');
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { setVal(phase.hourBudget != null ? String(phase.hourBudget) : ''); }, [phase.hourBudget]);
+  if (locked) return phase.hourBudget != null ? <span style={{ fontSize: 11, color: '#94a3b8' }}>· {phase.hourBudget}h</span> : null;
+  const save = async () => {
+    const raw = val.trim();
+    const next = raw === '' ? null : Number(raw);
+    if (next === (phase.hourBudget ?? null)) return;
+    if (next != null && (isNaN(next) || next < 0)) { setVal(phase.hourBudget != null ? String(phase.hourBudget) : ''); return; }
+    setSaving(true);
+    try { await api.patch(`/deals/phases/${phase.id}`, { hourBudget: next }); onChange(); } finally { setSaving(false); }
+  };
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }} title="Stundenbudget">
+      <input type="number" min="0" step="0.5" value={val} disabled={saving}
+        onChange={e => setVal(e.target.value)} onBlur={save}
+        onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+        placeholder="0"
+        style={{ width: 58, padding: '3px 6px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12, textAlign: 'center' }} />
+      <span style={{ fontSize: 11, color: '#94a3b8' }}>h</span>
+    </span>
+  );
 }
 
 function flattenPhases(phases: Phase[]): { id: string; code: string; name: string; depth: number; hourBudget: number | null }[] {
@@ -147,7 +153,6 @@ function flattenPhases(phases: Phase[]): { id: string; code: string; name: strin
 
 function BulkBudgetEditor({ dealId, phases, onSaved }: { dealId: string; phases: Phase[]; onSaved: () => void }) {
   const flat = flattenPhases(phases);
-  const siaTotal = useDealSiaTotal(dealId);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -169,8 +174,6 @@ function BulkBudgetEditor({ dealId, phases, onSaved }: { dealId: string; phases:
     const v = parseFloat(drafts[row.id] ?? '');
     return s + (isNaN(v) ? 0 : v);
   }, 0);
-  const capActive = (siaTotal ?? 0) > 0;
-  const overCap = capActive && Math.round(total * 100) > Math.round((siaTotal ?? 0) * 100);
 
   const saveAll = async () => {
     setError(null);
@@ -231,26 +234,19 @@ function BulkBudgetEditor({ dealId, phases, onSaved }: { dealId: string; phases:
         ))}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, gap: 12, flexWrap: 'wrap' }}>
-        <div style={{ fontSize: 12, color: overCap ? '#dc2626' : '#64748b' }}>
-          Summe: <strong style={{ color: overCap ? '#dc2626' : '#1e293b' }}>{total.toLocaleString('de-CH')}h</strong>
-          {capActive && (
-            <span style={{ marginLeft: 6 }}>
-              / {(siaTotal ?? 0).toLocaleString('de-CH')}h SIA-Kontingent
-              {overCap && <span style={{ marginLeft: 6, fontWeight: 700 }}>— überschritten</span>}
-            </span>
-          )}
+        <div style={{ fontSize: 12, color: '#64748b' }}>
+          Summe: <strong style={{ color: '#1e293b' }}>{total.toLocaleString('de-CH')}h</strong>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {error && <span style={{ fontSize: 12, color: '#dc2626' }}>{error}</span>}
           <button
             onClick={saveAll}
-            disabled={!dirty || saving || overCap}
+            disabled={!dirty || saving}
             style={{
               ...btnPrimary,
-              opacity: (!dirty || saving || overCap) ? 0.5 : 1,
-              cursor: (!dirty || saving || overCap) ? 'not-allowed' : 'pointer',
+              opacity: (!dirty || saving) ? 0.5 : 1,
+              cursor: (!dirty || saving) ? 'not-allowed' : 'pointer',
             }}
-            title={overCap ? 'Summe übersteigt SIA-Kontingent' : undefined}
           >
             <FiCheck size={13} /> {saving ? 'Speichern…' : 'Alle speichern'}
           </button>
@@ -294,9 +290,6 @@ function PhaseRow({ phase, currency, onChange, canViewPayments, locked = false }
                 <FiUser size={11} /> {phase.responsible.name}
               </span>
             )}
-            {phase.hourBudget != null && (
-              <span style={{ fontSize: 11, color: '#94a3b8' }}>· {phase.hourBudget}h</span>
-            )}
             {(phase as any).budgetChf != null && (
               <span style={{ fontSize: 11, color: '#94a3b8' }}>· {Number((phase as any).budgetChf).toLocaleString('de-CH')} CHF</span>
             )}
@@ -304,7 +297,8 @@ function PhaseRow({ phase, currency, onChange, canViewPayments, locked = false }
               <span style={{ fontSize: 11, color: '#94a3b8' }}>· {(phase as any).offeredHours}h offeriert</span>
             )}
           </div>
-          <div style={{ display: 'flex', gap: 6 }} onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }} onClick={e => e.stopPropagation()}>
+            <InlineHours phase={phase} onChange={onChange} locked={locked} />
             {!locked && <button title="Bearbeiten" onClick={() => setEditing(v => !v)} style={{ ...btnIcon, color: editing ? '#3b82f6' : '#64748b' }}><FiEdit2 size={13} /></button>}
             {!locked && <button title="Sub-Phase hinzufügen" onClick={() => setAddingSub(v => !v)} style={btnIcon}><FiPlus size={13} /></button>}
             {canViewPayments && (
@@ -374,16 +368,15 @@ function SubPhaseRow({ phase, statusCfg, onChange, locked = false }: { phase: Ph
             </span>
           )}
         </div>
-        {!locked && (
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button title="Bearbeiten" onClick={() => setEditing(v => !v)} style={{ ...btnIcon, padding: 4 }}><FiEdit2 size={11} /></button>
-            <button title="Löschen" onClick={async () => {
-              if (!confirm(`Sub-Phase "${phase.name}" löschen?`)) return;
-              await api.delete(`/deals/phases/${phase.id}`);
-              onChange();
-            }} style={{ ...btnIcon, color: '#dc2626', padding: 4 }}><FiTrash2 size={11} /></button>
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+          <InlineHours phase={phase} onChange={onChange} locked={locked} />
+          {!locked && <button title="Bearbeiten" onClick={() => setEditing(v => !v)} style={{ ...btnIcon, padding: 4 }}><FiEdit2 size={11} /></button>}
+          {!locked && <button title="Löschen" onClick={async () => {
+            if (!confirm(`Sub-Phase "${phase.name}" löschen?`)) return;
+            await api.delete(`/deals/phases/${phase.id}`);
+            onChange();
+          }} style={{ ...btnIcon, color: '#dc2626', padding: 4 }}><FiTrash2 size={11} /></button>}
+        </div>
       </div>
       {phase.description && !editing && (
         <div style={{ fontSize: 12, color: '#94a3b8', paddingLeft: 16, paddingBottom: 6 }}>{phase.description}</div>

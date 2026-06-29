@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { useParams } from "next/navigation";
-import { useAuth } from "../../../../src/auth/AuthProvider";
+import { useParams, useRouter } from "next/navigation";
+import { useAuth, isManagerRole } from "../../../../src/auth/AuthProvider";
 import { api } from "../../../../src/api/client";
 import { getAllPhaseCodes } from "../../../../src/lib/siaPhases";
 import LogTimeQuickModal from "../../../../components/time/LogTimeQuickModal";
@@ -66,7 +66,9 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
 export default function TaskDetailsPage() {
   const { user } = useAuth();
   const params = useParams();
+  const router = useRouter();
   const taskId = params?.id as string;
+  const [busyAction, setBusyAction] = useState(false);
 
   const [task, setTask] = useState<any>(null);
   const [comments, setComments] = useState<any[]>([]);
@@ -139,6 +141,34 @@ export default function TaskDetailsPage() {
     await api.patch(`/tasks/${taskId}/priority`, { priority: newPriority });
     fetchTask();
   };
+
+  const handleArchive = async () => {
+    const archived = !task?.archivedAt;
+    setBusyAction(true);
+    try {
+      await api.patch(`/tasks/${taskId}/archive`, { archived });
+      if (archived) { showToast("Aufgabe archiviert"); router.push("/tasks"); }
+      else { fetchTask(); showToast("Aufgabe wiederhergestellt"); }
+    } catch (e: any) {
+      showToast(e?.message || "Archivieren fehlgeschlagen", "error");
+    } finally { setBusyAction(false); }
+  };
+
+  const handleDeleteTask = async () => {
+    if (!confirm("Aufgabe wirklich endgültig löschen? Das kann nicht rückgängig gemacht werden.")) return;
+    setBusyAction(true);
+    try {
+      await api.delete(`/tasks/${taskId}`);
+      showToast("Aufgabe gelöscht");
+      router.push("/tasks");
+    } catch (e: any) {
+      showToast(e?.message || "Löschen fehlgeschlagen", "error");
+      setBusyAction(false);
+    }
+  };
+
+  // Backend allows the creator or management; mirror that so we don't show a button that will 403.
+  const canManageTask = isAdmin || isManagerRole(user?.role) || (task && task.createdByUserId === user?.id);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -321,12 +351,8 @@ export default function TaskDetailsPage() {
 
             {/* Task card */}
             <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #E8E4DE" }}>
-              {/* Status bar */}
+              {/* Status bar — Status + Priorität on the left, actions on the right (title shows once, below) */}
               <div style={{ padding: "16px 24px", borderBottom: "1px solid #FAF9F6", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.02em" }}>
-                  {task.title}
-                </span>
-                <div style={{ width: 1, height: 16, background: "#E8E4DE" }} />
                 {/* Status dropdown */}
                 <div style={{ position: "relative" }}>
                   <select
@@ -363,6 +389,7 @@ export default function TaskDetailsPage() {
                 </div>
                 <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
                   {!editMode ? (
+                    <>
                     <button
                       onClick={startEdit}
                       style={{
@@ -374,6 +401,37 @@ export default function TaskDetailsPage() {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       Bearbeiten
                     </button>
+                    {canManageTask && (
+                      <>
+                        <button
+                          onClick={handleArchive}
+                          disabled={busyAction}
+                          title={task.archivedAt ? "Aufgabe wiederherstellen" : "Aufgabe archivieren"}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 6, padding: "6px 14px",
+                            background: "#FAF9F6", border: "1px solid #E8E4DE", borderRadius: 8,
+                            fontSize: 13, fontWeight: 500, color: "#475569", cursor: busyAction ? "not-allowed" : "pointer"
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                          {task.archivedAt ? "Wiederherstellen" : "Archivieren"}
+                        </button>
+                        <button
+                          onClick={handleDeleteTask}
+                          disabled={busyAction}
+                          title="Aufgabe löschen"
+                          style={{
+                            display: "flex", alignItems: "center", gap: 6, padding: "6px 14px",
+                            background: "#fff", border: "1px solid #fecaca", borderRadius: 8,
+                            fontSize: 13, fontWeight: 500, color: "#dc2626", cursor: busyAction ? "not-allowed" : "pointer"
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                          Löschen
+                        </button>
+                      </>
+                    )}
+                    </>
                   ) : (
                     <>
                       <button
@@ -503,13 +561,15 @@ export default function TaskDetailsPage() {
                       <option value="">Niemand</option>
                       {users.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
                     </select>
-                  ) : (
+                  ) : assignedUser ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <Avatar name={assignedUser?.name || assignedUser?.email || "?"} size={28} />
+                      <Avatar name={assignedUser.name || assignedUser.email || "?"} size={28} />
                       <span style={{ fontSize: 13, color: "#374151", fontWeight: 500 }}>
-                        {assignedUser?.name || assignedUser?.email || "Niemand"}
+                        {assignedUser.name || assignedUser.email}
                       </span>
                     </div>
+                  ) : (
+                    <span style={{ fontSize: 13, color: "#94a3b8", fontStyle: "italic" }}>Nicht zugewiesen</span>
                   )}
                 </div>
 
@@ -618,11 +678,26 @@ export default function TaskDetailsPage() {
                   </span>
                 </div>
 
-                {/* Phase */}
+                {/* Phase — show the code badge + the phase name (not just "34") */}
                 {task.phase && (
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", letterSpacing: "0.06em", marginBottom: 8, textTransform: "uppercase" }}>Leistungsphase</div>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "#7c3aed", background: "#f3e8ff", borderRadius: 6, padding: "3px 10px" }}>{task.phase}</span>
+                    {(() => {
+                      const pp = projectPhases.find(p => String(p.code) === String(task.phase));
+                      const sp = phaseOptions.find(p => String(p.code) === String(task.phase));
+                      const name: string | null = pp?.name || sp?.label || null;
+                      // If the name already begins with the code (e.g. "34.1 Projekt…"), show only the name
+                      // to avoid "34 · 34.1 …" redundancy; otherwise show the code badge + the name.
+                      const nameStartsWithCode = !!name && name.trimStart().startsWith(String(task.phase));
+                      return (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          {!nameStartsWithCode && <span style={{ fontSize: 12, fontWeight: 700, color: "#7c3aed", background: "#f3e8ff", borderRadius: 6, padding: "3px 10px" }}>{task.phase}</span>}
+                          {name
+                            ? <span style={{ fontSize: 13, color: "#374151", fontWeight: 600 }}>{name}</span>
+                            : <span style={{ fontSize: 12, fontWeight: 700, color: "#7c3aed", background: "#f3e8ff", borderRadius: 6, padding: "3px 10px" }}>{task.phase}</span>}
+                        </span>
+                      );
+                    })()}
                   </div>
                 )}
 

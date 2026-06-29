@@ -25,7 +25,6 @@ import {
   FiMapPin, FiUsers, FiX, FiLayers, FiFileText,
   FiFolder, FiTruck, FiLink, FiCheckSquare, FiBriefcase,
 } from 'react-icons/fi';
-import { LuCoins } from 'react-icons/lu';
 import Link from 'next/link';
 import '../projects.css';
 
@@ -37,7 +36,8 @@ const TABS: { id: Tab; label: string; icon: any; roles?: string[] }[] = [
   { id: 'tasks',          label: 'Aufgaben',        icon: FiCheckSquare, roles: ['ADMIN', 'PROJEKTLEITER', 'MITARBEITER'] },
   { id: 'team',           label: 'Team',            icon: FiUsers, roles: ['ADMIN', 'PROJEKTLEITER', 'MITARBEITER'] },
   { id: 'documents',      label: 'Dokumente',       icon: FiFolder },
-  { id: 'budget',         label: 'Baukosten',       icon: LuCoins, roles: ['ADMIN', 'PROJEKTLEITER'] },
+  // 'Baukosten' (construction-cost control) removed from the UI by client request — the office only
+  // runs projects, not construction-cost supervision. Backend + BudgetPanel stay intact, just unlinked.
   { id: 'permits',        label: 'Baubewilligung',  icon: FiFileText },
 ];
 
@@ -60,6 +60,11 @@ export default function ProjectDetailPage() {
   const [projectTasks,    setProjectTasks]    = useState<any[]>([]);
   const [logTimeOpen,     setLogTimeOpen]     = useState(false);
   const [logTimePhaseId,  setLogTimePhaseId]  = useState<string | undefined>(undefined);
+  // Quick-create a task directly on the project's Aufgaben tab.
+  const [showTaskForm,    setShowTaskForm]    = useState(false);
+  const [newTaskTitle,    setNewTaskTitle]    = useState('');
+  const [newTaskPhaseId,  setNewTaskPhaseId]  = useState('');
+  const [creatingTask,    setCreatingTask]    = useState(false);
 
   const isAdmin  = user?.role === 'ADMIN';
   const isExtern = user?.role === 'EXTERN';
@@ -79,10 +84,30 @@ export default function ProjectDetailPage() {
     }
   }, [id]);
 
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => {
+  const loadProjectTasks = useCallback(() => {
     api.get('/tasks').then((res: any) => { const d = res?.data ?? (Array.isArray(res) ? res : []); setProjectTasks(d.filter((t: any) => t.projectId === id)); }).catch(() => {});
   }, [id]);
+
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadProjectTasks(); }, [loadProjectTasks]);
+
+  const createProjectTask = async () => {
+    const title = newTaskTitle.trim();
+    if (!title) return;
+    setCreatingTask(true);
+    try {
+      await api.post('/tasks', {
+        title, status: 'OPEN', priority: 'MEDIUM',
+        projectId: id,
+        projectPhaseId: newTaskPhaseId || undefined,
+        accountId: project?.account?.id || undefined,
+      });
+      setNewTaskTitle(''); setNewTaskPhaseId(''); setShowTaskForm(false);
+      loadProjectTasks();
+    } catch (e: any) {
+      setError(e.message || 'Aufgabe konnte nicht erstellt werden');
+    } finally { setCreatingTask(false); }
+  };
   useEffect(() => {
     if (canEdit) api.get('/users').then((d: any) => setAllUsers(Array.isArray(d) ? d : [])).catch(() => {});
   }, [canEdit]);
@@ -356,7 +381,7 @@ export default function ProjectDetailPage() {
             <div>
               {/* SIA Phase Timeline */}
               <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '16px 24px', marginBottom: 16 }}>
-                <PhaseTimeline projectId={id} phases={phases} canEdit={canEdit} onUpdate={load} showFinancials={showFinancials} onLogTime={(phaseId) => { setLogTimePhaseId(phaseId); setLogTimeOpen(true); }} />
+                <PhaseTimeline projectId={id} phases={phases} canEdit={canEdit} onUpdate={load} showFinancials={showFinancials} users={allUsers} onLogTime={(phaseId) => { setLogTimePhaseId(phaseId); setLogTimeOpen(true); }} />
               </div>
 
               <div className="proj-detail-grid">
@@ -517,11 +542,31 @@ export default function ProjectDetailPage() {
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px 28px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Aufgaben ({projectTasks.length})</h2>
+                {canEdit && !showTaskForm && (
+                  <button onClick={() => setShowTaskForm(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>+ Neue Aufgabe</button>
+                )}
               </div>
+
+              {/* Quick-create a task directly on this project */}
+              {canEdit && showTaskForm && (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: 12, marginBottom: 16 }}>
+                  <input autoFocus value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') createProjectTask(); if (e.key === 'Escape') { setShowTaskForm(false); setNewTaskTitle(''); } }}
+                    placeholder="Aufgabentitel" style={{ flex: '1 1 220px', padding: '8px 11px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 13 }} />
+                  <select value={newTaskPhaseId} onChange={e => setNewTaskPhaseId(e.target.value)} style={{ padding: '8px 11px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 13, minWidth: 160 }}>
+                    <option value="">— Phase (optional) —</option>
+                    {(project.phases || []).filter((p: any) => !p.parentPhaseId).sort((a: any, b: any) => a.order - b.order).map((p: any) => (
+                      <option key={p.id} value={p.id}>{p.code ? p.code + ' · ' : ''}{p.name}</option>
+                    ))}
+                  </select>
+                  <button onClick={createProjectTask} disabled={creatingTask || !newTaskTitle.trim()} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: (creatingTask || !newTaskTitle.trim()) ? 0.5 : 1 }}>{creatingTask ? '…' : 'Speichern'}</button>
+                  <button onClick={() => { setShowTaskForm(false); setNewTaskTitle(''); setNewTaskPhaseId(''); }} style={{ background: '#fff', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Abbrechen</button>
+                </div>
+              )}
 
               {projectTasks.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '32px 0', color: '#94a3b8', fontSize: 14 }}>
-                  Keine Aufgaben mit diesem Projekt verknüpft.
+                  Keine Aufgaben mit diesem Projekt verknüpft.{canEdit && ' Lege oben rechts eine neue Aufgabe an.'}
                 </div>
               ) : (
                 <>

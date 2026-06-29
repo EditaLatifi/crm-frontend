@@ -53,6 +53,17 @@ const STAGE_BADGE: Record<string, { bg: string; color: string }> = {
   default: { bg: '#eff6ff', color: '#1a1a1a' },
 };
 
+// Internes Kontingent = sum of DealPhase hour budgets, plus any legacy phaseBudgets entry whose
+// code has no DealPhase row yet (so a code is never counted twice across the two stores).
+function kontingentHours(deal: any): number {
+  const dealPhases: any[] = Array.isArray(deal?.dealPhases) ? deal.dealPhases : [];
+  const codesWithRow = new Set(dealPhases.map((p: any) => String(p.code)));
+  const fromDealPhases = dealPhases.reduce((s: number, p: any) => s + (Number(p.hourBudget) || 0), 0);
+  const pb = (deal?.phaseBudgets && typeof deal.phaseBudgets === 'object') ? deal.phaseBudgets : {};
+  const fromLegacy = Object.keys(pb).reduce((s: number, code: string) => codesWithRow.has(String(code)) ? s : s + (Number(pb[code]) || 0), 0);
+  return fromDealPhases + fromLegacy;
+}
+
 export default function DealDetailPage() {
   const router = useRouter();
   const routeParams = useParams();
@@ -86,6 +97,7 @@ export default function DealDetailPage() {
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dealTasks, setDealTasks] = useState<any[]>([]);
+  const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
   const [linkedProject, setLinkedProject] = useState<any>(null);
   const [emailOpen, setEmailOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -132,6 +144,7 @@ export default function DealDetailPage() {
       api.get('/deals/deal-stages').catch((e) => { console.warn('[DealDetail] deal-stages failed', e); return []; }),
       api.get('/tasks').catch((e) => { console.warn('[DealDetail] tasks failed', e); return []; }),
     ]);
+    api.get('/users').then((u: any) => setUsers(Array.isArray(u) ? u : [])).catch(() => {});
     setDeal(dealData);
     setNotes(Array.isArray(notesData) ? notesData : []);
     setAttachments(Array.isArray(attachData) ? attachData : []);
@@ -408,24 +421,12 @@ export default function DealDetailPage() {
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Internes Kontingent</div>
                     <div style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>
                       {(() => {
-                        const fromBudgets = (deal.phaseBudgets && typeof deal.phaseBudgets === 'object')
-                          ? Object.values(deal.phaseBudgets as Record<string, number>).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
-                          : 0;
-                        const fromDealPhases = Array.isArray(deal.dealPhases)
-                          ? deal.dealPhases.reduce((s: number, p: any) => s + (Number(p.hourBudget) || 0), 0)
-                          : 0;
-                        const totalHours = fromBudgets + fromDealPhases;
+                        const totalHours = kontingentHours(deal);
                         return totalHours > 0 ? `${totalHours.toLocaleString('de-CH')}h` : '—';
                       })()}
                     </div>
                     {(() => {
-                      const fromBudgets = (deal.phaseBudgets && typeof deal.phaseBudgets === 'object')
-                        ? Object.values(deal.phaseBudgets as Record<string, number>).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
-                        : 0;
-                      const fromDealPhases = Array.isArray(deal.dealPhases)
-                        ? deal.dealPhases.reduce((s: number, p: any) => s + (Number(p.hourBudget) || 0), 0)
-                        : 0;
-                      if (fromBudgets + fromDealPhases > 0) return null;
+                      if (kontingentHours(deal) > 0) return null;
                       return (
                         <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>
                           Wähle eine Leistungsphase unten und trage Stunden ein →
@@ -617,15 +618,9 @@ export default function DealDetailPage() {
 
                   {/* Deal tasks removed (S3): deal nudges are handled by Follow-ups; work tasks live in the project. */}
 
-                  {/* Phase budget overview */}
-                  {/* Phase budget overview — uses deal.phaseBudgets (phase-level) + task actual hours */}
-                  {selectedPhases.length > 0 && <PhaseOverview deal={deal} tasks={dealTasks} selectedPhases={selectedPhases} editMode={editMode} onTaskUpdated={fetchAll} dealId={params.id as string} linkedProjectId={linkedProject?.id} onBudgetSave={async (budgets: any) => {
-                    await api.patch(`/deals/${params.id}`, { phaseBudgets: budgets });
-                    setDeal((d: any) => ({ ...d, phaseBudgets: budgets }));
-                  }} />}
-
-                  {/* Sub-phases + Zahlungsplan — locked once the deal became a project */}
-                  <DealPhaseTree dealId={params.id as string} currency={deal.currency || 'CHF'} canViewPayments={isAdmin} locked={!!linkedProject} />
+                  {/* SINGLE phase editor: phases + Mitarbeiter + Stundenbudget + Sub-Phasen + Zahlungsplan,
+                      all in one place. The separate "Phasen-Übersicht" table was removed so there aren't two. */}
+                  <DealPhaseTree dealId={params.id as string} currency={deal.currency || 'CHF'} canViewPayments={isAdmin} locked={!!linkedProject} reloadKey={selectedPhases.join(',')} />
                 </div>
               )}
             </div>
@@ -737,36 +732,126 @@ function getPhaseStatus(phaseTasks: any[]): string {
   return hasTime || phaseTasks.some((t: any) => t.status === 'IN_PROGRESS') ? 'in_progress' : 'pending';
 }
 
-function PhaseOverview({ deal, tasks, selectedPhases, editMode, onBudgetSave, onTaskUpdated, dealId, linkedProjectId }: {
-  deal: any; tasks: any[]; selectedPhases: number[]; editMode: boolean;
+function PhaseOverview({ deal, tasks, users, selectedPhases, editMode, onBudgetSave, onTaskUpdated, dealId, linkedProjectId }: {
+  deal: any; tasks: any[]; users: { id: string; name: string }[]; selectedPhases: number[]; editMode: boolean;
   onBudgetSave: (budgets: any) => Promise<void>;
   onTaskUpdated?: () => void;
   dealId: string;
   linkedProjectId?: string | null;
 }) {
+  // Legacy per-code budget map (older deals); the real source of truth is deal.dealPhases rows.
   const budgets: Record<string, number> = deal.phaseBudgets && typeof deal.phaseBudgets === 'object' ? deal.phaseBudgets : {};
+  // Real DealPhase rows, keyed by SIA code — these feed the Internes Kontingent up top and carry the responsible worker.
+  const dealPhases: any[] = Array.isArray(deal.dealPhases) ? deal.dealPhases : [];
+  const dpByCode: Record<string, any> = {};
+  dealPhases.forEach((p: any) => { if (p.code) dpByCode[String(p.code)] = p; });
+  const hoursFor = (code: string): number => {
+    const dp = dpByCode[code];
+    if (dp && dp.hourBudget != null) return Number(dp.hourBudget) || 0;
+    return Number(budgets[code]) || 0;
+  };
+
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [savingPhase, setSavingPhase] = useState<string | null>(null);
+  const [savingResp, setSavingResp] = useState<string | null>(null);
   const [expandedPhase, setExpandedPhase] = useState<string | null>(null);
+  const legacyMigratedRef = useRef<string | null>(null);
   const selectedSet = new Set(selectedPhases.map(String));
-  // Phase-level hour budgets are now edited ONLY in the structured Phasen-Editor (DealPhaseTree),
-  // which is the single source of truth. Here they stay read-only so there aren't two conflicting
-  // budget editors. (Per-task budgets further below remain editable — DealPhaseTree doesn't manage those.)
-  const phaseBudgetEditable = false;
+  // Directly editable: budget + Mitarbeiter write to the real DealPhase rows (same store as the
+  // structured Phasen-Editor below), so the budget feeds the Internes Kontingent up top.
+  const phaseBudgetEditable = true;
+
+  // SIA name for a code (main or sub), so migrated/created phases get a proper label.
+  const siaNameFor = (code: string): string => {
+    for (const m of SIA_PHASES_FULL) {
+      if (m.code === code) return m.name;
+      const sub = m.sub.find((s: any) => s.code === code);
+      if (sub) return sub.name;
+    }
+    return code;
+  };
 
   useEffect(() => {
     const d: Record<string, string> = {};
-    for (const code of Object.keys(budgets)) d[code] = String(budgets[code]);
+    for (const p of dealPhases) { if (p.code && p.hourBudget != null) d[String(p.code)] = String(p.hourBudget); }
+    for (const code of Object.keys(budgets)) { if (d[code] === undefined) d[code] = String(budgets[code]); }
     setDrafts(d);
-  }, [deal.phaseBudgets]);
+  }, [deal.dealPhases, deal.phaseBudgets]);
 
-  async function saveBudget(code: string) {
-    const val = parseFloat(drafts[code] ?? '');
+  // Self-heal: older deals stored some budgets in the legacy phaseBudgets map, so they showed only in
+  // this table and not in the structured Phasen-Editor / Stundenbudget below. Convert any legacy entry
+  // into a real DealPhase row (once per deal), then clear the legacy map so all views match.
+  useEffect(() => {
+    const legacyCodes = Object.keys(budgets).filter(c => (Number(budgets[c]) || 0) > 0 && !dpByCode[c]);
+    if (legacyCodes.length === 0 || legacyMigratedRef.current === dealId) return;
+    legacyMigratedRef.current = dealId;
+    (async () => {
+      try {
+        for (const code of legacyCodes) {
+          const parentCode = code.includes('.') ? code.split('.')[0] : undefined;
+          const id = await ensureDealPhase(code, siaNameFor(code), parentCode);
+          if (id) await api.patch(`/deals/phases/${id}`, { hourBudget: Number(budgets[code]) });
+        }
+        await onBudgetSave({}); // legacy fully migrated → clear the old map
+        onTaskUpdated?.();
+      } catch { legacyMigratedRef.current = null; }
+    })();
+  }, [deal.dealPhases, deal.phaseBudgets, dealId]);
+
+  // Find (or create) the real DealPhase row for a SIA code, creating its parent main phase first
+  // for a sub-phase. Returns the DealPhase id.
+  async function ensureDealPhase(code: string, name: string, parentCode?: string): Promise<string> {
+    const existing = dpByCode[code];
+    if (existing) return existing.id;
+    let parentId: string | undefined;
+    if (parentCode) {
+      const parent = dpByCode[parentCode];
+      if (parent) parentId = parent.id;
+      else {
+        const main = SIA_PHASES_FULL.find(m => m.code === parentCode);
+        const createdParent = await api.post(`/deals/${dealId}/phases`, { code: parentCode, name: main?.name || parentCode });
+        parentId = createdParent?.id;
+        if (createdParent) dpByCode[parentCode] = createdParent;
+      }
+    }
+    const created = await api.post(`/deals/${dealId}/phases`, { code, name, parentId });
+    if (created) dpByCode[code] = created;
+    return created?.id;
+  }
+
+  // Drop a legacy phaseBudgets entry once its value lives on a DealPhase row (prevents double counting).
+  async function clearLegacyBudget(code: string) {
+    if (budgets[code] === undefined) return;
     const nb = { ...budgets };
-    if (isNaN(val) || val <= 0) delete nb[code]; else nb[code] = val;
-    setSavingPhase(code);
+    delete nb[code];
     await onBudgetSave(nb);
-    setSavingPhase(null);
+  }
+
+  async function saveBudget(code: string, name: string, parentCode?: string) {
+    const val = parseFloat(drafts[code] ?? '');
+    const hourBudget = isNaN(val) || val <= 0 ? null : val;
+    setSavingPhase(code);
+    try {
+      const dp = dpByCode[code];
+      if (dp) await api.patch(`/deals/phases/${dp.id}`, { hourBudget });
+      else if (hourBudget != null) await ensureDealPhase(code, name, parentCode).then(id => id && api.patch(`/deals/phases/${id}`, { hourBudget }));
+      await clearLegacyBudget(code);
+      onTaskUpdated?.();
+    } finally {
+      setSavingPhase(null);
+    }
+  }
+
+  async function saveResponsible(code: string, name: string, userId: string, parentCode?: string) {
+    setSavingResp(code);
+    try {
+      const dp = dpByCode[code];
+      const id = dp ? dp.id : await ensureDealPhase(code, name, parentCode);
+      if (id) await api.patch(`/deals/phases/${id}`, { responsibleUserId: userId || null });
+      onTaskUpdated?.();
+    } finally {
+      setSavingResp(null);
+    }
   }
 
   // Build phase data: group tasks by phase code, collect assignees + hours
@@ -774,13 +859,13 @@ function PhaseOverview({ deal, tasks, selectedPhases, editMode, onBudgetSave, on
   tasks.forEach((t: any) => { if (t.phase) { (tasksByPhase[t.phase] ??= []).push(t); } });
 
   // Build rows from SIA structure (using shared SIA_PHASES_FULL which has code/name/sub)
-  type Row = { code: string; name: string; isSub: boolean; isSelected: boolean };
+  type Row = { code: string; name: string; isSub: boolean; isSelected: boolean; parentCode?: string };
   const rows: Row[] = [];
   SIA_PHASES_FULL.forEach(main => {
     const mainSelected = selectedSet.has(main.code);
     rows.push({ code: main.code, name: main.name, isSub: false, isSelected: mainSelected });
     main.sub.forEach(sub => {
-      rows.push({ code: sub.code, name: sub.name, isSub: true, isSelected: mainSelected });
+      rows.push({ code: sub.code, name: sub.name, isSub: true, isSelected: mainSelected, parentCode: main.code });
     });
   });
 
@@ -808,7 +893,8 @@ function PhaseOverview({ deal, tasks, selectedPhases, editMode, onBudgetSave, on
           <tbody>
             {rows.filter(r => r.isSelected).map(row => {
               const pt = tasksByPhase[row.code] || [];
-              const budget = budgets[row.code] ?? 0;
+              const budget = hoursFor(row.code);
+              const dpRow = dpByCode[row.code];
               const used = pt.reduce((s: number, t: any) => s + (t.timeEntries || []).reduce((ss: number, e: any) => ss + (e.durationMinutes || 0), 0) / 60, 0);
               const remaining = budget > 0 ? budget - used : 0;
               const over = budget > 0 && used > budget;
@@ -840,12 +926,25 @@ function PhaseOverview({ deal, tasks, selectedPhases, editMode, onBudgetSave, on
                       {pt.length > 0 && <span style={{ fontSize: 10, color: '#94a3b8', marginLeft: 6 }}>({pt.length})</span>}
                     </td>
                     <td style={tdS}>
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {assignees.slice(0, 3).map((n, i) => (
-                          <span key={i} style={{ fontSize: 10, background: '#eff6ff', color: '#1a1a1a', borderRadius: 4, padding: '1px 6px', fontWeight: 600 }}>{n.split(' ')[0]}</span>
-                        ))}
-                        {assignees.length > 3 && <span style={{ fontSize: 10, color: '#94a3b8' }}>+{assignees.length - 3}</span>}
-                        {assignees.length === 0 && <span style={{ color: '#cbd5e1', fontSize: 11 }}>—</span>}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <select
+                          value={dpRow?.responsibleUserId || ''}
+                          disabled={savingResp === row.code}
+                          onClick={e => e.stopPropagation()}
+                          onChange={e => { e.stopPropagation(); saveResponsible(row.code, row.name, e.target.value, row.parentCode); }}
+                          style={{ fontSize: 11, padding: '2px 4px', borderRadius: 4, border: '1px solid #d1d5db', background: '#fff', maxWidth: 140 }}
+                        >
+                          <option value="">{savingResp === row.code ? '…' : '— Mitarbeiter —'}</option>
+                          {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                        </select>
+                        {assignees.length > 0 && (
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                            {assignees.slice(0, 3).map((n, i) => (
+                              <span key={i} title="Aufgaben-Zuständige" style={{ fontSize: 9, background: '#f1f5f9', color: '#64748b', borderRadius: 4, padding: '1px 5px', fontWeight: 600 }}>{n.split(' ')[0]}</span>
+                            ))}
+                            {assignees.length > 3 && <span style={{ fontSize: 9, color: '#94a3b8' }}>+{assignees.length - 3}</span>}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td style={tdS}>
@@ -855,7 +954,7 @@ function PhaseOverview({ deal, tasks, selectedPhases, editMode, onBudgetSave, on
                             onChange={e => { e.stopPropagation(); setDrafts(d => ({ ...d, [row.code]: e.target.value })); }}
                             onClick={e => e.stopPropagation()}
                             style={{ width: 50, padding: '2px 4px', borderRadius: 4, border: '1px solid #d1d5db', fontSize: 11, textAlign: 'center' }} />
-                          <button onClick={e => { e.stopPropagation(); saveBudget(row.code); }}
+                          <button onClick={e => { e.stopPropagation(); saveBudget(row.code, row.name, row.parentCode); }}
                             disabled={savingPhase === row.code}
                             style={{ padding: '1px 6px', borderRadius: 3, border: 'none', background: '#1a1a1a', color: '#fff', fontSize: 10, cursor: 'pointer' }}>
                             {savingPhase === row.code ? '…' : '✓'}

@@ -166,7 +166,8 @@ export default function LogTimeQuickModal({ open, onClose, onSaved, defaultProje
             }} style={{ ...inp, borderColor: phaseMissing ? '#dc2626' : '#e5e7eb' }} disabled={!projectId}>
               <option value="">— Phase wählen —</option>
               {phases.sort((a: any, b: any) => a.order - b.order).map((p: any) => <option key={p.id} value={p.id}>{String(p.order).padStart(2, '0')} - {p.name}</option>)}
-              <option value={ALLG}>Allgemein (keine bestimmte Phase)</option>
+              {/* Only offer the "Allgemein" escape when the project has no real Allgemein phase, else it shows twice. */}
+              {!phases.some((p: any) => /allgemein/i.test(p.name)) && <option value={ALLG}>Allgemein (keine bestimmte Phase)</option>}
             </select>
             <div style={{ fontSize: 11, color: phaseMissing ? '#dc2626' : '#94a3b8', marginTop: 4 }}>
               Falls du unsicher bist, wähle „Allgemein" — du bist nie blockiert.

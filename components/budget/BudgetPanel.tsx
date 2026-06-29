@@ -57,23 +57,37 @@ export default function BudgetPanel({ projectId, canEdit }: { projectId: string;
   if (loading) return <div style={{ padding: 32, textAlign: 'center', color: '#94a3b8' }}>Lade...</div>;
 
   const currency = summary?.currency || 'CHF';
+  const budgetSet = !!summary?.budgetSet;
   const pct = summary?.totalBudget > 0 ? Math.round((summary.totalActual / summary.totalBudget) * 100) : 0;
   const overBudget = summary?.remaining < 0;
+  // "Verbleibend" = reference budget − Verbraucht. The reference is the project's own Gesamtbudget
+  // when set, otherwise the planned sum — so we label it so the number is never ambiguous.
+  const remainingSub = budgetSet ? 'Gesamtbudget − Verbraucht' : 'Geplant − Verbraucht';
 
   return (
     <div>
-      {/* Summary cards */}
+      {/* What this tab is — Baukosten ≠ Bürostunden. Keeps the team from confusing it with the Kontingent. */}
+      <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#475569', lineHeight: 1.5 }}>
+        <strong style={{ color: '#0f172a' }}>Baukosten</strong> = die Kosten des <em>Bauwerks</em> (Rohbau, Elektro, Sanitär, Dach …), die du für den Bauherrn kontrollierst —
+        getrennt von den Bürostunden/Honorar (das ist das <em>Kontingent</em>). Optional: nur ausfüllen, wenn ihr die Baukosten überwacht.
+      </div>
+
+      {/* Summary cards. When the project has no own Baukosten-Budget, we don't repeat "Geplant" as
+          "Gesamtbudget" — we show it as not-set so the four numbers tell a coherent story. */}
       {summary && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 12, marginBottom: 24 }}>
           {[
-            { label: 'Gesamtbudget', value: chf(summary.totalBudget, currency), color: '#3b82f6', bg: '#eff6ff' },
-            { label: 'Geplant', value: chf(summary.totalEstimated, currency), color: '#f59e0b', bg: '#fffbeb' },
-            { label: 'Verbraucht', value: chf(summary.totalActual, currency), color: '#ef4444', bg: '#fef2f2' },
-            { label: 'Verbleibend', value: chf(summary.remaining, currency), color: overBudget ? '#dc2626' : '#22c55e', bg: overBudget ? '#fef2f2' : '#f0fdf4' },
-          ].map(c => (
+            budgetSet
+              ? { label: 'Gesamtbudget', value: chf(summary.totalBudget, currency), color: '#3b82f6', bg: '#eff6ff', sub: 'Festgelegtes Baukosten-Budget' }
+              : { label: 'Gesamtbudget', value: 'nicht festgelegt', color: '#94a3b8', bg: '#f8fafc', sub: 'Kein Budget gesetzt → Geplant gilt als Richtwert' },
+            { label: 'Geplant', value: chf(summary.totalEstimated, currency), color: '#f59e0b', bg: '#fffbeb', sub: 'Summe der geplanten Kosten' },
+            { label: 'Verbraucht', value: chf(summary.totalActual, currency), color: '#ef4444', bg: '#fef2f2', sub: 'Summe der effektiven Kosten' },
+            { label: 'Verbleibend', value: chf(summary.remaining, currency), color: overBudget ? '#dc2626' : '#22c55e', bg: overBudget ? '#fef2f2' : '#f0fdf4', sub: remainingSub },
+          ].map((c: any) => (
             <div key={c.label} style={{ background: c.bg, borderRadius: 12, padding: '14px 16px', border: `1px solid ${c.color}22` }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: c.color }}>{c.value}</div>
+              <div style={{ fontSize: c.value === 'nicht festgelegt' ? 14 : 18, fontWeight: 800, color: c.color }}>{c.value}</div>
               <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{c.label}</div>
+              {c.sub && <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3, lineHeight: 1.3 }}>{c.sub}</div>}
             </div>
           ))}
         </div>

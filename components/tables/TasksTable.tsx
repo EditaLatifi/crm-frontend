@@ -132,6 +132,19 @@ export default function TasksTable() {
     fetchTasks();
   };
 
+  const deleteTask = async (taskId: string) => {
+    if (typeof window !== 'undefined' && !window.confirm('Aufgabe wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) return;
+    setTasks(prev => prev.filter((t: Task) => t.id !== taskId));
+    try { await api.delete(`/tasks/${taskId}`); toast?.success?.('Aufgabe gelöscht.'); }
+    catch (e: any) { toast?.error?.(e?.message || 'Löschen fehlgeschlagen.'); fetchTasks(); }
+  };
+
+  const archiveTask = async (taskId: string) => {
+    setTasks(prev => prev.filter((t: Task) => t.id !== taskId)); // remove from the active board
+    try { await api.patch(`/tasks/${taskId}/archive`, { archived: true }); toast?.success?.('Aufgabe archiviert.'); }
+    catch (e: any) { toast?.error?.(e?.message || 'Archivieren fehlgeschlagen.'); fetchTasks(); }
+  };
+
   const onDragEnd = async (result: any) => {
     const { source, destination, draggableId } = result;
     if (!destination || source.droppableId === destination.droppableId) return;
@@ -173,15 +186,14 @@ export default function TasksTable() {
                       </Flex>
                       {/* One-click status — mobile (no drag) */}
                       <div style={{ display: 'flex', gap: 8, marginTop: 10 }} onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
-                        {t.status !== 'IN_PROGRESS' && t.status !== 'DONE' && (
-                          <button onClick={() => changeStatus(t.id, 'IN_PROGRESS')} style={{ flex: 1, fontSize: 13, fontWeight: 600, padding: '9px 10px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#eff6ff', color: '#1d4ed8' }}>▶ Starten</button>
-                        )}
                         {t.status !== 'DONE' && (
                           <button onClick={() => changeStatus(t.id, 'DONE')} style={{ flex: 1, fontSize: 13, fontWeight: 600, padding: '9px 10px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#f0fdf4', color: '#16a34a' }}>✓ Erledigt</button>
                         )}
                         {t.status === 'DONE' && (
                           <button onClick={() => changeStatus(t.id, 'OPEN')} style={{ flex: 1, fontSize: 13, fontWeight: 600, padding: '9px 10px', borderRadius: 8, border: '1px solid #e5e7eb', cursor: 'pointer', background: '#fff', color: '#64748b' }}>↩ Wieder öffnen</button>
                         )}
+                        <button onClick={() => archiveTask(t.id)} title="Archivieren" style={{ fontSize: 13, padding: '9px 11px', borderRadius: 8, border: '1px solid #e5e7eb', cursor: 'pointer', background: '#fff', color: '#64748b' }}>📦</button>
+                        <button onClick={() => deleteTask(t.id)} title="Löschen" style={{ fontSize: 13, padding: '9px 11px', borderRadius: 8, border: '1px solid #fecaca', cursor: 'pointer', background: '#fff', color: '#dc2626' }}>🗑</button>
                       </div>
                     </Box>
                   </Link>
@@ -254,15 +266,14 @@ export default function TasksTable() {
                                 </Flex>
                                 {/* One-click status — no drag needed */}
                                 <div style={{ display: 'flex', gap: 6, marginTop: 8 }} onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
-                                  {t.status !== 'IN_PROGRESS' && t.status !== 'DONE' && (
-                                    <button onClick={() => changeStatus(t.id, 'IN_PROGRESS')} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 7, border: 'none', cursor: 'pointer', background: '#eff6ff', color: '#1d4ed8' }}>▶ Starten</button>
-                                  )}
                                   {t.status !== 'DONE' && (
                                     <button onClick={() => changeStatus(t.id, 'DONE')} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 7, border: 'none', cursor: 'pointer', background: '#f0fdf4', color: '#16a34a' }}>✓ Erledigt</button>
                                   )}
                                   {t.status === 'DONE' && (
                                     <button onClick={() => changeStatus(t.id, 'OPEN')} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 7, border: '1px solid #e5e7eb', cursor: 'pointer', background: '#fff', color: '#64748b' }}>↩ Wieder öffnen</button>
                                   )}
+                                  <button onClick={() => archiveTask(t.id)} title="Archivieren" style={{ fontSize: 11, padding: '4px 9px', borderRadius: 7, border: '1px solid #e5e7eb', cursor: 'pointer', background: '#fff', color: '#64748b' }}>📦</button>
+                                  <button onClick={() => deleteTask(t.id)} title="Löschen" style={{ fontSize: 11, padding: '4px 9px', borderRadius: 7, border: '1px solid #fecaca', cursor: 'pointer', background: '#fff', color: '#dc2626' }}>🗑</button>
                                 </div>
                                 {/* Checklist mini progress */}
                                 {Array.isArray((t as any).checklists) && (t as any).checklists.length > 0 && (() => {

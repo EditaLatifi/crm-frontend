@@ -51,6 +51,7 @@ type Props = {
   onUpdate?: () => void;
   showFinancials?: boolean;
   onLogTime?: (phaseId: string) => void;
+  users?: { id: string; name?: string; email?: string }[];
 };
 
 // Hours booked on a phase, excluding Mehrkosten (same rule as the backend Kontingent gate).
@@ -67,7 +68,7 @@ const PhaseIcon = ({ status }: { status: string }) => {
   return <span style={{ width: 14, height: 14, borderRadius: '50%', background: '#e2e8f0', display: 'inline-block' }} />;
 };
 
-export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate, showFinancials, onLogTime }: Props) {
+export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate, showFinancials, onLogTime, users = [] }: Props) {
   const { user } = useAuth();
   const toast = useToast();
   const isExtern = isExternRole(user?.role);
@@ -83,8 +84,6 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate, sh
   const [np, setNp] = useState({ code: '', name: '', budgetHours: '' });
   const [subFor, setSubFor] = useState<string | null>(null);
   const [ns, setNs] = useState({ code: '', name: '' });
-  const [taskFor, setTaskFor] = useState<string | null>(null);
-  const [nt, setNt] = useState({ title: '', extra: false });
 
   async function addPhase() {
     if (!np.name.trim()) return;
@@ -104,14 +103,6 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate, sh
     try {
       await api.post(`/projects/${projectId}/phases`, { name: ns.name.trim(), code: ns.code.trim() || undefined, parentPhaseId: parentId });
       setNs({ code: '', name: '' }); setSubFor(null); onUpdate?.();
-    } catch (e: any) { setError(e.message || 'Fehler beim Hinzufügen'); } finally { setBusy(false); }
-  }
-  async function addTask(phaseId: string) {
-    if (!nt.title.trim()) return;
-    setBusy(true); setError(null);
-    try {
-      await api.post('/tasks', { title: nt.title.trim(), status: 'OPEN', priority: 'MEDIUM', projectId, projectPhaseId: phaseId, isBillableExtra: nt.extra });
-      setNt({ title: '', extra: false }); setTaskFor(null); onUpdate?.();
     } catch (e: any) { setError(e.message || 'Fehler beim Hinzufügen'); } finally { setBusy(false); }
   }
   const miniInput: React.CSSProperties = { fontSize: 12, padding: '6px 9px', border: '1px solid #e2e8f0', borderRadius: 7, outline: 'none' };
@@ -154,6 +145,16 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate, sh
     } catch (e: any) {
       setError(e.message || 'Fehler beim Speichern der geplanten Stunden');
       toast.error('Speichern fehlgeschlagen');
+    }
+  }
+
+  async function savePhaseResponsible(phaseId: string, userId: string) {
+    try {
+      await api.patch(`/projects/${projectId}/phases/${phaseId}`, { responsibleUserId: userId || null });
+      toast.success(userId ? 'Verantwortliche/r gespeichert.' : 'Verantwortliche/r entfernt.');
+      onUpdate?.();
+    } catch (e: any) {
+      toast.error(e.message || 'Speichern fehlgeschlagen');
     }
   }
 
@@ -387,12 +388,11 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate, sh
                     </div>
                   )}
 
-                  {/* Per-phase add: sub-phase + task (with Mehrkosten toggle) */}
+                  {/* Per-phase add: sub-phase only. Aufgaben werden im Register „Aufgaben" hinzugefügt, nicht hier. */}
                   {canEdit && (
                     <div style={{ marginTop: 10, paddingLeft: 30 }} onClick={e => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => { setSubFor(subFor === phase.id ? null : phase.id); setTaskFor(null); }} style={miniGhost}>+ Sub-Phase</button>
-                        <button onClick={() => { setTaskFor(taskFor === phase.id ? null : phase.id); setSubFor(null); }} style={miniGhost}>+ Aufgabe</button>
+                        <button onClick={() => { setSubFor(subFor === phase.id ? null : phase.id); }} style={miniGhost}>+ Sub-Phase</button>
                       </div>
                       {subFor === phase.id && (
                         <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -400,18 +400,6 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate, sh
                           <input value={ns.name} onChange={e => setNs({ ...ns, name: e.target.value })} placeholder="Sub-Phase Name" style={{ ...miniInput, flex: '1 1 180px' }} autoFocus />
                           <button onClick={() => addSub(phase.id)} disabled={busy || !ns.name.trim()} style={miniBtn}>{busy ? '…' : 'Speichern'}</button>
                           <button onClick={() => { setSubFor(null); setNs({ code: '', name: '' }); }} style={miniGhost}>Abbrechen</button>
-                        </div>
-                      )}
-                      {taskFor === phase.id && (
-                        <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                          <input value={nt.title} onChange={e => setNt({ ...nt, title: e.target.value })} placeholder="Aufgaben-Titel" style={{ ...miniInput, flex: '1 1 200px' }} autoFocus />
-                          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#b45309', whiteSpace: 'nowrap' }}>
-                            <input type="checkbox" checked={nt.extra} onChange={e => setNt({ ...nt, extra: e.target.checked })} />
-                            Mehrkosten
-                            <Tooltip text={'Mehrkosten = zusätzlich verrechnete Stunden, die NICHT vom Kontingent abgezogen werden. Nur ankreuzen, wenn der Kunde diese Stunden extra zahlt.'} />
-                          </label>
-                          <button onClick={() => addTask(phase.id)} disabled={busy || !nt.title.trim()} style={miniBtn}>{busy ? '…' : 'Aufgabe'}</button>
-                          <button onClick={() => { setTaskFor(null); setNt({ title: '', extra: false }); }} style={miniGhost}>Abbrechen</button>
                         </div>
                       )}
                     </div>
@@ -507,6 +495,23 @@ export default function PhaseTimeline({ projectId, phases, canEdit, onUpdate, sh
                                 <div style={{ height: '100%', background: barColor, borderRadius: 20, width: `${pct}%`, transition: 'width 0.3s' }} />
                               </div>
                             )}
+                            {/* Verantwortliche/r für diese Phase — direkt hier zuweisen */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontSize: 12 }}>
+                              <span style={{ color: '#94a3b8', whiteSpace: 'nowrap' }}>👤 Verantwortlich:</span>
+                              {canEdit ? (
+                                <select
+                                  value={phase.responsibleUserId || ''}
+                                  onClick={e => e.stopPropagation()}
+                                  onChange={e => { e.stopPropagation(); savePhaseResponsible(phase.id, e.target.value); }}
+                                  style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', maxWidth: 220 }}
+                                >
+                                  <option value="">— niemand —</option>
+                                  {users.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
+                                </select>
+                              ) : (
+                                <span style={{ fontWeight: 600, color: '#1e293b' }}>{phase.responsible?.name || '—'}</span>
+                              )}
+                            </div>
                             {entries.length > 0 && (
                               <div style={{ marginTop: 8, borderTop: '1px solid #e5e7eb', paddingTop: 8 }}>
                                 {entries.slice(0, 3).map(e => (
