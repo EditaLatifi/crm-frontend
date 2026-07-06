@@ -213,13 +213,7 @@ export default function LogTimeQuickModal({ open, onClose, onSaved, defaultProje
             </div>
           </div>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#b45309', marginBottom: 4, cursor: 'pointer' }}>
-            <input type="checkbox" checked={isBillableExtra} onChange={e => setIsBillableExtra(e.target.checked)} />
-            Mehrkosten
-          </label>
-          <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 12, marginLeft: 24 }}>
-            Nur ankreuzen, wenn der Kunde diese Stunden zusätzlich zahlt. Im Zweifel leer lassen.
-          </div>
+          {/* Mehrkosten is set on the Aufgabe (task), not per time entry — keeps time logging simple. */}
 
           {isAdmin && (
             <div style={{ marginBottom: 12 }}>

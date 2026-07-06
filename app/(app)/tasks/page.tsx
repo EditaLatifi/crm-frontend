@@ -26,6 +26,7 @@ export default function TasksPage() {
     phase: '',
     projectPhaseId: '',
     isPaymentReminder: false,
+    isBillableExtra: false,
     specification: '',
     assigneeIds: [] as string[],
     budgetHours: '',
@@ -63,7 +64,7 @@ export default function TasksPage() {
     setSaving(true);
     try {
       await api.post('/tasks', form);
-      setForm({ title: '', description: '', status: 'OPEN', priority: 'LOW', dueDate: '', assignedToUserId: '', accountId: '', contactId: '', dealId: '', projectId: '', phase: '', projectPhaseId: '', isPaymentReminder: false, specification: '', assigneeIds: [], budgetHours: '' });
+      setForm({ title: '', description: '', status: 'OPEN', priority: 'LOW', dueDate: '', assignedToUserId: '', accountId: '', contactId: '', dealId: '', projectId: '', phase: '', projectPhaseId: '', isPaymentReminder: false, isBillableExtra: false, specification: '', assigneeIds: [], budgetHours: '' });
       setShowForm(false);
       setShowAdvanced(false);
       setRefreshKey(k => k + 1);
@@ -205,9 +206,9 @@ export default function TasksPage() {
                         </select>
                       </div>
                     </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1a1a1a', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={form.isPaymentReminder} onChange={e => setForm(f => ({ ...f, isPaymentReminder: e.target.checked }))} />
-                      Zahlungserinnerung
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#b45309', cursor: 'pointer' }} title="Kunde zahlt die Stunden dieser Aufgabe zusätzlich; sie zählen nicht gegen das Kontingent.">
+                      <input type="checkbox" checked={form.isBillableExtra} onChange={e => setForm(f => ({ ...f, isBillableExtra: e.target.checked }))} />
+                      Mehrkosten
                     </label>
                     {isAdmin && (
                       <div>

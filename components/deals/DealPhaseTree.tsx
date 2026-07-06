@@ -106,7 +106,7 @@ export default function DealPhaseTree({ dealId, currency, canViewPayments = true
         </div>
       )}
 
-      {phases.map(p => (
+      {[...phases].sort((a, b) => { const n = (p: any) => { const m = String(p?.code || p?.name || '').match(/\d+(?:\.\d+)?/); return m ? parseFloat(m[0]) : 999; }; return n(a) - n(b); }).map(p => (
         <PhaseRow key={p.id} phase={p} currency={currency} onChange={reload} canViewPayments={canViewPayments} locked={locked} />
       ))}
     </div>

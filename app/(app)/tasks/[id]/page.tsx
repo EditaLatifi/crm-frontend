@@ -91,6 +91,7 @@ export default function TaskDetailsPage() {
   const [editSpecification, setEditSpecification] = useState("");
   const [editBudgetHours, setEditBudgetHours] = useState("");
   const [editPaymentReminder, setEditPaymentReminder] = useState(false);
+  const [editBillableExtra, setEditBillableExtra] = useState(false);
   const [projectPhases, setProjectPhases] = useState<{ id: string; name: string; code?: string; parentPhaseId?: string | null }[]>([]);
   const [saving, setSaving] = useState(false);
   const phaseOptions = getAllPhaseCodes();
@@ -202,6 +203,7 @@ export default function TaskDetailsPage() {
     setEditSpecification(task.specification || "");
     setEditBudgetHours(task.budgetHours ?? "");
     setEditPaymentReminder(!!task.isPaymentReminder);
+    setEditBillableExtra(!!task.isBillableExtra);
     setEditMode(true);
   };
 
@@ -221,6 +223,7 @@ export default function TaskDetailsPage() {
         specification: editSpecification || null,
         budgetHours: editBudgetHours !== "" ? Number(editBudgetHours) : null,
         isPaymentReminder: editPaymentReminder,
+        isBillableExtra: editBillableExtra,
       });
       setEditMode(false);
       fetchTask();
@@ -473,8 +476,9 @@ export default function TaskDetailsPage() {
                     autoFocus
                   />
                 ) : (
-                  <h1 style={{ margin: "0 0 16px 0", fontSize: 22, fontWeight: 700, color: "#0f172a", lineHeight: 1.3 }}>
+                  <h1 style={{ margin: "0 0 16px 0", fontSize: 22, fontWeight: 700, color: "#0f172a", lineHeight: 1.3, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                     {task.title}
+                    {task.isBillableExtra && <span style={{ fontSize: 11, fontWeight: 700, color: "#b45309", background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 20, padding: "3px 10px" }}>Mehrkosten</span>}
                   </h1>
                 )}
 
@@ -518,10 +522,13 @@ export default function TaskDetailsPage() {
                       )}
                     </div>
                     <div style={{ gridColumn: "1 / -1" }}>
-                      <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#374151", cursor: "pointer" }}>
-                        <input type="checkbox" checked={editPaymentReminder} onChange={e => setEditPaymentReminder(e.target.checked)} />
-                        Zahlungserinnerung
+                      <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#b45309", cursor: "pointer" }}>
+                        <input type="checkbox" checked={editBillableExtra} onChange={e => setEditBillableExtra(e.target.checked)} />
+                        Mehrkosten
                       </label>
+                      <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 3, marginLeft: 24 }}>
+                        Ankreuzen, wenn der Kunde die Stunden dieser Aufgabe zusätzlich zahlt. Diese Stunden zählen nicht gegen das Kontingent.
+                      </div>
                     </div>
                     {isAdmin && (
                       <div>

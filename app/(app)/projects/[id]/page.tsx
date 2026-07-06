@@ -162,11 +162,18 @@ export default function ProjectDetailPage() {
     </div>
   );
 
-  const phases         = project.phases || [];
+  // Sort phases by their SIA number (10,20,31,32,33,41,51…), not by selection order.
+  const siaOrder = (p: any) => { const m = String(p?.code || p?.name || '').match(/\d+(?:\.\d+)?/); return m ? parseFloat(m[0]) : 999; };
+  const phases         = [...(project.phases || [])].sort((a: any, b: any) => siaOrder(a) - siaOrder(b));
   // Main phases (SIA 1–6) carry budget & progress; sub-phases are organization only (no own Kontingent).
   const mainPhases     = phases.filter((p: any) => !p.parentPhaseId);
   const completedCount = mainPhases.filter((p: any) => p.status === 'COMPLETED' || p.status === 'SKIPPED').length;
   const progress       = mainPhases.length > 0 ? Math.round((completedCount / mainPhases.length) * 100) : 0;
+  // Hours metric (shown alongside the phase-completion %): Mehrkosten excluded, like the Kontingent gate.
+  const usedHoursFor   = (ph: any) => (ph.timeEntries || []).filter((e: any) => !(e.isBillableExtra || e.task?.isBillableExtra)).reduce((s: number, e: any) => s + (e.durationMinutes || 0), 0) / 60;
+  const totalPlannedH  = mainPhases.reduce((s: number, p: any) => s + (p.budgetHours || 0), 0);
+  const totalUsedH     = mainPhases.reduce((s: number, p: any) => s + usedHoursFor(p), 0);
+  const hoursPct       = totalPlannedH > 0 ? Math.round((totalUsedH / totalPlannedH) * 100) : 0;
   const memberIds      = (project.members || []).map((m: any) => m.userId);
   const availableUsers = allUsers.filter((u: any) => !memberIds.includes(u.id));
 
@@ -352,6 +359,18 @@ export default function ProjectDetailPage() {
               <div style={{ height: '100%', width: `${progress}%`, borderRadius: 99, background: progress === 100 ? 'linear-gradient(90deg,#22c55e,#16a34a)' : 'linear-gradient(90deg,#3b82f6,#6366f1)', transition: 'width 0.3s' }} />
             </div>
             <div style={{ fontSize: 12, color: '#94a3b8' }}>{completedCount} von {mainPhases.length} SIA-Leistungsphasen abgeschlossen</div>
+            {/* Second, hours-based view — so the % is never confused with actual worked hours. */}
+            {totalPlannedH > 0 && (
+              <div style={{ marginTop: 4, paddingTop: 8, borderTop: '1px dashed #e2e8f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Stunden</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: hoursPct >= 100 ? '#dc2626' : '#1e293b' }}>{totalUsedH.toFixed(1)}h / {totalPlannedH.toFixed(0)}h · {hoursPct}%</span>
+                </div>
+                <div style={{ height: 6, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden', marginTop: 5 }}>
+                  <div style={{ height: '100%', width: `${Math.min(hoursPct, 100)}%`, borderRadius: 99, background: hoursPct >= 100 ? '#dc2626' : hoursPct >= 80 ? '#d97706' : '#22c55e', transition: 'width 0.3s' }} />
+                </div>
+              </div>
+            )}
           </div>
 
           {projectTasks.length > 0 && (
