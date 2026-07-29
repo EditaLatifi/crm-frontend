@@ -52,6 +52,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLogin = pathname === "/login";
   const isShare = pathname?.startsWith("/share/");
+  // Public auth pages must bypass the login guard, otherwise "Passwort vergessen" bounces back to /login.
+  const isPublicAuth = pathname === "/forgot-password" || pathname === "/reset-password";
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -72,7 +74,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
-  if (isLogin || isShare) {
+  if (isLogin || isShare || isPublicAuth) {
     return <>{children}</>;
   }
   return (
