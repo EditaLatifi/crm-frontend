@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     siteName: 'IP3 CRM',
     images: [
       {
-        url: 'https://crm-frontend-xi-three.vercel.app/logoip3.png',
+        url: 'https://ip3-crm.ch/logoip3.png',
         width: 512,
         height: 512,
         alt: 'IP3 CRM Logo',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     card: 'summary',
     title: 'IP3 Projektportal',
     description: 'Aktuellen Projektstatus einsehen – ohne Login.',
-    images: ['https://crm-frontend-xi-three.vercel.app/logoip3.png'],
+    images: ['https://ip3-crm.ch/logoip3.png'],
   },
 };
 
